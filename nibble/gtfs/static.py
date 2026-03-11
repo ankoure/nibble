@@ -1,0 +1,537 @@
+"""Downloads and parses static GTFS ZIP archives into in-memory indexes."""
+
+from __future__ import annotations
+
+import csv
+import io
+import logging
+import math
+import zipfile
+import zoneinfo
+from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import datetime
+
+import httpx
+
+from nibble.models import StopTime, Trip
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class StaticGTFS:
+    """In-memory indexes built from a static GTFS ZIP at startup.
+
+    Attributes:
+        trips: Mapping of ``trip_id`` → :class:`~nibble.models.Trip`, loaded
+            from ``trips.txt``.
+        stop_times: Mapping of ``trip_id`` → list of
+            :class:`~nibble.models.StopTime` sorted by ``stop_sequence``,
+            loaded from ``stop_times.txt``.
+        stops: Mapping of ``stop_id`` → ``(lat, lon)`` float tuple, loaded
+            from ``stops.txt``.
+        shapes: Mapping of ``shape_id`` → list of ``(lat, lon)`` tuples sorted
+            by ``shape_pt_sequence``, loaded from ``shapes.txt``.
+        route_trips: Mapping of ``route_id`` → list of ``trip_id`` strings for
+            all trips on that route.  Built from ``trips.txt`` at load time.
+    """
+
+    trips: dict[str, Trip] = field(default_factory=dict)
+    stop_times: dict[str, list[StopTime]] = field(default_factory=dict)
+    stops: dict[str, tuple[float, float]] = field(default_factory=dict)
+    shapes: dict[str, list[tuple[float, float]]] = field(default_factory=dict)
+    route_trips: dict[str, list[str]] = field(default_factory=dict)
+
+
+def get_route_id(gtfs: StaticGTFS, trip_id: str) -> str | None:
+    """Return the route_id for a trip_id, or None if not found.
+
+    Args:
+        gtfs: The loaded static GTFS indexes.
+        trip_id: The GTFS trip identifier to look up.
+
+    Returns:
+        The ``route_id`` string, or ``None`` if the trip is not in the index.
+    """
+    trip = gtfs.trips.get(trip_id)
+    return trip.route_id if trip else None
+
+
+def load_static_gtfs(url: str) -> StaticGTFS:
+    """Download and parse a static GTFS ZIP from a URL. Synchronous; runs at startup.
+
+    Args:
+        url: URL of the static GTFS ZIP archive.
+
+    Returns:
+        A ``StaticGTFS`` object with populated trip and stop-time indexes.
+
+    Raises:
+        httpx.HTTPStatusError: If the download returns a non-2xx response.
+    """
+    logger.info("Downloading static GTFS from %s", url)
+    response = httpx.get(url, follow_redirects=True, timeout=60)
+    response.raise_for_status()
+    return _parse_gtfs_zip(response.content)
+
+
+def load_static_gtfs_from_bytes(content: bytes) -> StaticGTFS:
+    """Parse a static GTFS ZIP from already-downloaded bytes.
+
+    Use this when the ZIP was already fetched (e.g. by the fixer/publisher)
+    to avoid downloading it a second time.
+
+    Args:
+        content: Raw bytes of a GTFS ZIP archive.
+
+    Returns:
+        A ``StaticGTFS`` object with populated trip and stop-time indexes.
+    """
+    return _parse_gtfs_zip(content)
+
+
+_STOPPED_THRESHOLD_M = 30.0
+
+
+def infer_stop_from_position(
+    lat: float,
+    lon: float,
+    trip_id: str,
+    gtfs: "StaticGTFS",
+) -> tuple[str | None, int | None, str]:
+    """Infer stop_id, stop_sequence, and current_status from a raw vehicle position.
+
+    Projects the vehicle onto the trip's shape polyline using
+    ``shape_dist_traveled``, then determines the next stop ahead and whether
+    the vehicle is stopped at it.
+
+    Returns ``(None, None, "IN_TRANSIT_TO")`` when inference is not possible
+    (trip not found, no shape, no stop times, or stop times lack
+    ``shape_dist_traveled``).
+
+    Args:
+        lat: Vehicle latitude in WGS84 decimal degrees.
+        lon: Vehicle longitude in WGS84 decimal degrees.
+        trip_id: GTFS trip identifier for the vehicle's current trip.
+        gtfs: Loaded static GTFS indexes.
+
+    Returns:
+        A ``(stop_id, stop_sequence, current_status)`` tuple.  ``current_status``
+        is ``"STOPPED_AT"`` when the vehicle is within
+        :data:`_STOPPED_THRESHOLD_M` metres of a stop, otherwise
+        ``"IN_TRANSIT_TO"``.
+    """
+    trip = gtfs.trips.get(trip_id)
+    if trip is None or trip.shape_id is None:
+        return None, None, "IN_TRANSIT_TO"
+
+    shape_pts = gtfs.shapes.get(trip.shape_id)
+    if not shape_pts:
+        return None, None, "IN_TRANSIT_TO"
+
+    times = gtfs.stop_times.get(trip_id)
+    if not times:
+        return None, None, "IN_TRANSIT_TO"
+
+    timed = sorted(
+        (st for st in times if st.shape_dist_traveled is not None),
+        key=lambda st: st.shape_dist_traveled,  # type: ignore[arg-type]
+    )
+    if not timed:
+        return None, None, "IN_TRANSIT_TO"
+
+    vehicle_dist = _project_onto_polyline(lat, lon, shape_pts)
+
+    for st in timed:
+        assert st.shape_dist_traveled is not None
+        if abs(st.shape_dist_traveled - vehicle_dist) <= _STOPPED_THRESHOLD_M:
+            return st.stop_id, st.stop_sequence, "STOPPED_AT"
+
+    for st in timed:
+        assert st.shape_dist_traveled is not None
+        if st.shape_dist_traveled > vehicle_dist:
+            return st.stop_id, st.stop_sequence, "IN_TRANSIT_TO"
+
+    # Vehicle is past the last stop — report the last stop
+    last = timed[-1]
+    return last.stop_id, last.stop_sequence, "IN_TRANSIT_TO"
+
+
+_TRIP_TIME_WINDOW_S = 1800  # 30 minutes tolerance on each end of a trip's time window
+
+
+def _gtfs_time_to_seconds(time_str: str | None) -> int | None:
+    """Convert a GTFS ``HH:MM:SS`` time string to seconds past midnight.
+
+    Hours may exceed 23 for service running past midnight (e.g. ``"25:30:00"``
+    → 91800).  Returns ``None`` for ``None`` or malformed input.
+    """
+    if not time_str:
+        return None
+    parts = time_str.split(":")
+    if len(parts) != 3:
+        return None
+    try:
+        return int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+    except ValueError:
+        return None
+
+
+def infer_trip_from_position(
+    lat: float,
+    lon: float,
+    route_id: str,
+    gtfs: "StaticGTFS",
+    timestamp: datetime | None = None,
+    agency_timezone: str | None = None,
+) -> str | None:
+    """Infer the most likely ``trip_id`` for a vehicle given its position and route.
+
+    Iterates over all trips for *route_id* that have an associated shape and
+    computes the minimum perpendicular distance from *(lat, lon)* to each
+    shape polyline.
+
+    When both *timestamp* and *agency_timezone* are supplied, trips whose
+    scheduled time window (first-stop to last-stop departure/arrival times,
+    with a ±30-minute tolerance) does not bracket the current local time are
+    excluded before the distance ranking.  When no trips survive the time
+    filter the constraint is dropped and all candidates are ranked by distance
+    alone, so the function always returns the best geometric match.
+
+    Returns ``None`` only when *route_id* is not in the index or no candidate
+    trip has a shape.
+
+    Note: if two trips share the same shape (same physical path, different
+    times of day) the returned ``trip_id`` is one of them arbitrarily, but
+    stop inference via :func:`infer_stop_from_position` will still be correct
+    since the shapes are identical.
+
+    Args:
+        lat: Vehicle latitude in WGS84 decimal degrees.
+        lon: Vehicle longitude in WGS84 decimal degrees.
+        route_id: GTFS route identifier reported by the feed.
+        gtfs: Loaded static GTFS indexes.
+        timestamp: UTC-aware datetime of the observation.  Required for
+            time-of-day filtering.
+        agency_timezone: IANA timezone string (e.g. ``"America/New_York"``).
+            Required for time-of-day filtering.
+
+    Returns:
+        The best-matching ``trip_id``, or ``None`` if no match is possible.
+    """
+    trip_ids = gtfs.route_trips.get(route_id)
+    if not trip_ids:
+        return None
+
+    # Compute local time-of-day in seconds when we have enough context
+    local_tod: int | None = None
+    if timestamp is not None and agency_timezone is not None:
+        try:
+            tz = zoneinfo.ZoneInfo(agency_timezone)
+            local_dt = timestamp.astimezone(tz)
+            local_tod = local_dt.hour * 3600 + local_dt.minute * 60 + local_dt.second
+        except Exception:
+            logger.warning("Unknown agency_timezone %r; skipping time filter", agency_timezone)
+
+    def _in_time_window(trip_id: str) -> bool:
+        """Return True if local_tod falls within this trip's scheduled window."""
+        times = gtfs.stop_times.get(trip_id)
+        if not times:
+            return True  # no schedule data — don't filter out
+        secs = []
+        for st in times:
+            s = _gtfs_time_to_seconds(st.departure_time or st.arrival_time)
+            if s is not None:
+                secs.append(s)
+        if not secs:
+            return True
+        first, last = min(secs), max(secs)
+        assert local_tod is not None
+        # Check both the current calendar day and the "extended" day (handles
+        # post-midnight trips that use HH > 23 in GTFS)
+        for tod in (local_tod, local_tod + 86400):
+            if first - _TRIP_TIME_WINDOW_S <= tod <= last + _TRIP_TIME_WINDOW_S:
+                return True
+        return False
+
+    def _score(trip_id: str) -> float:
+        shape_id = gtfs.trips[trip_id].shape_id
+        if shape_id is None:
+            return math.inf
+        shape_pts = gtfs.shapes.get(shape_id)
+        if not shape_pts:
+            return math.inf
+        return _min_distance_to_polyline(lat, lon, shape_pts)
+
+    scores = {tid: _score(tid) for tid in trip_ids}
+    candidates = [tid for tid, s in scores.items() if s < math.inf]
+    if not candidates:
+        return None
+
+    # Apply time filter; fall back to all candidates if none survive
+    if local_tod is not None:
+        time_filtered = [tid for tid in candidates if _in_time_window(tid)]
+        if time_filtered:
+            candidates = time_filtered
+
+    return min(candidates, key=scores.__getitem__)
+
+
+def _min_distance_to_polyline(
+    lat: float, lon: float, shape_pts: list[tuple[float, float]]
+) -> float:
+    """Return the minimum perpendicular distance in metres from a point to a polyline.
+
+    Uses the same flat-earth approximation as :func:`_project_onto_polyline`.
+    """
+    if len(shape_pts) == 1:
+        return _haversine_m(lat, lon, shape_pts[0][0], shape_pts[0][1])
+
+    best_dist_sq = math.inf
+    R = 6_371_000.0
+    RAD = math.pi / 180.0
+
+    for i in range(len(shape_pts) - 1):
+        lat1, lon1 = shape_pts[i]
+        lat2, lon2 = shape_pts[i + 1]
+        cos_lat = math.cos(math.radians((lat1 + lat2) / 2.0))
+
+        ax = (lat - lat1) * R * RAD
+        ay = (lon - lon1) * R * RAD * cos_lat
+        bx = (lat2 - lat1) * R * RAD
+        by = (lon2 - lon1) * R * RAD * cos_lat
+
+        seg_len_sq = bx * bx + by * by
+        if seg_len_sq == 0.0:
+            t = 0.0
+        else:
+            t = max(0.0, min(1.0, (ax * bx + ay * by) / seg_len_sq))
+
+        dx = ax - bx * t
+        dy = ay - by * t
+        d_sq = dx * dx + dy * dy
+        if d_sq < best_dist_sq:
+            best_dist_sq = d_sq
+
+    return math.sqrt(best_dist_sq)
+
+
+def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Return the great-circle distance in metres between two WGS84 points."""
+    R = 6_371_000.0
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+    return 2 * R * math.asin(math.sqrt(min(1.0, a)))
+
+
+def _project_onto_polyline(
+    stop_lat: float,
+    stop_lon: float,
+    shape_pts: list[tuple[float, float]],
+    cum: list[float] | None = None,
+) -> float:
+    """Return the distance in metres along *shape_pts* to the closest point.
+
+    Uses a flat-earth (Cartesian) approximation per segment, which is accurate
+    to well within one metre for the segment lengths typical in GTFS shapes.
+
+    Args:
+        stop_lat: Stop latitude in WGS84 decimal degrees.
+        stop_lon: Stop longitude in WGS84 decimal degrees.
+        shape_pts: Ordered list of ``(lat, lon)`` shape points.
+        cum: Optional precomputed cumulative vertex distances (metres). When
+            projecting many stops onto the same shape, pass this to avoid
+            recomputing it for each stop.
+
+    Returns:
+        Cumulative distance in metres along the polyline to the projection of
+        the stop onto the nearest segment.
+    """
+    if len(shape_pts) == 1:
+        return 0.0
+
+    if cum is None:
+        cum = [0.0]
+        for i in range(1, len(shape_pts)):
+            cum.append(cum[-1] + _haversine_m(*shape_pts[i - 1], *shape_pts[i]))
+
+    best_dist_sq = math.inf
+    best_along = 0.0
+    R = 6_371_000.0
+    RAD = math.pi / 180.0
+
+    for i in range(len(shape_pts) - 1):
+        lat1, lon1 = shape_pts[i]
+        lat2, lon2 = shape_pts[i + 1]
+        cos_lat = math.cos(math.radians((lat1 + lat2) / 2.0))
+
+        ax = (stop_lat - lat1) * R * RAD
+        ay = (stop_lon - lon1) * R * RAD * cos_lat
+        bx = (lat2 - lat1) * R * RAD
+        by = (lon2 - lon1) * R * RAD * cos_lat
+
+        seg_len_sq = bx * bx + by * by
+        if seg_len_sq == 0.0:
+            t = 0.0
+            seg_along = 0.0
+        else:
+            t = max(0.0, min(1.0, (ax * bx + ay * by) / seg_len_sq))
+            seg_along = t * math.sqrt(seg_len_sq)
+
+        dx = ax - bx * t
+        dy = ay - by * t
+        d_sq = dx * dx + dy * dy
+        if d_sq < best_dist_sq:
+            best_dist_sq = d_sq
+            best_along = cum[i] + seg_along
+
+    return best_along
+
+
+def _fill_shape_dist_traveled(gtfs: StaticGTFS) -> None:
+    """Back-fill ``shape_dist_traveled`` for stop times that lack it.
+
+    For each trip that has a ``shape_id`` and at least one stop time with a
+    ``None`` ``shape_dist_traveled``, project every stop in that trip onto the
+    shape polyline and assign the cumulative distance (in metres) to all stop
+    times for that trip.  Trips whose every stop time already has a value, or
+    whose shape or stop coordinates are unavailable, are left unchanged.
+    """
+    for trip_id, times in gtfs.stop_times.items():
+        if all(st.shape_dist_traveled is not None for st in times):
+            continue
+
+        trip = gtfs.trips.get(trip_id)
+        if trip is None or trip.shape_id is None:
+            continue
+
+        shape_pts = gtfs.shapes.get(trip.shape_id)
+        if not shape_pts:
+            continue
+
+        # Precompute cumulative vertex distances once for the whole trip
+        cum: list[float] = [0.0]
+        for i in range(1, len(shape_pts)):
+            cum.append(cum[-1] + _haversine_m(*shape_pts[i - 1], *shape_pts[i]))
+
+        # Partial feed coverage: discard existing values and recompute the whole trip
+        for st in times:
+            coords = gtfs.stops.get(st.stop_id)
+            if coords is None:
+                continue
+            st.shape_dist_traveled = _project_onto_polyline(coords[0], coords[1], shape_pts, cum)
+
+
+def _parse_gtfs_zip(content: bytes) -> StaticGTFS:
+    """Parse a raw GTFS ZIP archive and return populated StaticGTFS indexes.
+
+    Args:
+        content: Raw bytes of a GTFS ZIP archive.
+
+    Returns:
+        A ``StaticGTFS`` with trips, stop_times, stops, and shapes populated
+        from the corresponding ``.txt`` files. Missing files are silently
+        skipped. If ``shape_dist_traveled`` is absent from ``stop_times.txt``,
+        it is computed by projecting each stop onto its trip's shape polyline
+        (in metres).
+    """
+    gtfs = StaticGTFS()
+    with zipfile.ZipFile(io.BytesIO(content)) as zf:
+        names = zf.namelist()
+
+        if "stops.txt" in names:
+            with zf.open("stops.txt") as f:
+                reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
+                for row in reader:
+                    stop_id = row.get("stop_id", "").strip()
+                    if not stop_id:
+                        continue
+                    try:
+                        lat = float(row.get("stop_lat", "").strip())
+                        lon = float(row.get("stop_lon", "").strip())
+                    except ValueError:
+                        continue
+                    gtfs.stops[stop_id] = (lat, lon)
+
+        if "shapes.txt" in names:
+            raw_shapes: dict[str, list[tuple[int, float, float]]] = defaultdict(list)
+            with zf.open("shapes.txt") as f:
+                reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
+                for row in reader:
+                    shape_id = row.get("shape_id", "").strip()
+                    seq_raw = row.get("shape_pt_sequence", "").strip()
+                    if not shape_id or not seq_raw.isdigit():
+                        continue
+                    try:
+                        lat = float(row.get("shape_pt_lat", "").strip())
+                        lon = float(row.get("shape_pt_lon", "").strip())
+                    except ValueError:
+                        continue
+                    raw_shapes[shape_id].append((int(seq_raw), lat, lon))
+            for shape_id, pts in raw_shapes.items():
+                pts.sort(key=lambda p: p[0])
+                gtfs.shapes[shape_id] = [(lat, lon) for _, lat, lon in pts]
+
+        if "trips.txt" in names:
+            with zf.open("trips.txt") as f:
+                reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
+                for row in reader:
+                    trip_id = row.get("trip_id", "").strip()
+                    route_id = row.get("route_id", "").strip()
+                    if not trip_id or not route_id:
+                        continue
+                    direction_raw = row.get("direction_id", "").strip()
+                    direction_id = int(direction_raw) if direction_raw.isdigit() else None
+                    gtfs.trips[trip_id] = Trip(
+                        trip_id=trip_id,
+                        route_id=route_id,
+                        direction_id=direction_id,
+                        shape_id=row.get("shape_id", "").strip() or None,
+                    )
+            # Build reverse index: route_id → [trip_id, ...]
+            rt: dict[str, list[str]] = defaultdict(list)
+            for tid, trip in gtfs.trips.items():
+                rt[trip.route_id].append(tid)
+            gtfs.route_trips = dict(rt)
+
+        if "stop_times.txt" in names:
+            raw: dict[str, list[StopTime]] = defaultdict(list)
+            with zf.open("stop_times.txt") as f:
+                reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
+                for row in reader:
+                    trip_id = row.get("trip_id", "").strip()
+                    stop_id = row.get("stop_id", "").strip()
+                    seq_raw = row.get("stop_sequence", "").strip()
+                    if not trip_id or not stop_id or not seq_raw.isdigit():
+                        continue
+                    dist_raw = row.get("shape_dist_traveled", "").strip()
+                    try:
+                        shape_dist_traveled = float(dist_raw) if dist_raw else None
+                    except ValueError:
+                        shape_dist_traveled = None
+                    raw[trip_id].append(
+                        StopTime(
+                            trip_id=trip_id,
+                            stop_id=stop_id,
+                            stop_sequence=int(seq_raw),
+                            arrival_time=row.get("arrival_time", "").strip() or None,
+                            departure_time=row.get("departure_time", "").strip() or None,
+                            shape_dist_traveled=shape_dist_traveled,
+                        )
+                    )
+            for trip_id, times in raw.items():
+                gtfs.stop_times[trip_id] = sorted(times, key=lambda st: st.stop_sequence)
+
+    _fill_shape_dist_traveled(gtfs)
+
+    logger.info(
+        "Loaded static GTFS: %d trips, %d trips with stop times, %d stops, %d shapes",
+        len(gtfs.trips),
+        len(gtfs.stop_times),
+        len(gtfs.stops),
+        len(gtfs.shapes),
+    )
+    return gtfs

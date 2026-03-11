@@ -1,0 +1,38 @@
+"""Feed adapter factory."""
+
+from __future__ import annotations
+
+from nibble.adapters.base import BaseAdapter
+
+
+def get_adapter(adapter_name: str, url: str, agency_id: str = "") -> BaseAdapter:
+    """Return the appropriate adapter for the given adapter name.
+
+    Args:
+        adapter_name: One of ``"gtfs_rt"`` or ``"passio"``.
+        url: The feed URL (GTFS-RT endpoint or Passio GO! API URL).
+        agency_id: Optional agency identifier used by some JSON adapters.
+
+    Returns:
+        A ``BaseAdapter`` instance ready to use in the poll loop.
+
+    Raises:
+        ValueError: If ``adapter_name`` does not match a known adapter.
+    """
+    if adapter_name == "passio":
+        from nibble.adapters.passio import PassioAdapter
+
+        return PassioAdapter(url, agency_id)
+    if adapter_name == "gtfs_rt":
+        from nibble.adapters.gtfs_rt import GtfsRtAdapter
+
+        return GtfsRtAdapter(url)
+    if adapter_name == "mwrta":
+        from nibble.adapters.mwrta import MwrtaAdapter
+
+        return MwrtaAdapter(url, agency_id)
+    if adapter_name == "trillium":
+        from nibble.adapters.trillium import TrilliumAdapter
+
+        return TrilliumAdapter(url, agency_id)
+    raise ValueError(f"Unknown adapter: {adapter_name!r}")

@@ -1,0 +1,215 @@
+"""Shared fixtures for nibble integration tests."""
+
+from __future__ import annotations
+
+import asyncio
+import io
+import zipfile
+from contextlib import suppress
+
+import pytest
+import pytest_asyncio
+import httpx
+from google.transit import gtfs_realtime_pb2
+
+from nibble.config import Settings
+from nibble.gtfs.static import StaticGTFS, _parse_gtfs_zip
+from nibble.server import Broadcaster, create_app
+
+
+# ---------------------------------------------------------------------------
+# Streaming ASGI transport (required for SSE)
+# ---------------------------------------------------------------------------
+# httpx's built-in ASGITransport buffers the entire response before returning,
+# so it cannot stream SSE.  This transport runs the ASGI app in a background
+# asyncio task and pipes response chunks through a queue so aiter_lines() works.
+
+
+class _StreamingBody(httpx.AsyncByteStream):
+    def __init__(
+        self, queue: asyncio.Queue, app_task: asyncio.Task, disconnect: asyncio.Event
+    ) -> None:
+        self._queue = queue
+        self._app_task = app_task
+        self._disconnect = disconnect
+
+    async def __aiter__(self):  # type: ignore[override]
+        while True:
+            chunk = await self._queue.get()
+            if chunk is None:
+                break
+            yield chunk
+
+    async def aclose(self) -> None:
+        self._disconnect.set()
+        self._app_task.cancel()
+        with suppress(asyncio.CancelledError, Exception):
+            await self._app_task
+
+
+class StreamingASGITransport(httpx.AsyncBaseTransport):
+    """ASGI transport that delivers chunks incrementally — required for SSE tests."""
+
+    def __init__(self, app) -> None:  # type: ignore[type-arg]
+        self._app = app
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        query = request.url.query
+        if isinstance(query, str):
+            query = query.encode()
+
+        scope = {
+            "type": "http",
+            "asgi": {"version": "3.0"},
+            "http_version": "1.1",
+            "method": request.method,
+            "headers": [(k.lower(), v) for k, v in request.headers.raw],
+            "scheme": request.url.scheme,
+            "path": request.url.path,
+            "raw_path": request.url.raw_path.split(b"?")[0],
+            "query_string": query,
+            "server": (request.url.host, request.url.port or 80),
+            "client": ("127.0.0.1", 123),
+            "root_path": "",
+        }
+
+        chunks = request.stream.__aiter__()
+        request_complete = False
+        disconnect = asyncio.Event()
+
+        async def receive() -> dict:
+            nonlocal request_complete
+            if request_complete:
+                await disconnect.wait()
+                return {"type": "http.disconnect"}
+            try:
+                body = await chunks.__anext__()
+                return {"type": "http.request", "body": body, "more_body": True}
+            except StopAsyncIteration:
+                request_complete = True
+                return {"type": "http.request", "body": b"", "more_body": False}
+
+        status_code: int | None = None
+        resp_headers = None
+        body_queue: asyncio.Queue[bytes | None] = asyncio.Queue()
+        response_started: asyncio.Event = asyncio.Event()
+
+        async def send(message: dict) -> None:
+            nonlocal status_code, resp_headers
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+                resp_headers = message.get("headers", [])
+                response_started.set()
+            elif message["type"] == "http.response.body":
+                body = message.get("body", b"")
+                more_body = message.get("more_body", False)
+                if body:
+                    await body_queue.put(body)
+                if not more_body:
+                    await body_queue.put(None)
+
+        app_task = asyncio.create_task(self._app(scope, receive, send))
+        await response_started.wait()
+
+        assert status_code is not None
+        stream = _StreamingBody(body_queue, app_task, disconnect)
+        return httpx.Response(status_code, headers=resp_headers or [], stream=stream)
+
+
+# ---------------------------------------------------------------------------
+# Static GTFS fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def gtfs_zip_bytes() -> bytes:
+    """In-memory GTFS ZIP with 2 trips (trip-1, trip-2) and 3 stops each."""
+    trips_csv = (
+        "route_id,service_id,trip_id,direction_id\nroute-1,svc-1,trip-1,0\nroute-1,svc-1,trip-2,1\n"
+    )
+    stop_times_csv = (
+        "trip_id,arrival_time,departure_time,stop_id,stop_sequence\n"
+        "trip-1,08:00:00,08:00:00,stop-A,1\n"
+        "trip-1,08:05:00,08:05:00,stop-B,2\n"
+        "trip-1,08:10:00,08:10:00,stop-C,3\n"
+        "trip-2,09:00:00,09:00:00,stop-A,1\n"
+        "trip-2,09:05:00,09:05:00,stop-B,2\n"
+        "trip-2,09:10:00,09:10:00,stop-C,3\n"
+    )
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("trips.txt", trips_csv)
+        zf.writestr("stop_times.txt", stop_times_csv)
+    return buf.getvalue()
+
+
+@pytest.fixture
+def static_gtfs(gtfs_zip_bytes: bytes) -> StaticGTFS:
+    """Real StaticGTFS loaded from the in-memory ZIP (no HTTP)."""
+    return _parse_gtfs_zip(gtfs_zip_bytes)
+
+
+# ---------------------------------------------------------------------------
+# GTFS-RT fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def feed_message() -> gtfs_realtime_pb2.FeedMessage:
+    """Real FeedMessage protobuf with 2 vehicles: v1 on trip-1 (seq 1), v2 on trip-2 (seq 1)."""
+    feed = gtfs_realtime_pb2.FeedMessage()
+    feed.header.gtfs_realtime_version = "2.0"
+    feed.header.timestamp = 1704067200  # 2024-01-01 12:00:00 UTC
+
+    e1 = feed.entity.add()
+    e1.id = "e1"
+    e1.vehicle.vehicle.id = "v1"
+    e1.vehicle.trip.trip_id = "trip-1"
+    e1.vehicle.trip.route_id = "route-1"
+    e1.vehicle.position.latitude = 41.82
+    e1.vehicle.position.longitude = -71.41
+    e1.vehicle.current_stop_sequence = 1
+    e1.vehicle.timestamp = 1704067200
+
+    e2 = feed.entity.add()
+    e2.id = "e2"
+    e2.vehicle.vehicle.id = "v2"
+    e2.vehicle.trip.trip_id = "trip-2"
+    e2.vehicle.trip.route_id = "route-1"
+    e2.vehicle.position.latitude = 41.83
+    e2.vehicle.position.longitude = -71.42
+    e2.vehicle.current_stop_sequence = 1
+    e2.vehicle.timestamp = 1704067200
+
+    return feed
+
+
+# ---------------------------------------------------------------------------
+# Server fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def settings() -> Settings:
+    return Settings(  # type: ignore[call-arg]
+        gtfs_rt_url="http://example.com/rt",
+        gtfs_static_url="http://example.com/static.zip",
+    )
+
+
+@pytest.fixture
+def broadcaster() -> Broadcaster:
+    return Broadcaster()
+
+
+@pytest.fixture
+def app(settings: Settings, broadcaster: Broadcaster):
+    return create_app(settings, broadcaster)
+
+
+@pytest_asyncio.fixture
+async def async_client(app):
+    """Async HTTPX client backed by the Starlette ASGI app (streaming transport for SSE)."""
+    transport = StreamingASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        yield client

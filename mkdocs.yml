@@ -1,0 +1,70 @@
+site_name: nibble
+site_description: GTFS-RT to MBTA V3 SSE adapter
+repo_url: ""
+
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: false
+            show_root_heading: true
+            members_order: source
+            show_submodules: false
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - API Reference: api.md
+  - Code Reference:
+      - Models: reference/models.md
+      - Config: reference/config.md
+      - State: reference/state.md
+      - Pipeline:
+          - Poller: reference/poller.md
+          - Reconciler: reference/reconciler.md
+          - Interpolator: reference/interpolator.md
+          - Emitter: reference/emitter.md
+      - Server: reference/server.md
+      - Adapters: reference/adapters.md
+      - Normalizers: reference/normalizers.md
+      - GTFS: reference/gtfs.md
+
+validation:
+  links:
+    not_found: ignore
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.snippets:
+      base_path: .
+  - tables
