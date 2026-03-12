@@ -58,7 +58,7 @@ def _curr_event(
 
 
 class TestInterpolate:
-    def test_produces_intermediate_events(self):
+    def test_produces_intermediate_events(self) -> None:
         gtfs = _gtfs_with_stop_times()
         prev = _state(seq=3)
         curr = _curr_event(seq=6)
@@ -68,7 +68,7 @@ class TestInterpolate:
         seqs = [e.current_stop_sequence for e in events]
         assert seqs == [4, 5, 6]
 
-    def test_intermediate_events_are_interpolated(self):
+    def test_intermediate_events_are_interpolated(self) -> None:
         gtfs = _gtfs_with_stop_times()
         prev = _state(seq=3)
         curr = _curr_event(seq=6)
@@ -78,7 +78,7 @@ class TestInterpolate:
             assert e.provenance == "interpolated"
         assert events[-1].provenance == "observed"
 
-    def test_timestamps_are_ordered(self):
+    def test_timestamps_are_ordered(self) -> None:
         gtfs = _gtfs_with_stop_times()
         prev = _state(seq=3, ts=datetime(2024, 1, 1, 12, 3, 0, tzinfo=timezone.utc))
         curr = _curr_event(seq=6, ts=datetime(2024, 1, 1, 12, 9, 0, tzinfo=timezone.utc))
@@ -86,28 +86,28 @@ class TestInterpolate:
         timestamps = [e.timestamp for e in events]
         assert timestamps == sorted(timestamps)
 
-    def test_gap_exceeding_max_stops_returns_empty(self):
+    def test_gap_exceeding_max_stops_returns_empty(self) -> None:
         gtfs = _gtfs_with_stop_times()
         prev = _state(seq=1)
         curr = _curr_event(seq=8)
         events = interpolate(prev, curr, gtfs, max_stops=3)
         assert events == []
 
-    def test_trip_id_mismatch_returns_empty(self):
+    def test_trip_id_mismatch_returns_empty(self) -> None:
         gtfs = _gtfs_with_stop_times()
         prev = _state(trip_id="trip-1")
         curr = _curr_event(trip_id="trip-2")
         events = interpolate(prev, curr, gtfs, max_stops=5)
         assert events == []
 
-    def test_backwards_stop_sequence_returns_empty(self):
+    def test_backwards_stop_sequence_returns_empty(self) -> None:
         gtfs = _gtfs_with_stop_times()
         prev = _state(seq=6)
         curr = _curr_event(seq=3)
         events = interpolate(prev, curr, gtfs, max_stops=5)
         assert events == []
 
-    def test_no_stop_times_falls_back_to_linear(self):
+    def test_no_stop_times_falls_back_to_linear(self) -> None:
         gtfs = StaticGTFS()
         gtfs.trips["trip-1"] = Trip(trip_id="trip-1", route_id="route-1")
         # No stop_times for trip-1

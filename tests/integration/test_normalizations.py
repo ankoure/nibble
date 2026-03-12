@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 
 from google.transit import gtfs_realtime_pb2
 
-from nibble.gtfs.static import _parse_gtfs_zip
+from nibble.gtfs.static import StaticGTFS, _parse_gtfs_zip
 from nibble.interpolator import interpolate
 from nibble.models import Position, VehicleEvent
 from nibble.normalizer.ripta import RiptaNormalizer
@@ -62,7 +62,7 @@ class TestStaticGTFSNormalizationsFlowThrough:
     """Normalizations applied during _parse_gtfs_zip() must produce correct
     behavior in downstream stages (StateStore, interpolator)."""
 
-    def test_whitespace_stripped_trip_id_resolves_confirmed(self):
+    def test_whitespace_stripped_trip_id_resolves_confirmed(self) -> None:
         """GTFS CSV with ' trip-1 ' (padded spaces) must still allow a feed
         vehicle with trip_id='trip-1' to resolve as confidence='confirmed'.
 
@@ -81,7 +81,7 @@ class TestStaticGTFSNormalizationsFlowThrough:
         assert resolved.confidence == "confirmed"
         assert resolved.trip_id == "trip-1"
 
-    def test_bom_prefixed_gtfs_trip_resolves_confirmed(self):
+    def test_bom_prefixed_gtfs_trip_resolves_confirmed(self) -> None:
         """GTFS trips.txt encoded with utf-8-sig BOM must still allow a feed
         vehicle to resolve as confidence='confirmed'.
 
@@ -101,7 +101,7 @@ class TestStaticGTFSNormalizationsFlowThrough:
         assert resolved.confidence == "confirmed"
         assert resolved.trip_id == "trip-1"
 
-    def test_unsorted_stop_times_produce_correct_interpolation(self):
+    def test_unsorted_stop_times_produce_correct_interpolation(self) -> None:
         """GTFS stop_times.txt with rows in reverse sequence order must still
         produce correctly-ordered interpolated events.
 
@@ -151,7 +151,7 @@ class TestStaticGTFSNormalizationsFlowThrough:
         assert events[0].provenance == "interpolated"
         assert events[1].current_stop_sequence == 3
 
-    def test_empty_arrival_times_trigger_linear_fraction_fallback(self):
+    def test_empty_arrival_times_trigger_linear_fraction_fallback(self) -> None:
         """GTFS stop_times.txt with no arrival/departure times must still
         produce interpolated events using linear timestamp spacing.
 
@@ -207,7 +207,7 @@ class TestFeedParsingNormalizationsFlowThrough:
     """Normalizations applied during _parse_feed() must produce correct
     behavior after state resolution via StateStore."""
 
-    def test_zero_bearing_is_none_after_state_resolution(self, static_gtfs):
+    def test_zero_bearing_is_none_after_state_resolution(self, static_gtfs: StaticGTFS) -> None:
         """A feed vehicle with bearing=0.0 (due-north ambiguity) must have
         position.bearing=None after _parse_feed + StateStore.update_from_event().
 
@@ -224,7 +224,7 @@ class TestFeedParsingNormalizationsFlowThrough:
 
         assert resolved.position.bearing is None
 
-    def test_feed_header_timestamp_used_when_vehicle_ts_zero(self, static_gtfs):
+    def test_feed_header_timestamp_used_when_vehicle_ts_zero(self, static_gtfs: StaticGTFS) -> None:
         """A vehicle with timestamp=0 must use the feed header timestamp,
         and that timestamp must survive state resolution.
 
@@ -243,7 +243,7 @@ class TestFeedParsingNormalizationsFlowThrough:
 
         assert resolved.timestamp == expected_ts
 
-    def test_vehicle_id_fallback_flows_through_to_state_store(self, static_gtfs):
+    def test_vehicle_id_fallback_flows_through_to_state_store(self, static_gtfs: StaticGTFS) -> None:
         """A feed entity with empty vehicle.id but non-empty entity.id must be
         keyed by entity.id through _parse_feed and into StateStore.
 
@@ -280,7 +280,7 @@ class TestNormalizerPipelineIntegration:
     confidence='confirmed' in the StateStore — not just a correctly-parsed
     string value."""
 
-    def test_ripta_suffix_strip_produces_confirmed_confidence(self, static_gtfs):
+    def test_ripta_suffix_strip_produces_confirmed_confidence(self, static_gtfs: StaticGTFS) -> None:
         """After RIPTA normalization strips the date suffix, the StateStore must
         resolve the vehicle as confidence='confirmed' because the normalized
         trip_id is found in static GTFS.

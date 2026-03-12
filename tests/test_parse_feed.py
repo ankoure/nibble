@@ -57,7 +57,7 @@ def _add_vehicle(
 
 
 class TestParseFeed:
-    def test_normal_vehicle_parsed_correctly(self):
+    def test_normal_vehicle_parsed_correctly(self) -> None:
         feed = _feed()
         _add_vehicle(feed)
         snap = _parse_feed(feed)
@@ -77,7 +77,7 @@ class TestParseFeed:
         assert e.current_status == "IN_TRANSIT_TO"
         assert e.label == "Bus 42"
 
-    def test_entity_without_vehicle_field_skipped(self):
+    def test_entity_without_vehicle_field_skipped(self) -> None:
         feed = _feed()
         entity = feed.entity.add()
         entity.id = "alert-1"
@@ -85,7 +85,7 @@ class TestParseFeed:
         snap = _parse_feed(feed)
         assert snap == {}
 
-    def test_vehicle_without_trip_field_has_none_trip_id(self):
+    def test_vehicle_without_trip_field_has_none_trip_id(self) -> None:
         feed = _feed()
         entity = feed.entity.add()
         entity.id = "e1"
@@ -97,7 +97,7 @@ class TestParseFeed:
         assert snap["v1"].trip_id is None
         assert snap["v1"].route_id is None
 
-    def test_vehicle_without_position_field_defaults_to_zero(self):
+    def test_vehicle_without_position_field_defaults_to_zero(self) -> None:
         feed = _feed()
         entity = feed.entity.add()
         entity.id = "e1"
@@ -110,21 +110,21 @@ class TestParseFeed:
         assert snap["v1"].position.bearing is None
         assert snap["v1"].position.speed is None
 
-    def test_bearing_zero_becomes_none(self):
+    def test_bearing_zero_becomes_none(self) -> None:
         # bearing=0.0 (due north) is falsy — treated as None by _parse_feed
         feed = _feed()
         _add_vehicle(feed, bearing=0.0)
         snap = _parse_feed(feed)
         assert snap["v1"].position.bearing is None
 
-    def test_speed_zero_becomes_none(self):
+    def test_speed_zero_becomes_none(self) -> None:
         # speed=0.0 (stopped) is falsy — treated as None by _parse_feed
         feed = _feed()
         _add_vehicle(feed, speed=0.0)
         snap = _parse_feed(feed)
         assert snap["v1"].position.speed is None
 
-    def test_vehicle_id_falls_back_to_entity_id(self):
+    def test_vehicle_id_falls_back_to_entity_id(self) -> None:
         feed = _feed()
         entity = feed.entity.add()
         entity.id = "fallback-id"
@@ -134,7 +134,7 @@ class TestParseFeed:
         snap = _parse_feed(feed)
         assert "fallback-id" in snap
 
-    def test_empty_vehicle_id_and_entity_id_skipped(self):
+    def test_empty_vehicle_id_and_entity_id_skipped(self) -> None:
         feed = _feed()
         entity = feed.entity.add()
         entity.id = ""
@@ -142,14 +142,14 @@ class TestParseFeed:
         snap = _parse_feed(feed)
         assert snap == {}
 
-    def test_vehicle_timestamp_zero_uses_feed_timestamp(self):
+    def test_vehicle_timestamp_zero_uses_feed_timestamp(self) -> None:
         feed = _feed(header_ts=FEED_TS)
         _add_vehicle(feed, timestamp=0)
         snap = _parse_feed(feed)
         expected = datetime.fromtimestamp(FEED_TS, tz=timezone.utc)
         assert snap["v1"].timestamp == expected
 
-    def test_feed_timestamp_zero_uses_now(self):
+    def test_feed_timestamp_zero_uses_now(self) -> None:
         feed = _feed(header_ts=0)
         before = datetime.now(timezone.utc)
         _add_vehicle(feed, timestamp=0)
@@ -157,19 +157,19 @@ class TestParseFeed:
         after = datetime.now(timezone.utc)
         assert before <= snap["v1"].timestamp <= after
 
-    def test_status_incoming_at(self):
+    def test_status_incoming_at(self) -> None:
         feed = _feed()
         _add_vehicle(feed, status=0)
         snap = _parse_feed(feed)
         assert snap["v1"].current_status == "INCOMING_AT"
 
-    def test_status_stopped_at(self):
+    def test_status_stopped_at(self) -> None:
         feed = _feed()
         _add_vehicle(feed, status=1)
         snap = _parse_feed(feed)
         assert snap["v1"].current_status == "STOPPED_AT"
 
-    def test_multiple_vehicles_all_parsed(self):
+    def test_multiple_vehicles_all_parsed(self) -> None:
         feed = _feed()
         _add_vehicle(feed, entity_id="e1", vehicle_id="v1")
         _add_vehicle(feed, entity_id="e2", vehicle_id="v2", trip_id="trip-2")

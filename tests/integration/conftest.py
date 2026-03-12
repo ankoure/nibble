@@ -5,12 +5,16 @@ from __future__ import annotations
 import asyncio
 import io
 import zipfile
+from collections.abc import AsyncGenerator, AsyncIterator, MutableMapping
 from contextlib import suppress
+from typing import Any, cast
 
 import pytest
 import pytest_asyncio
 import httpx
 from google.transit import gtfs_realtime_pb2
+from starlette.applications import Starlette
+from starlette.types import ASGIApp
 
 from nibble.config import Settings
 from nibble.gtfs.static import StaticGTFS, _parse_gtfs_zip
@@ -27,13 +31,16 @@ from nibble.server import Broadcaster, create_app
 
 class _StreamingBody(httpx.AsyncByteStream):
     def __init__(
-        self, queue: asyncio.Queue, app_task: asyncio.Task, disconnect: asyncio.Event
+        self,
+        queue: asyncio.Queue[bytes | None],
+        app_task: asyncio.Task[None],
+        disconnect: asyncio.Event,
     ) -> None:
         self._queue = queue
         self._app_task = app_task
         self._disconnect = disconnect
 
-    async def __aiter__(self):  # type: ignore[override]
+    async def __aiter__(self) -> AsyncIterator[bytes]:
         while True:
             chunk = await self._queue.get()
             if chunk is None:
@@ -50,7 +57,7 @@ class _StreamingBody(httpx.AsyncByteStream):
 class StreamingASGITransport(httpx.AsyncBaseTransport):
     """ASGI transport that delivers chunks incrementally — required for SSE tests."""
 
-    def __init__(self, app) -> None:  # type: ignore[type-arg]
+    def __init__(self, app: ASGIApp) -> None:
         self._app = app
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
@@ -73,11 +80,11 @@ class StreamingASGITransport(httpx.AsyncBaseTransport):
             "root_path": "",
         }
 
-        chunks = request.stream.__aiter__()
+        chunks = cast(httpx.AsyncByteStream, request.stream).__aiter__()
         request_complete = False
         disconnect = asyncio.Event()
 
-        async def receive() -> dict:
+        async def receive() -> dict[str, Any]:
             nonlocal request_complete
             if request_complete:
                 await disconnect.wait()
@@ -90,11 +97,11 @@ class StreamingASGITransport(httpx.AsyncBaseTransport):
                 return {"type": "http.request", "body": b"", "more_body": False}
 
         status_code: int | None = None
-        resp_headers = None
+        resp_headers: list[tuple[bytes, bytes]] | None = None
         body_queue: asyncio.Queue[bytes | None] = asyncio.Queue()
         response_started: asyncio.Event = asyncio.Event()
 
-        async def send(message: dict) -> None:
+        async def send(message: MutableMapping[str, Any]) -> None:
             nonlocal status_code, resp_headers
             if message["type"] == "http.response.start":
                 status_code = message["status"]
@@ -108,7 +115,7 @@ class StreamingASGITransport(httpx.AsyncBaseTransport):
                 if not more_body:
                     await body_queue.put(None)
 
-        app_task = asyncio.create_task(self._app(scope, receive, send))
+        app_task: asyncio.Task[None] = asyncio.create_task(self._app(scope, receive, send))  # type: ignore[arg-type]
         await response_started.wait()
 
         assert status_code is not None
@@ -191,7 +198,7 @@ def feed_message() -> gtfs_realtime_pb2.FeedMessage:
 
 @pytest.fixture
 def settings() -> Settings:
-    return Settings(  # type: ignore[call-arg]
+    return Settings(
         gtfs_rt_url="http://example.com/rt",
         gtfs_static_url="http://example.com/static.zip",
     )
@@ -203,12 +210,12 @@ def broadcaster() -> Broadcaster:
 
 
 @pytest.fixture
-def app(settings: Settings, broadcaster: Broadcaster):
+def app(settings: Settings, broadcaster: Broadcaster) -> Starlette:
     return create_app(settings, broadcaster)
 
 
 @pytest_asyncio.fixture
-async def async_client(app):
+async def async_client(app: Starlette) -> AsyncGenerator[httpx.AsyncClient, None]:
     """Async HTTPX client backed by the Starlette ASGI app (streaming transport for SSE)."""
     transport = StreamingASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:

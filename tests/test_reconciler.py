@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-
+from typing import Any
 
 from nibble.config import Settings
 from nibble.gtfs.static import StaticGTFS
@@ -10,15 +10,15 @@ from nibble.reconciler import reconcile
 from nibble.state import StateStore
 
 
-def _settings(**kwargs) -> Settings:
-    defaults = dict(
+def _settings(**kwargs: Any) -> Settings:
+    defaults: dict[str, Any] = dict(
         gtfs_rt_url="http://example.com/rt",
         gtfs_static_url="http://example.com/static.zip",
         stale_vehicle_threshold_seconds=90,
         max_interpolation_stops=3,
     )
     defaults.update(kwargs)
-    return Settings(**defaults)  # type: ignore[call-arg]
+    return Settings(**defaults)
 
 
 def _gtfs(trip_ids: list[str] | None = None) -> StaticGTFS:
@@ -44,7 +44,7 @@ def _event(
 
 
 class TestFirstCall:
-    def test_empty_prev_emits_reset(self):
+    def test_empty_prev_emits_reset(self) -> None:
         gtfs = _gtfs()
         config = _settings()
         store = StateStore()
@@ -54,7 +54,7 @@ class TestFirstCall:
         assert events[0].event_type == "reset"
         assert any(d["id"] == "v1" for d in events[0].data)
 
-    def test_reset_contains_all_vehicles(self):
+    def test_reset_contains_all_vehicles(self) -> None:
         gtfs = _gtfs(["trip-1", "trip-2"])
         config = _settings()
         store = StateStore()
@@ -70,7 +70,7 @@ class TestFirstCall:
 
 
 class TestSubsequentCalls:
-    def test_changed_vehicle_emits_update(self):
+    def test_changed_vehicle_emits_update(self) -> None:
         gtfs = _gtfs()
         config = _settings()
         store = StateStore()
@@ -85,7 +85,7 @@ class TestSubsequentCalls:
         update_events = [e for e in events if e.event_type == "update"]
         assert update_events
 
-    def test_removed_vehicle_emits_remove(self):
+    def test_removed_vehicle_emits_remove(self) -> None:
         gtfs = _gtfs()
         config = _settings()
         store = StateStore()
@@ -98,7 +98,7 @@ class TestSubsequentCalls:
         assert remove_events
         assert any(d["id"] == "v1" for e in remove_events for d in e.data)
 
-    def test_stale_vehicle_emits_remove(self):
+    def test_stale_vehicle_emits_remove(self) -> None:
         gtfs = _gtfs()
         config = _settings(stale_vehicle_threshold_seconds=5)
         store = StateStore()

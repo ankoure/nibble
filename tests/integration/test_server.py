@@ -61,34 +61,34 @@ async def _read_sse_events(
 
 
 class TestHealthEndpoint:
-    async def test_health_returns_200(self, async_client: httpx.AsyncClient):
+    async def test_health_returns_200(self, async_client: httpx.AsyncClient) -> None:
         response = await async_client.get("/health")
         assert response.status_code == 200
 
-    async def test_health_response_shape(self, async_client: httpx.AsyncClient):
+    async def test_health_response_shape(self, async_client: httpx.AsyncClient) -> None:
         response = await async_client.get("/health")
         body = response.json()
         assert body["status"] == "ok"
         assert "last_poll_time" in body
         assert "connected_clients" in body
 
-    async def test_health_initial_last_poll_time_is_null(self, async_client: httpx.AsyncClient):
+    async def test_health_initial_last_poll_time_is_null(self, async_client: httpx.AsyncClient) -> None:
         response = await async_client.get("/health")
         assert response.json()["last_poll_time"] is None
 
-    async def test_health_initial_client_count_is_zero(self, async_client: httpx.AsyncClient):
+    async def test_health_initial_client_count_is_zero(self, async_client: httpx.AsyncClient) -> None:
         response = await async_client.get("/health")
         assert response.json()["connected_clients"] == 0
 
 
 class TestVehiclesSSEEndpoint:
-    async def test_vehicles_sends_initial_reset_event(self, async_client: httpx.AsyncClient):
+    async def test_vehicles_sends_initial_reset_event(self, async_client: httpx.AsyncClient) -> None:
         """New SSE client receives an immediate reset event (even with empty state)."""
         events = await _read_sse_events(async_client, n=1)
         assert events, "Expected at least one SSE event from /vehicles"
         assert events[0][0] == "reset"
 
-    async def test_vehicles_reset_data_is_valid_json(self, async_client: httpx.AsyncClient):
+    async def test_vehicles_reset_data_is_valid_json(self, async_client: httpx.AsyncClient) -> None:
         events = await _read_sse_events(async_client, n=1)
         assert events
         data = json.loads(events[0][1])
@@ -96,11 +96,11 @@ class TestVehiclesSSEEndpoint:
 
     async def test_vehicles_reset_contains_prepopulated_vehicles(
         self, broadcaster: Broadcaster, async_client: httpx.AsyncClient
-    ):
+    ) -> None:
         """Vehicles broadcast before client connects appear in the initial reset."""
         sse_event = SSEEvent(
             event_type="reset",
-            data=[{"id": "v-prepopulated", "type": "vehicle"}],  # type: ignore[list-item]
+            data=[{"id": "v-prepopulated", "type": "vehicle"}],
         )
         await broadcaster.broadcast([sse_event])
 
@@ -112,11 +112,11 @@ class TestVehiclesSSEEndpoint:
 
     async def test_vehicles_streams_broadcast_update(
         self, broadcaster: Broadcaster, async_client: httpx.AsyncClient
-    ):
+    ) -> None:
         """After the initial reset, a broadcast update is received by the SSE client."""
         update = SSEEvent(
             event_type="update",
-            data=[{"id": "v-new", "type": "vehicle"}],  # type: ignore[list-item]
+            data=[{"id": "v-new", "type": "vehicle"}],
         )
 
         async def _inject_update() -> None:
@@ -133,7 +133,7 @@ class TestVehiclesSSEEndpoint:
 
     async def test_health_reflects_connected_client(
         self, broadcaster: Broadcaster, async_client: httpx.AsyncClient
-    ):
+    ) -> None:
         """A connected SSE client should increment the connected_clients count."""
         ready = asyncio.Event()
 

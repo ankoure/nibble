@@ -7,6 +7,7 @@ using real data objects — no HTTP mocking required.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Any
 
 from google.transit import gtfs_realtime_pb2
 
@@ -19,15 +20,15 @@ from nibble.reconciler import reconcile
 from nibble.state import StateStore
 
 
-def _settings(**kwargs) -> Settings:
-    defaults = dict(
+def _settings(**kwargs: Any) -> Settings:
+    defaults: dict[str, Any] = dict(
         gtfs_rt_url="http://example.com/rt",
         gtfs_static_url="http://example.com/static.zip",
         stale_vehicle_threshold_seconds=90,
         max_interpolation_stops=3,
     )
     defaults.update(kwargs)
-    return Settings(**defaults)  # type: ignore[call-arg]
+    return Settings(**defaults)
 
 
 def _ts(offset_seconds: int = 0) -> datetime:
@@ -37,22 +38,22 @@ def _ts(offset_seconds: int = 0) -> datetime:
 class TestParseFeedIntegration:
     def test_parse_feed_returns_vehicles_keyed_by_id(
         self, feed_message: gtfs_realtime_pb2.FeedMessage
-    ):
+    ) -> None:
         result = _parse_feed(feed_message)
         assert "v1" in result
         assert "v2" in result
 
-    def test_parse_feed_extracts_trip_id(self, feed_message: gtfs_realtime_pb2.FeedMessage):
+    def test_parse_feed_extracts_trip_id(self, feed_message: gtfs_realtime_pb2.FeedMessage) -> None:
         result = _parse_feed(feed_message)
         assert result["v1"].trip_id == "trip-1"
         assert result["v2"].trip_id == "trip-2"
 
-    def test_parse_feed_extracts_position(self, feed_message: gtfs_realtime_pb2.FeedMessage):
+    def test_parse_feed_extracts_position(self, feed_message: gtfs_realtime_pb2.FeedMessage) -> None:
         result = _parse_feed(feed_message)
         assert abs(result["v1"].position.latitude - 41.82) < 0.001
         assert abs(result["v1"].position.longitude - -71.41) < 0.001
 
-    def test_parse_feed_extracts_stop_sequence(self, feed_message: gtfs_realtime_pb2.FeedMessage):
+    def test_parse_feed_extracts_stop_sequence(self, feed_message: gtfs_realtime_pb2.FeedMessage) -> None:
         result = _parse_feed(feed_message)
         assert result["v1"].current_stop_sequence == 1
 
@@ -60,7 +61,7 @@ class TestParseFeedIntegration:
 class TestReconcileIntegration:
     def test_first_poll_emits_reset_with_all_vehicles(
         self, feed_message: gtfs_realtime_pb2.FeedMessage, static_gtfs: StaticGTFS
-    ):
+    ) -> None:
         curr = _parse_feed(feed_message)
         store = StateStore()
         config = _settings()
@@ -72,7 +73,7 @@ class TestReconcileIntegration:
 
     def test_changed_stop_sequence_emits_update(
         self, feed_message: gtfs_realtime_pb2.FeedMessage, static_gtfs: StaticGTFS
-    ):
+    ) -> None:
         config = _settings()
         store = StateStore()
 
@@ -102,7 +103,7 @@ class TestReconcileIntegration:
 
     def test_disappeared_vehicle_emits_remove(
         self, feed_message: gtfs_realtime_pb2.FeedMessage, static_gtfs: StaticGTFS
-    ):
+    ) -> None:
         config = _settings()
         store = StateStore()
 
@@ -130,7 +131,7 @@ class TestReconcileIntegration:
         removed_ids = {d["id"] for e in remove_events for d in e.data}
         assert "v2" in removed_ids
 
-    def test_stale_vehicle_emits_remove(self, static_gtfs: StaticGTFS):
+    def test_stale_vehicle_emits_remove(self, static_gtfs: StaticGTFS) -> None:
         config = _settings(stale_vehicle_threshold_seconds=5)
         store = StateStore()
 
@@ -161,7 +162,7 @@ class TestReconcileIntegration:
 
 
 class TestInterpolationIntegration:
-    def test_stop_gap_produces_interpolated_events(self, static_gtfs: StaticGTFS):
+    def test_stop_gap_produces_interpolated_events(self, static_gtfs: StaticGTFS) -> None:
         """Jumping from seq 1 to seq 3 on the same trip with real StaticGTFS stop times
         should produce intermediate synthetic events via schedule-aware interpolation."""
         from nibble.interpolator import interpolate
@@ -205,7 +206,7 @@ class TestInterpolationIntegration:
         assert events[1].stop_id == "stop-C"
         assert events[1].provenance == "observed"
 
-    def test_interpolation_timestamps_are_ordered(self, static_gtfs: StaticGTFS):
+    def test_interpolation_timestamps_are_ordered(self, static_gtfs: StaticGTFS) -> None:
         """Interpolated events should have timestamps between prev and curr."""
         from nibble.interpolator import interpolate
         from nibble.state import VehicleState
@@ -236,7 +237,7 @@ class TestInterpolationIntegration:
 
 
 class TestNormalizerIntegration:
-    def test_ripta_normalizer_strips_suffix_before_parse(self, static_gtfs: StaticGTFS):
+    def test_ripta_normalizer_strips_suffix_before_parse(self, static_gtfs: StaticGTFS) -> None:
         """RIPTA feed with date-suffixed trip_id should be normalized to base trip_id."""
         normalizer = RiptaNormalizer()
 

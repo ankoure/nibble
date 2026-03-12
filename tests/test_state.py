@@ -33,7 +33,7 @@ def _gtfs(trip_ids: list[str] | None = None) -> StaticGTFS:
 
 
 class TestResolutionLadder:
-    def test_known_trip_id_is_confirmed(self):
+    def test_known_trip_id_is_confirmed(self) -> None:
         store = StateStore()
         gtfs = _gtfs(["trip-1"])
         event = _event(trip_id="trip-1")
@@ -43,7 +43,7 @@ class TestResolutionLadder:
         assert result.trip_id == "trip-1"
         assert result.route_id == "route-trip-1"
 
-    def test_unknown_trip_id_still_confirmed(self):
+    def test_unknown_trip_id_still_confirmed(self) -> None:
         store = StateStore()
         gtfs = _gtfs([])  # empty
         event = _event(trip_id="unknown-trip")
@@ -51,7 +51,7 @@ class TestResolutionLadder:
         assert result.confidence == "confirmed"
         assert result.trip_id == "unknown-trip"
 
-    def test_missing_trip_id_within_threshold_is_inferred(self):
+    def test_missing_trip_id_within_threshold_is_inferred(self) -> None:
         store = StateStore()
         gtfs = _gtfs(["trip-1"])
         t0 = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -68,7 +68,7 @@ class TestResolutionLadder:
         assert result.provenance == "inferred"
         assert result.trip_id == "trip-1"
 
-    def test_missing_trip_id_beyond_threshold_is_stale(self):
+    def test_missing_trip_id_beyond_threshold_is_stale(self) -> None:
         store = StateStore()
         gtfs = _gtfs(["trip-1"])
         t0 = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -80,13 +80,13 @@ class TestResolutionLadder:
         )
         assert result.confidence == "stale"
 
-    def test_never_seen_vehicle_with_no_trip_id_is_stale(self):
+    def test_never_seen_vehicle_with_no_trip_id_is_stale(self) -> None:
         store = StateStore()
         gtfs = _gtfs([])
         result = store.update_from_event(_event(trip_id=None), gtfs, stale_threshold_seconds=90)
         assert result.confidence == "stale"
 
-    def test_remove_clears_state(self):
+    def test_remove_clears_state(self) -> None:
         store = StateStore()
         gtfs = _gtfs(["trip-1"])
         store.update_from_event(_event(trip_id="trip-1"), gtfs, stale_threshold_seconds=90)

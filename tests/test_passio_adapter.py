@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 
+from typing import Any
+
 import httpx
 import pytest
 import respx
@@ -12,7 +14,7 @@ from nibble.adapters.passio import PassioAdapter
 URL = "https://passio.example.com/vehicles"
 
 
-def _sample_vehicles() -> list[dict]:
+def _sample_vehicles() -> list[dict[str, Any]]:
     return [
         {
             "vehicleId": "101",
