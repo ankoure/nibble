@@ -42,3 +42,5 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --dev
       - run: uv run mkdocs build --strict
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: uv run mkdocs gh-deploy --force
