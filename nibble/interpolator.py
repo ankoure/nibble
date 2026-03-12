@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta
 
+from typing import Literal
+
 from nibble.gtfs.static import StaticGTFS, _gtfs_time_to_seconds
 from nibble.models import StopTime, VehicleEvent
 from nibble.state import VehicleState
@@ -88,8 +90,10 @@ def interpolate(
 
         ts = prev_time + timedelta(seconds=total_seconds * frac)
         is_last = i == len(intermediate) - 1
-        provenance = "observed" if is_last else "interpolated"
-        confidence = curr.confidence if is_last else "inferred"
+        provenance: Literal["observed", "interpolated"] = "observed" if is_last else "interpolated"
+        confidence: Literal["confirmed", "inferred", "stale"] = (
+            curr.confidence if is_last else "inferred"
+        )
 
         events.append(
             VehicleEvent(
@@ -105,8 +109,8 @@ def interpolate(
                 label=curr.label,
                 position=curr.position,
                 timestamp=ts,
-                provenance=provenance,  # type: ignore[arg-type]
-                confidence=confidence,  # type: ignore[arg-type]
+                provenance=provenance,
+                confidence=confidence,
             )
         )
 
@@ -148,8 +152,8 @@ def _linear_interpolate(prev: VehicleState, curr: VehicleEvent, gap: int) -> lis
                 label=curr.label,
                 position=curr.position,
                 timestamp=ts,
-                provenance="observed" if is_last else "interpolated",  # type: ignore[arg-type]
-                confidence=curr.confidence if is_last else "inferred",  # type: ignore[arg-type]
+                provenance="observed" if is_last else "interpolated",
+                confidence=curr.confidence if is_last else "inferred",
             )
         )
     return events

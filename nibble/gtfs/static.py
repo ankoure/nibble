@@ -11,6 +11,7 @@ import zoneinfo
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Literal
 
 import httpx
 
@@ -102,8 +103,8 @@ def infer_stop_from_position(
     lat: float,
     lon: float,
     trip_id: str,
-    gtfs: "StaticGTFS",
-) -> tuple[str | None, int | None, str]:
+    gtfs: StaticGTFS,
+) -> tuple[str | None, int | None, Literal["INCOMING_AT", "STOPPED_AT", "IN_TRANSIT_TO"]]:
     """Infer stop_id, stop_sequence, and current_status from a raw vehicle position.
 
     Projects the vehicle onto the trip's shape polyline using
@@ -140,7 +141,7 @@ def infer_stop_from_position(
 
     timed = sorted(
         (st for st in times if st.shape_dist_traveled is not None),
-        key=lambda st: st.shape_dist_traveled,  # type: ignore[arg-type]
+        key=lambda st: st.shape_dist_traveled or 0.0,
     )
     if not timed:
         return None, None, "IN_TRANSIT_TO"
@@ -186,7 +187,7 @@ def infer_trip_from_position(
     lat: float,
     lon: float,
     route_id: str,
-    gtfs: "StaticGTFS",
+    gtfs: StaticGTFS,
     timestamp: datetime | None = None,
     agency_timezone: str | None = None,
 ) -> str | None:

@@ -50,7 +50,7 @@ def publish_gtfs_to_s3(
         ImportError: If ``boto3`` is not installed (install ``nibble[s3]``).
     """
     try:
-        import boto3  # type: ignore[import-untyped]
+        import boto3
     except ImportError as exc:
         raise ImportError("boto3 is required for S3 publishing. Install nibble[s3].") from exc
 

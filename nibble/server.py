@@ -7,8 +7,9 @@ import json
 import logging
 import sys
 import time
+from collections.abc import MutableMapping
 from datetime import datetime, timezone
-from typing import AsyncIterator
+from typing import Any, AsyncIterator
 
 import uvicorn
 from sse_starlette.sse import EventSourceResponse
@@ -23,8 +24,8 @@ from nibble.adapters import get_adapter
 from nibble.config import Settings
 from nibble.gtfs.feed_info import parse_feed_info
 from nibble.gtfs.fixer import fix_gtfs_zip
-from nibble.gtfs.static import load_static_gtfs, load_static_gtfs_from_bytes
-from nibble.models import SSEEvent, VehicleEvent
+from nibble.gtfs.static import StaticGTFS, load_static_gtfs, load_static_gtfs_from_bytes
+from nibble.models import SSEEvent
 from nibble.poller import poll_loop
 
 logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ class JsonFormatter(logging.Formatter):
             )[:-3]
             + "Z"
         )
-        obj: dict = {
+        obj: dict[str, Any] = {
             "timestamp": ts,
             "level": record.levelname,
             "logger": record.name,
@@ -56,7 +57,7 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(obj)
 
 
-def configure_logging(config: "Settings") -> None:  # noqa: F821
+def configure_logging(config: Settings) -> None:
     """Configure the root logger based on application settings.
 
     Args:
@@ -90,7 +91,7 @@ class LoggingMiddleware:
         start = time.monotonic()
         status_code = 0
 
-        async def send_wrapper(message: dict) -> None:
+        async def send_wrapper(message: MutableMapping[str, Any]) -> None:
             nonlocal status_code
             if message["type"] == "http.response.start":
                 status_code = message["status"]
@@ -123,7 +124,7 @@ class Broadcaster:
     def __init__(self) -> None:
         self._subscribers: set[asyncio.Queue[SSEEvent | None]] = set()
         self.last_poll_time: datetime | None = None
-        self._current_snapshot: dict[str, VehicleEvent] = {}
+        self._current_snapshot: dict[str, dict[str, Any]] = {}
 
     def subscribe(self) -> asyncio.Queue[SSEEvent | None]:
         """Register a new SSE client and return its dedicated event queue.
@@ -157,7 +158,7 @@ class Broadcaster:
             if event.event_type in ("reset", "update"):
                 for item in event.data:
                     if "id" in item:
-                        self._current_snapshot[item["id"]] = item  # type: ignore[assignment]
+                        self._current_snapshot[item["id"]] = item
             elif event.event_type == "remove":
                 for item in event.data:
                     self._current_snapshot.pop(item.get("id", ""), None)
@@ -175,7 +176,7 @@ class Broadcaster:
         """
         return SSEEvent(
             event_type="reset",
-            data=list(self._current_snapshot.values()),  # type: ignore[arg-type]
+            data=list(self._current_snapshot.values()),
         )
 
     @property
@@ -205,13 +206,13 @@ def create_app(config: Settings, broadcaster: Broadcaster) -> Starlette:
 
         reset = broadcaster.current_reset_event()
 
-        def matches_route(item: dict) -> bool:
+        def matches_route(item: dict[str, Any]) -> bool:
             if not route_filter:
                 return True
             route_data = item.get("relationships", {}).get("route", {}).get("data") or {}
             return route_data.get("id") == route_filter
 
-        async def stream() -> AsyncIterator[dict]:
+        async def stream() -> AsyncIterator[dict[str, Any]]:
             known_ids: set[str] = set()
             try:
                 filtered = [v for v in reset.data if matches_route(v)]
@@ -254,7 +255,7 @@ def create_app(config: Settings, broadcaster: Broadcaster) -> Starlette:
     )
 
 
-def _load_gtfs(config: Settings) -> "StaticGTFS":  # noqa: F821
+def _load_gtfs(config: Settings) -> StaticGTFS:
     """Download static GTFS, optionally fixing and publishing to S3 first.
 
     When ``config.gtfs_static_fix`` is ``True``, the raw ZIP is downloaded,

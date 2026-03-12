@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from nibble.models import SSEEvent, VehicleEvent
 
 
-def to_mbta_v3(event: VehicleEvent) -> dict:
+def to_mbta_v3(event: VehicleEvent) -> dict[str, Any]:
     """Translate a VehicleEvent into an MBTA V3 JSON:API vehicle resource object.
 
     Args:
@@ -18,7 +19,7 @@ def to_mbta_v3(event: VehicleEvent) -> dict:
         keys conforming to the MBTA V3 API vehicle resource shape. Relationship
         data is ``None`` when the corresponding ID is unknown.
     """
-    attributes: dict = {
+    attributes: dict[str, Any] = {
         "current_status": event.current_status,
         "current_stop_sequence": event.current_stop_sequence,
         "direction_id": event.direction_id,
@@ -34,7 +35,7 @@ def to_mbta_v3(event: VehicleEvent) -> dict:
         "confidence": event.confidence,
     }
 
-    relationships: dict = {}
+    relationships: dict[str, Any] = {}
     if event.trip_id:
         relationships["trip"] = {"data": {"id": event.trip_id, "type": "trip"}}
     else:

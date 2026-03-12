@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 
 @dataclass
@@ -75,7 +75,7 @@ class VehicleEvent:
     route_id: str | None = None
     stop_id: str | None = None
     current_stop_sequence: int | None = None
-    current_status: str = "IN_TRANSIT_TO"
+    current_status: Literal["INCOMING_AT", "STOPPED_AT", "IN_TRANSIT_TO"] = "IN_TRANSIT_TO"
     direction_id: int | None = None
     label: str | None = None
 
@@ -95,7 +95,7 @@ class SSEEvent:
     """
 
     event_type: Literal["reset", "update", "remove"]
-    data: list[dict] = field(default_factory=list)
+    data: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass

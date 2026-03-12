@@ -6,6 +6,10 @@ import asyncio
 import logging
 import time
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:
+    from nibble.server import Broadcaster
 
 import httpx
 from google.transit import gtfs_realtime_pb2
@@ -94,7 +98,7 @@ def _parse_feed(feed: gtfs_realtime_pb2.FeedMessage) -> dict[str, VehicleEvent]:
         stop_id = v.stop_id if v.stop_id else None
         seq = v.current_stop_sequence if v.current_stop_sequence else None
 
-        status_map = {
+        status_map: dict[int, Literal["INCOMING_AT", "STOPPED_AT", "IN_TRANSIT_TO"]] = {
             0: "INCOMING_AT",
             1: "STOPPED_AT",
             2: "IN_TRANSIT_TO",
@@ -120,7 +124,7 @@ def _parse_feed(feed: gtfs_realtime_pb2.FeedMessage) -> dict[str, VehicleEvent]:
 async def poll_loop(
     config: Settings,
     gtfs: StaticGTFS,
-    broadcaster: "Broadcaster",  # noqa: F821 — forward ref, defined in server.py
+    broadcaster: Broadcaster,
     adapter: BaseAdapter | None = None,
 ) -> None:
     """Run the feed poll loop forever, broadcasting SSE events on each cycle.
