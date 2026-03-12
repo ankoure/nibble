@@ -243,7 +243,9 @@ class TestFeedParsingNormalizationsFlowThrough:
 
         assert resolved.timestamp == expected_ts
 
-    def test_vehicle_id_fallback_flows_through_to_state_store(self, static_gtfs: StaticGTFS) -> None:
+    def test_vehicle_id_fallback_flows_through_to_state_store(
+        self, static_gtfs: StaticGTFS
+    ) -> None:
         """A feed entity with empty vehicle.id but non-empty entity.id must be
         keyed by entity.id through _parse_feed and into StateStore.
 
@@ -280,7 +282,9 @@ class TestNormalizerPipelineIntegration:
     confidence='confirmed' in the StateStore — not just a correctly-parsed
     string value."""
 
-    def test_ripta_suffix_strip_produces_confirmed_confidence(self, static_gtfs: StaticGTFS) -> None:
+    def test_ripta_suffix_strip_produces_confirmed_confidence(
+        self, static_gtfs: StaticGTFS
+    ) -> None:
         """After RIPTA normalization strips the date suffix, the StateStore must
         resolve the vehicle as confidence='confirmed' because the normalized
         trip_id is found in static GTFS.

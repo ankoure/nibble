@@ -48,12 +48,16 @@ class TestParseFeedIntegration:
         assert result["v1"].trip_id == "trip-1"
         assert result["v2"].trip_id == "trip-2"
 
-    def test_parse_feed_extracts_position(self, feed_message: gtfs_realtime_pb2.FeedMessage) -> None:
+    def test_parse_feed_extracts_position(
+        self, feed_message: gtfs_realtime_pb2.FeedMessage
+    ) -> None:
         result = _parse_feed(feed_message)
         assert abs(result["v1"].position.latitude - 41.82) < 0.001
         assert abs(result["v1"].position.longitude - -71.41) < 0.001
 
-    def test_parse_feed_extracts_stop_sequence(self, feed_message: gtfs_realtime_pb2.FeedMessage) -> None:
+    def test_parse_feed_extracts_stop_sequence(
+        self, feed_message: gtfs_realtime_pb2.FeedMessage
+    ) -> None:
         result = _parse_feed(feed_message)
         assert result["v1"].current_stop_sequence == 1
 

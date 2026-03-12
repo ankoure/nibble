@@ -14,7 +14,9 @@ def _vehicle_event(vehicle_id: str, trip_id: str = "trip-1") -> dict[str, Any]:
     return {"id": vehicle_id, "type": "vehicle", "trip_id": trip_id}
 
 
-def _sse_event(event_type: Literal["reset", "update", "remove"], vehicle_id: str = "v1") -> SSEEvent:
+def _sse_event(
+    event_type: Literal["reset", "update", "remove"], vehicle_id: str = "v1"
+) -> SSEEvent:
     return SSEEvent(event_type=event_type, data=[_vehicle_event(vehicle_id)])
 
 

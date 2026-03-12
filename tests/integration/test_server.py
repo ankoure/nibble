@@ -72,17 +72,23 @@ class TestHealthEndpoint:
         assert "last_poll_time" in body
         assert "connected_clients" in body
 
-    async def test_health_initial_last_poll_time_is_null(self, async_client: httpx.AsyncClient) -> None:
+    async def test_health_initial_last_poll_time_is_null(
+        self, async_client: httpx.AsyncClient
+    ) -> None:
         response = await async_client.get("/health")
         assert response.json()["last_poll_time"] is None
 
-    async def test_health_initial_client_count_is_zero(self, async_client: httpx.AsyncClient) -> None:
+    async def test_health_initial_client_count_is_zero(
+        self, async_client: httpx.AsyncClient
+    ) -> None:
         response = await async_client.get("/health")
         assert response.json()["connected_clients"] == 0
 
 
 class TestVehiclesSSEEndpoint:
-    async def test_vehicles_sends_initial_reset_event(self, async_client: httpx.AsyncClient) -> None:
+    async def test_vehicles_sends_initial_reset_event(
+        self, async_client: httpx.AsyncClient
+    ) -> None:
         """New SSE client receives an immediate reset event (even with empty state)."""
         events = await _read_sse_events(async_client, n=1)
         assert events, "Expected at least one SSE event from /vehicles"
