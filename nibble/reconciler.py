@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import logging
 
-from typing import Any
-
 from nibble.config import Settings
 from nibble.emitter import to_mbta_v3
 from nibble.gtfs.static import StaticGTFS
@@ -62,14 +60,13 @@ def reconcile(
         if prev_state and prev_state.confidence != "stale":
             logger.debug("Vehicle %s removed from feed", vehicle_id)
         state_store.remove(vehicle_id)
-        events.append(SSEEvent(event_type="remove", data=[{"id": vehicle_id}]))
+        events.append(SSEEvent(event_type="remove", data={"id": vehicle_id}))
 
-    update_data: list[dict[str, Any]] = []
     for vehicle_id, curr_event in resolved.items():
         if curr_event.confidence == "stale":
             # Stale vehicles are silently dropped — they'll be removed next cycle
             state_store.remove(vehicle_id)
-            events.append(SSEEvent(event_type="remove", data=[{"id": vehicle_id}]))
+            events.append(SSEEvent(event_type="remove", data={"id": vehicle_id}))
             continue
 
         prev_event = prev.get(vehicle_id)
@@ -82,13 +79,10 @@ def reconcile(
                 )
                 if interp_events:
                     for ie in interp_events:
-                        update_data.append(to_mbta_v3(ie))
+                        events.append(SSEEvent(event_type="update", data=to_mbta_v3(ie)))
                     continue
 
-        update_data.append(to_mbta_v3(curr_event))
-
-    if update_data:
-        events.append(SSEEvent(event_type="update", data=update_data))
+        events.append(SSEEvent(event_type="update", data=to_mbta_v3(curr_event)))
 
     return events
 

@@ -96,7 +96,7 @@ class TestSubsequentCalls:
         events = reconcile(prev, curr, store, gtfs, config)
         remove_events = [e for e in events if e.event_type == "remove"]
         assert remove_events
-        assert any(d["id"] == "v1" for e in remove_events for d in e.data)
+        assert any(e.data["id"] == "v1" for e in remove_events)
 
     def test_stale_vehicle_emits_remove(self) -> None:
         gtfs = _gtfs()

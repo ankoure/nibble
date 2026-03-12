@@ -155,13 +155,19 @@ class Broadcaster:
                 snapshot; ``"remove"`` events remove vehicles from it.
         """
         for event in events:
-            if event.event_type in ("reset", "update"):
-                for item in event.data:
+            if event.event_type == "reset":
+                for item in event.data:  # type: ignore[union-attr]
                     if "id" in item:
                         self._current_snapshot[item["id"]] = item
+            elif event.event_type == "update":
+                item = event.data
+                assert isinstance(item, dict)
+                if "id" in item:
+                    self._current_snapshot[item["id"]] = item
             elif event.event_type == "remove":
-                for item in event.data:
-                    self._current_snapshot.pop(item.get("id", ""), None)
+                item = event.data
+                assert isinstance(item, dict)
+                self._current_snapshot.pop(item.get("id", ""), None)
 
         for q in list(self._subscribers):
             for event in events:
@@ -223,13 +229,15 @@ def create_app(config: Settings, broadcaster: Broadcaster) -> Starlette:
                     if event is None:
                         break
                     if event.event_type == "remove":
-                        items = [v for v in event.data if v.get("id") in known_ids]
-                        known_ids -= {v["id"] for v in items}
+                        assert isinstance(event.data, dict)
+                        if event.data.get("id") in known_ids:
+                            known_ids.discard(event.data["id"])
+                            yield {"event": event.event_type, "data": json.dumps(event.data)}
                     else:
-                        items = [v for v in event.data if matches_route(v)]
-                        known_ids |= {v["id"] for v in items}
-                    if items:
-                        yield {"event": event.event_type, "data": json.dumps(items)}
+                        assert isinstance(event.data, dict)
+                        if matches_route(event.data):
+                            known_ids.add(event.data["id"])
+                            yield {"event": event.event_type, "data": json.dumps(event.data)}
             finally:
                 broadcaster.unsubscribe(q)
 

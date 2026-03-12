@@ -87,15 +87,17 @@ class SSEEvent:
     Attributes:
         event_type: The SSE event name — ``"reset"``, ``"update"``, or ``"remove"``.
 
-            - ``"reset"`` — full snapshot of all known vehicles; sent once to new subscribers
-            - ``"update"`` — one or more vehicles changed state; also used for new vehicles
-            - ``"remove"`` — one or more vehicles have left the feed; data contains only
-              ``{"id": ...}`` objects
-        data: List of serialized vehicle dicts (JSON:API format).
+            - ``"reset"`` — full snapshot of all known vehicles; sent once to new subscribers;
+              ``data`` is a list of serialized vehicle dicts (JSON:API format).
+            - ``"update"`` — a single vehicle changed state or is new; ``data`` is a single
+              serialized vehicle dict (JSON:API format).
+            - ``"remove"`` — a single vehicle has left the feed; ``data`` is ``{"id": ...}``.
+        data: A single serialized vehicle dict for ``"update"``/``"remove"`` events, or a list
+            of vehicle dicts for ``"reset"`` events.
     """
 
     event_type: Literal["reset", "update", "remove"]
-    data: list[dict[str, Any]] = field(default_factory=list)
+    data: list[dict[str, Any]] | dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

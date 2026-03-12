@@ -122,7 +122,7 @@ class TestVehiclesSSEEndpoint:
         """After the initial reset, a broadcast update is received by the SSE client."""
         update = SSEEvent(
             event_type="update",
-            data=[{"id": "v-new", "type": "vehicle"}],
+            data={"id": "v-new", "type": "vehicle"},
         )
 
         async def _inject_update() -> None:

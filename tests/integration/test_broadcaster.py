@@ -17,7 +17,8 @@ def _vehicle_event(vehicle_id: str, trip_id: str = "trip-1") -> dict[str, Any]:
 def _sse_event(
     event_type: Literal["reset", "update", "remove"], vehicle_id: str = "v1"
 ) -> SSEEvent:
-    return SSEEvent(event_type=event_type, data=[_vehicle_event(vehicle_id)])
+    v = _vehicle_event(vehicle_id)
+    return SSEEvent(event_type=event_type, data=[v] if event_type == "reset" else v)
 
 
 class TestSubscribeUnsubscribe:
@@ -65,7 +66,7 @@ class TestCurrentResetEvent:
         # First add a vehicle via reset
         await broadcaster.broadcast([_sse_event("reset", "v1")])
         # Then remove it
-        remove = SSEEvent(event_type="remove", data=[{"id": "v1"}])
+        remove = SSEEvent(event_type="remove", data={"id": "v1"})
         await broadcaster.broadcast([remove])
         reset = broadcaster.current_reset_event()
         ids = {item["id"] for item in reset.data}

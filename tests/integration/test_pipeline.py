@@ -132,7 +132,7 @@ class TestReconcileIntegration:
         events = reconcile(curr, curr2, store, static_gtfs, config)
         remove_events = [e for e in events if e.event_type == "remove"]
         assert remove_events
-        removed_ids = {d["id"] for e in remove_events for d in e.data}
+        removed_ids = {e.data["id"] for e in remove_events}
         assert "v2" in removed_ids
 
     def test_stale_vehicle_emits_remove(self, static_gtfs: StaticGTFS) -> None:
