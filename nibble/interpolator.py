@@ -189,4 +189,3 @@ def _scheduled_durations(stop_times: list[StopTime], prev_seq: int, curr_seq: in
         durations.append(max(0.0, t - base_secs))
 
     return durations
-

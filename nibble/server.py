@@ -5,15 +5,19 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from datetime import datetime
+import sys
+import time
+from datetime import datetime, timezone
 from typing import AsyncIterator
 
 import uvicorn
 from sse_starlette.sse import EventSourceResponse
 from starlette.applications import Starlette
+from starlette.middleware import Middleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Route
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from nibble.adapters import get_adapter
 from nibble.config import Settings
@@ -24,6 +28,87 @@ from nibble.models import SSEEvent, VehicleEvent
 from nibble.poller import poll_loop
 
 logger = logging.getLogger(__name__)
+
+_LOG_RESERVED = frozenset(logging.LogRecord("", 0, "", 0, "", (), None).__dict__)
+
+
+class JsonFormatter(logging.Formatter):
+    """Serialize log records to JSON lines for structured log aggregation."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        ts = (
+            datetime.fromtimestamp(record.created, tz=timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%S.%f"
+            )[:-3]
+            + "Z"
+        )
+        obj: dict = {
+            "timestamp": ts,
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        for key, value in record.__dict__.items():
+            if key not in _LOG_RESERVED:
+                obj[key] = value
+        if record.exc_info:
+            obj["exc_info"] = self.formatException(record.exc_info)
+        return json.dumps(obj)
+
+
+def configure_logging(config: "Settings") -> None:  # noqa: F821
+    """Configure the root logger based on application settings.
+
+    Args:
+        config: Application settings providing ``log_level`` and ``log_json``.
+    """
+    level = getattr(logging, config.log_level.upper(), logging.INFO)
+    handler = logging.StreamHandler(sys.stdout)
+    if config.log_json:
+        handler.setFormatter(JsonFormatter())
+        # Suppress uvicorn's built-in access log to avoid duplicate request lines.
+        logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    else:
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
+    root = logging.getLogger()
+    root.setLevel(level)
+    root.handlers.clear()
+    root.addHandler(handler)
+
+
+class LoggingMiddleware:
+    """ASGI middleware that logs each HTTP request with method, path, status, and duration."""
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        start = time.monotonic()
+        status_code = 0
+
+        async def send_wrapper(message: dict) -> None:
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+        duration_ms = round((time.monotonic() - start) * 1000)
+        method = scope.get("method", "")
+        path = scope.get("path", "")
+        query = scope.get("query_string", b"").decode()
+        full_path = f"{path}?{query}" if query else path
+        logger.info(
+            "HTTP %s %s",
+            method,
+            full_path,
+            extra={"status_code": status_code, "duration_ms": duration_ms},
+        )
 
 
 class Broadcaster:
@@ -164,7 +249,8 @@ def create_app(config: Settings, broadcaster: Broadcaster) -> Starlette:
         routes=[
             Route("/vehicles", vehicles),
             Route("/health", health),
-        ]
+        ],
+        middleware=[Middleware(LoggingMiddleware)],
     )
 
 
@@ -230,12 +316,8 @@ def _load_gtfs(config: Settings) -> "StaticGTFS":  # noqa: F821
 
 def main() -> None:
     """Entry point: load config, download static GTFS, start server and poll loop."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s %(message)s",
-    )
-
     config = Settings()  # type: ignore[call-arg]
+    configure_logging(config)
     gtfs = _load_gtfs(config)
     adapter = get_adapter(config.adapter, config.gtfs_rt_url, config.agency_id)
 

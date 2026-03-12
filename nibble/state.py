@@ -155,6 +155,16 @@ class StateStore:
 
         # No trip_id — try to infer from position + route_id before falling back to stale logic
         if event.route_id:
+            route_known = event.route_id in gtfs.route_trips
+            logger.debug(
+                "Vehicle %s: no trip_id, attempting position inference "
+                "(route_id=%r, known=%s, lat=%.5f, lon=%.5f)",
+                event.vehicle_id,
+                event.route_id,
+                route_known,
+                event.position.latitude,
+                event.position.longitude,
+            )
             inferred_trip_id = infer_trip_from_position(
                 event.position.latitude,
                 event.position.longitude,
@@ -162,6 +172,11 @@ class StateStore:
                 gtfs,
                 timestamp=event.timestamp,
                 agency_timezone=self._agency_timezone,
+            )
+            logger.debug(
+                "Vehicle %s: trip inference result -> %r",
+                event.vehicle_id,
+                inferred_trip_id,
             )
             if inferred_trip_id is not None:
                 route_id = event.route_id

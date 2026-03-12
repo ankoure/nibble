@@ -1,0 +1,13 @@
+services:
+  nibble:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      NIBBLE_ADAPTER: mwrta
+      NIBBLE_NORMALIZER: mwrta
+      NIBBLE_GTFS_RT_URL: ${NIBBLE_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${NIBBLE_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+    restart: unless-stopped
