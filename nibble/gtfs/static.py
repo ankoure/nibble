@@ -35,6 +35,9 @@ class StaticGTFS:
             by ``shape_pt_sequence``, loaded from ``shapes.txt``.
         route_trips: Mapping of ``route_id`` → list of ``trip_id`` strings for
             all trips on that route.  Built from ``trips.txt`` at load time.
+        route_short_names: Mapping of ``route_short_name`` → ``route_id`` for
+            agencies whose GTFS-RT feeds report short names instead of the
+            internal route UUID/ID.  Built from ``routes.txt`` at load time.
     """
 
     trips: dict[str, Trip] = field(default_factory=dict)
@@ -42,6 +45,7 @@ class StaticGTFS:
     stops: dict[str, tuple[float, float]] = field(default_factory=dict)
     shapes: dict[str, list[tuple[float, float]]] = field(default_factory=dict)
     route_trips: dict[str, list[str]] = field(default_factory=dict)
+    route_short_names: dict[str, str] = field(default_factory=dict)
 
 
 def get_route_id(gtfs: StaticGTFS, trip_id: str) -> str | None:
@@ -456,6 +460,18 @@ def _parse_gtfs_zip(content: bytes) -> StaticGTFS:
                         continue
                     gtfs.stops[stop_id] = (lat, lon)
 
+        if "routes.txt" in names:
+            with zf.open("routes.txt") as f:
+                reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
+                for row in reader:
+                    route_id = row.get("route_id", "").strip()
+                    if not route_id:
+                        continue
+                    for col in ("route_short_name", "route_long_name"):
+                        name = row.get(col, "").strip()
+                        if name:
+                            gtfs.route_short_names[name] = route_id
+
         if "shapes.txt" in names:
             raw_shapes: dict[str, list[tuple[int, float, float]]] = defaultdict(list)
             with zf.open("shapes.txt") as f:
@@ -528,10 +544,13 @@ def _parse_gtfs_zip(content: bytes) -> StaticGTFS:
     _fill_shape_dist_traveled(gtfs)
 
     logger.info(
-        "Loaded static GTFS: %d trips, %d trips with stop times, %d stops, %d shapes",
+        "Loaded static GTFS: %d trips, %d trips with stop times, %d stops, %d shapes, "
+        "%d route short names (%s)",
         len(gtfs.trips),
         len(gtfs.stop_times),
         len(gtfs.stops),
         len(gtfs.shapes),
+        len(gtfs.route_short_names),
+        ", ".join(sorted(gtfs.route_short_names)[:10]) or "none",
     )
     return gtfs

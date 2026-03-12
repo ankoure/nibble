@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from datetime import datetime, timezone
 
 import httpx
@@ -44,6 +45,10 @@ def _get_normalizer(name: str) -> BaseNormalizer:
         from nibble.normalizer.ripta import RiptaNormalizer
 
         return RiptaNormalizer()
+    if name == "mwrta":
+        from nibble.normalizer.mwrta import MwrtaNormalizer
+
+        return MwrtaNormalizer()
     raise ValueError(f"Unknown normalizer: {name!r}")
 
 
@@ -147,6 +152,7 @@ async def poll_loop(
     async with httpx.AsyncClient() as client:
         while True:
             try:
+                poll_start = time.monotonic()
                 feed = await adapter.fetch(client)
                 if feed is not None:
                     feed = normalizer.normalize(feed, gtfs)
@@ -156,7 +162,15 @@ async def poll_loop(
                         await broadcaster.broadcast(sse_events)
                         broadcaster.last_poll_time = datetime.now(timezone.utc)
                     prev_snapshot = curr_snapshot
-                    logger.debug("Poll complete: %d vehicles", len(curr_snapshot))
+                    duration_ms = round((time.monotonic() - poll_start) * 1000)
+                    logger.info(
+                        "Poll complete",
+                        extra={
+                            "vehicle_count": len(curr_snapshot),
+                            "sse_event_count": len(sse_events),
+                            "duration_ms": duration_ms,
+                        },
+                    )
             except Exception:
                 logger.exception("Unexpected error in poll loop")
 

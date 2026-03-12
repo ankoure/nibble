@@ -19,8 +19,8 @@ class Settings(BaseSettings):
             Defaults to ``15``.
         stale_vehicle_threshold_seconds: Seconds after which a vehicle with
             no ``trip_id`` is considered stale and removed. Defaults to ``90``.
-        normalizer: Name of the feed normalizer plugin — ``"default"`` or
-            ``"ripta"``. Defaults to ``"default"``.
+        normalizer: Name of the feed normalizer plugin — ``"default"``,
+            ``"ripta"``, or ``"mwrta"``. Defaults to ``"default"``.
         max_interpolation_stops: Maximum stop gap size to interpolate.
             Larger gaps are left as-is. Defaults to ``3``.
         host: Bind address for the HTTP server. Defaults to ``"0.0.0.0"``.
@@ -65,3 +65,6 @@ class Settings(BaseSettings):
     s3_prefix: str = "gtfs"
     s3_archived_feeds_key: str = "archived_feeds.txt"
     s3_region: str = "us-east-1"
+
+    log_level: str = "INFO"
+    log_json: bool = False
