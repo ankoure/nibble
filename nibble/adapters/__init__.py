@@ -5,13 +5,17 @@ from __future__ import annotations
 from nibble.adapters.base import BaseAdapter
 
 
-def get_adapter(adapter_name: str, url: str, agency_id: str = "") -> BaseAdapter:
+def get_adapter(
+    adapter_name: str, url: str, agency_id: str = "", agency_timezone: str | None = None
+) -> BaseAdapter:
     """Return the appropriate adapter for the given adapter name.
 
     Args:
         adapter_name: One of ``"gtfs_rt"`` or ``"passio"``.
         url: The feed URL (GTFS-RT endpoint or Passio GO! API URL).
         agency_id: Optional agency identifier used by some JSON adapters.
+        agency_timezone: IANA timezone name used to localise naive timestamps
+            from adapters that report local time without a UTC offset.
 
     Returns:
         A ``BaseAdapter`` instance ready to use in the poll loop.
@@ -30,7 +34,7 @@ def get_adapter(adapter_name: str, url: str, agency_id: str = "") -> BaseAdapter
     if adapter_name == "mwrta":
         from nibble.adapters.mwrta import MwrtaAdapter
 
-        return MwrtaAdapter(url, agency_id)
+        return MwrtaAdapter(url, agency_id, agency_timezone)
     if adapter_name == "trillium":
         from nibble.adapters.trillium import TrilliumAdapter
 

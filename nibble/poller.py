@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
-    from nibble.server import Broadcaster
+    from nibble.server import Broadcaster, GtfsHolder
 
 import httpx
 from google.transit import gtfs_realtime_pb2
@@ -123,7 +123,7 @@ def _parse_feed(feed: gtfs_realtime_pb2.FeedMessage) -> dict[str, VehicleEvent]:
 
 async def poll_loop(
     config: Settings,
-    gtfs: StaticGTFS,
+    gtfs: StaticGTFS | GtfsHolder,
     broadcaster: Broadcaster,
     adapter: BaseAdapter | None = None,
 ) -> None:
@@ -137,8 +137,8 @@ async def poll_loop(
     Args:
         config: Application settings providing the poll interval, stale
             threshold, normalizer name, and interpolation limits.
-        gtfs: Static GTFS indexes passed through to the state machine and
-            interpolator for trip validation and schedule lookups.
+        gtfs: Static GTFS indexes, or a ``GtfsHolder`` whose ``.gtfs``
+            attribute is read on every poll so live reloads are picked up.
         broadcaster: The pub/sub hub to push ``SSEEvent`` objects to after
             each successful poll.
         adapter: Feed adapter to use. If ``None``, a ``GtfsRtAdapter`` is
@@ -156,12 +156,15 @@ async def poll_loop(
     async with httpx.AsyncClient() as client:
         while True:
             try:
+                current_gtfs = gtfs.gtfs if hasattr(gtfs, "gtfs") else gtfs
                 poll_start = time.monotonic()
                 feed = await adapter.fetch(client)
                 if feed is not None:
-                    feed = normalizer.normalize(feed, gtfs)
+                    feed = normalizer.normalize(feed, current_gtfs)
                     curr_snapshot = _parse_feed(feed)
-                    sse_events = reconcile(prev_snapshot, curr_snapshot, state_store, gtfs, config)
+                    sse_events = reconcile(
+                        prev_snapshot, curr_snapshot, state_store, current_gtfs, config
+                    )
                     if sse_events:
                         await broadcaster.broadcast(sse_events)
                         broadcaster.last_poll_time = datetime.now(timezone.utc)

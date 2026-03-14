@@ -43,6 +43,10 @@ class Settings(BaseSettings):
         s3_archived_feeds_key: S3 key for the archived feeds index file.
             Defaults to ``"archived_feeds.txt"``.
         s3_region: AWS region for S3 operations. Defaults to ``"us-east-1"``.
+        gtfs_reload_interval_hours: How often to check for a new static GTFS
+            bundle, in hours. When set, a background loop re-downloads the
+            feed and reloads the in-memory indexes if ``feed_start_date`` has
+            changed. Defaults to ``None`` (no reload).
     """
 
     model_config = SettingsConfigDict(env_prefix="NIBBLE_", env_file=".env")
@@ -65,6 +69,7 @@ class Settings(BaseSettings):
     s3_prefix: str = "gtfs"
     s3_archived_feeds_key: str = "archived_feeds.txt"
     s3_region: str = "us-east-1"
+    gtfs_reload_interval_hours: int | None = None
 
     log_level: str = "INFO"
     log_json: bool = False

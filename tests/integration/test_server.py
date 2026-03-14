@@ -33,6 +33,7 @@ async def _read_sse_events(
     async_client: httpx.AsyncClient,
     n: int,
     timeout: float = 2.0,
+    url: str = "/vehicles",
 ) -> list[tuple[str, str]]:
     """Read n SSE events from /vehicles, tolerating slow stream cleanup.
 
@@ -45,7 +46,7 @@ async def _read_sse_events(
 
     async def _do_stream() -> None:
         lines: list[str] = []
-        async with async_client.stream("GET", "/vehicles") as response:
+        async with async_client.stream("GET", url) as response:
             async for line in response.aiter_lines():
                 lines.append(line)
                 parsed = _parse_sse_lines(lines)
@@ -58,6 +59,17 @@ async def _read_sse_events(
             await _do_stream()
 
     return collected
+
+
+def _make_vehicle(vehicle_id: str, route_id: str) -> dict:
+    """Build a minimal vehicle dict in MBTA-v3 SSE format."""
+    return {
+        "id": vehicle_id,
+        "type": "vehicle",
+        "relationships": {
+            "route": {"data": {"id": route_id}},
+        },
+    }
 
 
 class TestHealthEndpoint:
@@ -167,3 +179,133 @@ class TestVehiclesSSEEndpoint:
         with suppress(asyncio.CancelledError, TimeoutError):
             await task
         assert count >= 1
+
+
+class TestVehiclesRouteFilter:
+    """Tests for the filter[route] query parameter on /vehicles."""
+
+    async def _reset_ids(
+        self, async_client: httpx.AsyncClient, route_filter: str | None
+    ) -> list[str]:
+        """Connect with an optional route filter and return vehicle IDs from the reset event."""
+        url = f"/vehicles?filter[route]={route_filter}" if route_filter is not None else "/vehicles"
+        events = await _read_sse_events(async_client, n=1, url=url)
+        assert events, "Expected a reset event"
+        assert events[0][0] == "reset"
+        return [v["id"] for v in json.loads(events[0][1])]
+
+    async def test_no_filter_param_returns_all_vehicles(
+        self, broadcaster: Broadcaster, async_client: httpx.AsyncClient
+    ) -> None:
+        """Without any filter param, all vehicles appear in the reset."""
+        await broadcaster.broadcast(
+            [
+                SSEEvent(
+                    event_type="reset",
+                    data=[_make_vehicle("v-a", "route-A"), _make_vehicle("v-b", "route-B")],
+                )
+            ]
+        )
+        ids = await self._reset_ids(async_client, None)
+        assert "v-a" in ids
+        assert "v-b" in ids
+
+    async def test_empty_filter_value_returns_no_vehicles(
+        self, broadcaster: Broadcaster, async_client: httpx.AsyncClient
+    ) -> None:
+        """filter[route]= with an empty value matches nothing.
+
+        Regression test: gobble creates threads for empty route sets (e.g. ROUTES_CR = set()),
+        which produces ?filter[route]= in the URL. Previously nibble treated this identically
+        to no filter at all, causing those threads to receive all vehicles and write duplicates.
+        """
+        await broadcaster.broadcast(
+            [
+                SSEEvent(
+                    event_type="reset",
+                    data=[_make_vehicle("v-a", "route-A"), _make_vehicle("v-b", "route-B")],
+                )
+            ]
+        )
+        ids = await self._reset_ids(async_client, "")
+        assert ids == []
+
+    async def test_single_route_filter(
+        self, broadcaster: Broadcaster, async_client: httpx.AsyncClient
+    ) -> None:
+        """A single route ID filters to only matching vehicles."""
+        await broadcaster.broadcast(
+            [
+                SSEEvent(
+                    event_type="reset",
+                    data=[_make_vehicle("v-a", "route-A"), _make_vehicle("v-b", "route-B")],
+                )
+            ]
+        )
+        ids = await self._reset_ids(async_client, "route-A")
+        assert ids == ["v-a"]
+
+    async def test_comma_separated_route_filter(
+        self, broadcaster: Broadcaster, async_client: httpx.AsyncClient
+    ) -> None:
+        """Comma-separated route IDs (as sent by gobble) filter correctly.
+
+        Regression test: previously nibble compared the vehicle's route ID against
+        the entire comma-separated string, so no vehicles ever matched when gobble
+        batched multiple routes into one connection.
+        """
+        await broadcaster.broadcast(
+            [
+                SSEEvent(
+                    event_type="reset",
+                    data=[
+                        _make_vehicle("v-a", "route-A"),
+                        _make_vehicle("v-b", "route-B"),
+                        _make_vehicle("v-c", "route-C"),
+                    ],
+                )
+            ]
+        )
+        ids = await self._reset_ids(async_client, "route-A,route-C")
+        assert "v-a" in ids
+        assert "v-c" in ids
+        assert "v-b" not in ids
+
+    async def test_filter_with_no_matches_returns_empty_reset(
+        self, broadcaster: Broadcaster, async_client: httpx.AsyncClient
+    ) -> None:
+        """A filter that matches nothing yields an empty reset list."""
+        await broadcaster.broadcast(
+            [
+                SSEEvent(
+                    event_type="reset",
+                    data=[_make_vehicle("v-a", "route-A")],
+                )
+            ]
+        )
+        ids = await self._reset_ids(async_client, "route-UNKNOWN")
+        assert ids == []
+
+    async def test_route_filter_applies_to_update_events(
+        self, broadcaster: Broadcaster, async_client: httpx.AsyncClient
+    ) -> None:
+        """Update events for routes outside the filter are not delivered."""
+        update_on_filter = SSEEvent(event_type="update", data=_make_vehicle("v-a", "route-A"))
+        update_off_filter = SSEEvent(event_type="update", data=_make_vehicle("v-b", "route-B"))
+
+        async def _inject() -> None:
+            await asyncio.sleep(0.05)
+            await broadcaster.broadcast([update_on_filter, update_off_filter])
+
+        inject_task = asyncio.create_task(_inject())
+        url = "/vehicles?filter[route]=route-A"
+        events = await _read_sse_events(async_client, n=2, timeout=3.0, url=url)
+        await inject_task
+
+        event_types = [e[0] for e in events]
+        event_data = [json.loads(e[1]) for e in events]
+        vehicle_ids = [d["id"] for d in event_data if isinstance(d, dict)]
+
+        assert "update" in event_types
+        assert "v-a" in vehicle_ids
+        assert "v-b" not in vehicle_ids

@@ -30,6 +30,7 @@ def to_mbta_v3(event: VehicleEvent) -> dict[str, Any]:
         "speed": event.position.speed,
         "updated_at": event.timestamp.isoformat(),
         "occupancy_status": None,
+        "carriages": [],
         # nibble-specific provenance metadata
         "provenance": event.provenance,
         "confidence": event.confidence,

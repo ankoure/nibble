@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import logging
 import time
+import zoneinfo
 from datetime import datetime, timezone
 
 import httpx
@@ -41,9 +42,10 @@ logger = logging.getLogger(__name__)
 class MwrtaAdapter(BaseAdapter):
     """Fetches MWRTA JSON vehicle data and converts it to a FeedMessage."""
 
-    def __init__(self, url: str, agency_id: str = "") -> None:
+    def __init__(self, url: str, agency_id: str = "", agency_timezone: str | None = None) -> None:
         self._url = url
         self._agency_id = agency_id
+        self._tz = zoneinfo.ZoneInfo(agency_timezone) if agency_timezone else timezone.utc
 
     async def fetch(self, client: httpx.AsyncClient) -> gtfs_realtime_pb2.FeedMessage | None:
         try:
@@ -114,7 +116,7 @@ class MwrtaAdapter(BaseAdapter):
                 try:
                     dt = datetime.fromisoformat(date_time)
                     if dt.tzinfo is None:
-                        dt = dt.replace(tzinfo=timezone.utc)
+                        dt = dt.replace(tzinfo=self._tz)
                     vp.timestamp = int(dt.timestamp())
                 except ValueError:
                     logger.debug("MWRTA unparseable DateTime %r for ID %s", date_time, vehicle_id)

@@ -28,6 +28,19 @@ from nibble.gtfs.static import StaticGTFS, load_static_gtfs, load_static_gtfs_fr
 from nibble.models import SSEEvent
 from nibble.poller import poll_loop
 
+
+class GtfsHolder:
+    """Thread-safe container for the current ``StaticGTFS`` instance.
+
+    The reload loop swaps :attr:`gtfs` in place; the poll loop always reads
+    the latest value without needing a lock (Python attribute assignment is
+    atomic for simple object references).
+    """
+
+    def __init__(self, gtfs: StaticGTFS) -> None:
+        self.gtfs = gtfs
+
+
 logger = logging.getLogger(__name__)
 
 _LOG_RESERVED = frozenset(logging.LogRecord("", 0, "", 0, "", (), None).__dict__)
@@ -207,16 +220,22 @@ def create_app(config: Settings, broadcaster: Broadcaster) -> Starlette:
     """
 
     async def vehicles(request: Request) -> EventSourceResponse:
-        route_filter = request.query_params.get("filter[route]")
+        filter_param = request.query_params.get("filter[route]")
+        if filter_param is None:
+            route_filter_set = None  # param absent → no filter, return all
+        elif filter_param:
+            route_filter_set = set(filter_param.split(","))
+        else:
+            route_filter_set = set()  # param present but empty → match nothing
         q = broadcaster.subscribe()
 
         reset = broadcaster.current_reset_event()
 
         def matches_route(item: dict[str, Any]) -> bool:
-            if not route_filter:
+            if route_filter_set is None:
                 return True
             route_data = item.get("relationships", {}).get("route", {}).get("data") or {}
-            return route_data.get("id") == route_filter
+            return route_data.get("id") in route_filter_set
 
         async def stream() -> AsyncIterator[dict[str, Any]]:
             known_ids: set[str] = set()
@@ -323,18 +342,107 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
     return load_static_gtfs(config.gtfs_static_url)
 
 
+async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
+    """Periodically re-download the static GTFS and reload if the feed has changed.
+
+    Compares ``feed_start_date`` from the newly downloaded bundle against the
+    currently loaded one. If it differs (or if ``feed_info.txt`` is absent),
+    the fixed ZIP is published to S3 (when ``gtfs_static_fix`` is enabled) and
+    the holder's ``gtfs`` reference is swapped to the new indexes.
+
+    Args:
+        config: Application settings. ``gtfs_reload_interval_hours`` controls
+            the sleep interval between checks.
+        holder: Shared container whose ``gtfs`` attribute is replaced on reload.
+    """
+    interval_seconds = (config.gtfs_reload_interval_hours or 24) * 3600
+    current_start_date: str | None = None
+
+    await asyncio.sleep(interval_seconds)
+
+    while True:
+        try:
+            logger.info("Checking for updated static GTFS bundle")
+            import httpx as _httpx
+
+            response = await asyncio.to_thread(
+                lambda: _httpx.get(config.gtfs_static_url, follow_redirects=True, timeout=60)
+            )
+            response.raise_for_status()
+            raw_zip = response.content
+
+            if config.gtfs_static_fix:
+                candidate_zip = fix_gtfs_zip(raw_zip)
+            else:
+                candidate_zip = raw_zip
+
+            feed_info = parse_feed_info(candidate_zip)
+            new_start_date = feed_info.feed_start_date if feed_info else None
+
+            if new_start_date == current_start_date:
+                logger.info(
+                    "Static GTFS unchanged (feed_start_date=%s); skipping reload",
+                    current_start_date,
+                )
+            else:
+                logger.info(
+                    "New static GTFS detected (old=%s, new=%s); reloading",
+                    current_start_date,
+                    new_start_date,
+                )
+
+                if config.gtfs_static_fix:
+                    if not config.s3_bucket:
+                        raise ValueError(
+                            "NIBBLE_S3_BUCKET must be set when NIBBLE_GTFS_STATIC_FIX=true"
+                        )
+                    from nibble.gtfs.publisher import publish_gtfs_to_s3
+                    from nibble.gtfs.feed_info import FeedInfo
+                    from datetime import date
+
+                    if feed_info is None:
+                        today = date.today().strftime("%Y%m%d")
+                        feed_info = FeedInfo(
+                            feed_start_date=today,
+                            feed_end_date=today,
+                            feed_version="unknown",
+                        )
+                    publish_gtfs_to_s3(
+                        zip_bytes=candidate_zip,
+                        feed_info=feed_info,
+                        bucket=config.s3_bucket,
+                        prefix=config.s3_prefix,
+                        archived_feeds_key=config.s3_archived_feeds_key,
+                        region=config.s3_region,
+                    )
+
+                holder.gtfs = load_static_gtfs_from_bytes(candidate_zip)
+
+                current_start_date = new_start_date
+                logger.info("Static GTFS reloaded successfully")
+
+        except Exception:
+            logger.exception("Error during GTFS reload check")
+
+        await asyncio.sleep(interval_seconds)
+
+
 def main() -> None:
     """Entry point: load config, download static GTFS, start server and poll loop."""
     config = Settings()  # type: ignore[call-arg]
     configure_logging(config)
-    gtfs = _load_gtfs(config)
-    adapter = get_adapter(config.adapter, config.gtfs_rt_url, config.agency_id)
+    holder = GtfsHolder(_load_gtfs(config))
+    adapter = get_adapter(
+        config.adapter, config.gtfs_rt_url, config.agency_id, config.agency_timezone
+    )
 
     broadcaster = Broadcaster()
     app = create_app(config, broadcaster)
 
     async def startup() -> None:
-        asyncio.create_task(poll_loop(config, gtfs, broadcaster, adapter))
+        asyncio.create_task(poll_loop(config, holder, broadcaster, adapter))
+        if config.gtfs_reload_interval_hours is not None:
+            asyncio.create_task(gtfs_reload_loop(config, holder))
 
     app.add_event_handler("startup", startup)
 
