@@ -70,8 +70,26 @@ class TestFirstCall:
 
 
 class TestSubsequentCalls:
-    def test_changed_vehicle_emits_update(self) -> None:
+    def test_new_vehicle_emits_add(self) -> None:
         gtfs = _gtfs()
+        config = _settings()
+        store = StateStore()
+        t0 = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        t1 = datetime(2024, 1, 1, 12, 0, 15, tzinfo=timezone.utc)
+        prev = {"v1": _event("v1", seq=1, ts=t0)}
+        curr = {
+            "v1": _event("v1", seq=1, ts=t0),
+            "v2": _event("v2", seq=1, ts=t1),
+        }
+
+        reconcile({}, prev, store, gtfs, config)
+        events = reconcile(prev, curr, store, gtfs, config)
+        add_events = [e for e in events if e.event_type == "add"]
+        assert len(add_events) == 1
+        assert add_events[0].data["id"] == "v2"
+
+    def test_changed_vehicle_emits_update(self) -> None:
+        gtfs = _gtfs(["trip-1", "trip-2"])
         config = _settings()
         store = StateStore()
         t0 = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -91,19 +109,34 @@ class TestSubsequentCalls:
         store = StateStore()
         prev = {"v1": _event("v1")}
         curr: dict[str, VehicleEvent] = {}
-
         reconcile({}, prev, store, gtfs, config)
         events = reconcile(prev, curr, store, gtfs, config)
         remove_events = [e for e in events if e.event_type == "remove"]
         assert remove_events
         assert any(e.data["id"] == "v1" for e in remove_events)
 
+    def test_unchanged_vehicle_suppressed(self) -> None:
+        gtfs = _gtfs()
+        config = _settings()
+        store = StateStore()
+        t0 = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        t1 = datetime(2024, 1, 1, 12, 0, 15, tzinfo=timezone.utc)
+        prev = {"v1": _event("v1", seq=5, ts=t0)}
+        # same stop, only timestamp changed
+        curr = {"v1": _event("v1", seq=5, ts=t1)}
+
+        reconcile({}, prev, store, gtfs, config)
+        events = reconcile(prev, curr, store, gtfs, config)
+        update_events = [e for e in events if e.event_type == "update"]
+        assert not update_events
+
     def test_stale_vehicle_emits_remove(self) -> None:
         gtfs = _gtfs()
         config = _settings(stale_vehicle_threshold_seconds=5)
         store = StateStore()
         t0 = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-        t1 = datetime(2024, 1, 1, 12, 1, 0, tzinfo=timezone.utc)  # 60s > 5s threshold
+        # 60s > 5s threshold
+        t1 = datetime(2024, 1, 1, 12, 1, 0, tzinfo=timezone.utc)
         prev = {"v1": _event("v1", trip_id="trip-1", ts=t0)}
         curr = {"v1": _event("v1", trip_id=None, ts=t1)}
 

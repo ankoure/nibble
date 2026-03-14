@@ -82,9 +82,34 @@ def reconcile(
                         events.append(SSEEvent(event_type="update", data=to_mbta_v3(ie)))
                     continue
 
-        events.append(SSEEvent(event_type="update", data=to_mbta_v3(curr_event)))
+        if prev_event is None:
+            events.append(SSEEvent(event_type="add", data=to_mbta_v3(curr_event)))
+        elif _has_meaningful_change(prev_event, curr_event):
+            events.append(SSEEvent(event_type="update", data=to_mbta_v3(curr_event)))
 
     return events
+
+
+def _has_meaningful_change(prev: VehicleEvent, curr: VehicleEvent) -> bool:
+    """Return True if any stop/trip/status field changed between polls.
+
+    Position-only changes are intentionally ignored — they do not represent
+    a new transit event and would cause consumers like Gobble to emit
+    duplicate ARR/DEP records for the same stop.
+
+    Args:
+        prev: The vehicle event from the previous poll cycle (raw snapshot).
+        curr: The vehicle event from the current poll cycle (resolved).
+
+    Returns:
+        ``True`` if trip, stop, stop sequence, or status changed.
+    """
+    return (
+        prev.trip_id != curr.trip_id
+        or prev.stop_id != curr.stop_id
+        or prev.current_stop_sequence != curr.current_stop_sequence
+        or prev.current_status != curr.current_status
+    )
 
 
 def _should_interpolate(prev: VehicleEvent, curr: VehicleEvent, config: Settings) -> bool:

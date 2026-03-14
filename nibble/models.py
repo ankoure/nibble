@@ -85,18 +85,20 @@ class SSEEvent:
     """An SSE envelope ready for broadcast to clients.
 
     Attributes:
-        event_type: The SSE event name — ``"reset"``, ``"update"``, or ``"remove"``.
+        event_type: The SSE event name — ``"reset"``, ``"add"``, ``"update"``, or ``"remove"``.
 
             - ``"reset"`` — full snapshot of all known vehicles; sent once to new subscribers;
               ``data`` is a list of serialized vehicle dicts (JSON:API format).
-            - ``"update"`` — a single vehicle changed state or is new; ``data`` is a single
+            - ``"add"`` — a vehicle has appeared in the feed for the first time since the last
+              reset; ``data`` is a single serialized vehicle dict (JSON:API format).
+            - ``"update"`` — a vehicle already in the feed changed state; ``data`` is a single
               serialized vehicle dict (JSON:API format).
             - ``"remove"`` — a single vehicle has left the feed; ``data`` is ``{"id": ...}``.
-        data: A single serialized vehicle dict for ``"update"``/``"remove"`` events, or a list
-            of vehicle dicts for ``"reset"`` events.
+        data: A single serialized vehicle dict for ``"add"``/``"update"``/``"remove"`` events,
+            or a list of vehicle dicts for ``"reset"`` events.
     """
 
-    event_type: Literal["reset", "update", "remove"]
+    event_type: Literal["reset", "add", "update", "remove"]
     data: list[dict[str, Any]] | dict[str, Any] = field(default_factory=dict)
 
 
