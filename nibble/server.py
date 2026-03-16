@@ -24,9 +24,17 @@ from nibble.adapters import get_adapter
 from nibble.config import Settings
 from nibble.gtfs.feed_info import parse_feed_info
 from nibble.gtfs.fixer import fix_gtfs_zip
-from nibble.gtfs.static import StaticGTFS, load_static_gtfs, load_static_gtfs_from_bytes
-from nibble.models import SSEEvent
+from nibble.gtfs.static import (
+    StaticGTFS,
+    last_stop_sequence,
+    load_static_gtfs,
+    load_static_gtfs_from_bytes,
+)
+from nibble.headways import compute_headways
+from nibble.models import SSEEvent, VehicleEvent
+from nibble.overrides import OverrideStore
 from nibble.poller import poll_loop
+from nibble.predictions import predict_arrivals, compute_delay
 
 
 class GtfsHolder:
@@ -138,6 +146,7 @@ class Broadcaster:
         self._subscribers: set[asyncio.Queue[SSEEvent | None]] = set()
         self.last_poll_time: datetime | None = None
         self._current_snapshot: dict[str, dict[str, Any]] = {}
+        self.vehicle_snapshot: dict[str, VehicleEvent] = {}
 
     def subscribe(self) -> asyncio.Queue[SSEEvent | None]:
         """Register a new SSE client and return its dedicated event queue.
@@ -204,19 +213,30 @@ class Broadcaster:
         return len(self._subscribers)
 
 
-def create_app(config: Settings, broadcaster: Broadcaster) -> Starlette:
-    """Build and return the Starlette ASGI application with /vehicles and /health routes.
+def create_app(
+    config: Settings,
+    broadcaster: Broadcaster,
+    overrides: OverrideStore,
+    gtfs_holder: GtfsHolder,
+) -> Starlette:
+    """Build and return the Starlette ASGI application.
 
     Args:
-        config: Application settings (unused directly, reserved for future route config).
+        config: Application settings.
         broadcaster: The pub/sub hub that SSE clients subscribe to and the poll
             loop broadcasts into.
+        overrides: Store for operator-issued manual trip assignment corrections.
+        gtfs_holder: Shared container for the current static GTFS indexes, used
+            to validate trip IDs submitted via the corrections API.
 
     Returns:
-        A configured ``Starlette`` application with two routes:
+        A configured ``Starlette`` application with the following routes:
 
         - ``GET /vehicles`` — SSE stream of vehicle events
         - ``GET /health`` — JSON health check
+        - ``POST /trip_assignments`` — create a manual trip assignment
+        - ``GET /trip_assignments`` — list active manual trip assignments
+        - ``DELETE /trip_assignments/{vehicle_id}`` — remove a manual assignment
     """
 
     async def vehicles(request: Request) -> EventSourceResponse:
@@ -273,10 +293,73 @@ def create_app(config: Settings, broadcaster: Broadcaster) -> Starlette:
             }
         )
 
+    async def post_trip_assignment(request: Request) -> JSONResponse:
+        try:
+            body = await request.json()
+        except Exception:
+            return JSONResponse({"error": "invalid JSON body"}, status_code=400)
+
+        vehicle_id = body.get("vehicle_id")
+        trip_id = body.get("trip_id")
+        if not vehicle_id or not trip_id:
+            return JSONResponse({"error": "vehicle_id and trip_id are required"}, status_code=422)
+
+        if last_stop_sequence(gtfs_holder.gtfs, trip_id) is None:
+            return JSONResponse(
+                {"error": f"trip_id {trip_id!r} not found in static GTFS"},
+                status_code=422,
+            )
+
+        assigned_at = overrides.set(vehicle_id, trip_id)
+        logger.info("Manual trip assignment: vehicle=%s trip=%s", vehicle_id, trip_id)
+        return JSONResponse(
+            {"vehicle_id": vehicle_id, "trip_id": trip_id, "assigned_at": assigned_at}
+        )
+
+    async def get_trip_assignments(request: Request) -> JSONResponse:
+        return JSONResponse(overrides.all())
+
+    async def delete_trip_assignment(request: Request) -> JSONResponse:
+        vehicle_id = request.path_params["vehicle_id"]
+        overrides.remove(vehicle_id)
+        return JSONResponse(None, status_code=204)
+
+    async def trip_predictions(request: Request) -> JSONResponse:
+        trip_id = request.path_params["trip_id"]
+        vehicle = next(
+            (e for e in broadcaster.vehicle_snapshot.values() if e.trip_id == trip_id),
+            None,
+        )
+        if vehicle is None:
+            return JSONResponse(
+                {"error": f"no active vehicle on trip {trip_id!r}"},
+                status_code=404,
+            )
+        delay = compute_delay(vehicle, gtfs_holder.gtfs, config.agency_timezone)
+        stop_predictions = predict_arrivals(vehicle, gtfs_holder.gtfs, config.agency_timezone)
+        return JSONResponse(
+            {
+                "trip_id": trip_id,
+                "vehicle_id": vehicle.vehicle_id,
+                "delay_seconds": delay,
+                "stop_predictions": stop_predictions,
+            }
+        )
+
+    async def route_headways(request: Request) -> JSONResponse:
+        route_id = request.path_params["route_id"]
+        result = compute_headways(route_id, broadcaster.vehicle_snapshot, gtfs_holder.gtfs)
+        return JSONResponse(result)
+
     return Starlette(
         routes=[
             Route("/vehicles", vehicles),
             Route("/health", health),
+            Route("/trip_assignments", post_trip_assignment, methods=["POST"]),
+            Route("/trip_assignments", get_trip_assignments, methods=["GET"]),
+            Route("/trip_assignments/{vehicle_id}", delete_trip_assignment, methods=["DELETE"]),
+            Route("/trips/{trip_id}/predictions", trip_predictions),
+            Route("/routes/{route_id}/headways", route_headways),
         ],
         middleware=[Middleware(LoggingMiddleware)],
     )
@@ -328,12 +411,15 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
 
             feed_info = FeedInfo(feed_start_date=today, feed_end_date=today, feed_version="unknown")
 
+        slug = config.s3_agency_slug
         publish_gtfs_to_s3(
             zip_bytes=fixed_zip,
             feed_info=feed_info,
             bucket=config.s3_bucket,
-            prefix=config.s3_prefix,
-            archived_feeds_key=config.s3_archived_feeds_key,
+            prefix=f"{slug}/{config.s3_prefix}" if slug else config.s3_prefix,
+            archived_feeds_key=f"{slug}/{config.s3_archived_feeds_key}"
+            if slug
+            else config.s3_archived_feeds_key,
             region=config.s3_region,
         )
 
@@ -407,12 +493,15 @@ async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
                             feed_end_date=today,
                             feed_version="unknown",
                         )
+                    slug = config.s3_agency_slug
                     publish_gtfs_to_s3(
                         zip_bytes=candidate_zip,
                         feed_info=feed_info,
                         bucket=config.s3_bucket,
-                        prefix=config.s3_prefix,
-                        archived_feeds_key=config.s3_archived_feeds_key,
+                        prefix=f"{slug}/{config.s3_prefix}" if slug else config.s3_prefix,
+                        archived_feeds_key=f"{slug}/{config.s3_archived_feeds_key}"
+                        if slug
+                        else config.s3_archived_feeds_key,
                         region=config.s3_region,
                     )
 
@@ -431,22 +520,92 @@ def main() -> None:
     """Entry point: load config, download static GTFS, start server and poll loop."""
     config = Settings()  # type: ignore[call-arg]
     configure_logging(config)
+
+    if (
+        not config.enable_sse
+        and not config.publish_vehicle_positions
+        and not config.publish_trip_updates
+    ):
+        raise ValueError(
+            "At least one output mode must be enabled "
+            "(NIBBLE_ENABLE_SSE, NIBBLE_PUBLISH_VEHICLE_POSITIONS, or NIBBLE_PUBLISH_TRIP_UPDATES)"
+        )
+    if config.publish_vehicle_positions and not config.s3_bucket:
+        raise ValueError("NIBBLE_S3_BUCKET must be set when NIBBLE_PUBLISH_VEHICLE_POSITIONS=true")
+    if config.publish_trip_updates and not config.s3_bucket:
+        raise ValueError("NIBBLE_S3_BUCKET must be set when NIBBLE_PUBLISH_TRIP_UPDATES=true")
+
     holder = GtfsHolder(_load_gtfs(config))
     adapter = get_adapter(
         config.adapter, config.gtfs_rt_url, config.agency_id, config.agency_timezone
     )
 
+    overrides = OverrideStore(config.overrides_path)
     broadcaster = Broadcaster()
-    app = create_app(config, broadcaster)
 
-    async def startup() -> None:
-        asyncio.create_task(poll_loop(config, holder, broadcaster, adapter))
-        if config.gtfs_reload_interval_hours is not None:
-            asyncio.create_task(gtfs_reload_loop(config, holder))
+    callbacks = []
+    if config.publish_vehicle_positions:
+        import functools
 
-    app.add_event_handler("startup", startup)
+        from nibble.publishers.vehicle_positions import publish_vehicle_positions
 
-    uvicorn.run(app, host=config.host, port=config.port)
+        callbacks.append(
+            functools.partial(
+                publish_vehicle_positions,
+                bucket=config.s3_bucket,
+                key=config.vehicle_positions_s3_key,
+                region=config.s3_region,
+            )
+        )
+    if config.publish_trip_updates:
+        from nibble.publishers.trip_updates import publish_trip_updates
+
+        async def _publish_trip_updates(snapshot: dict) -> None:
+            await publish_trip_updates(
+                snapshot,
+                holder.gtfs,
+                bucket=config.s3_bucket,  # type: ignore[arg-type]
+                key=config.trip_updates_s3_key,
+                region=config.s3_region,
+                agency_timezone=config.agency_timezone,
+            )
+
+        callbacks.append(_publish_trip_updates)
+
+    on_snapshot = None
+    if callbacks:
+
+        async def _on_snapshot(snapshot: dict) -> None:
+            for cb in callbacks:
+                await cb(snapshot)
+
+        on_snapshot = _on_snapshot
+
+    if config.enable_sse:
+        app = create_app(config, broadcaster, overrides, holder)
+
+        async def startup() -> None:
+            asyncio.create_task(
+                poll_loop(config, holder, broadcaster, adapter, overrides, on_snapshot)
+            )
+            if config.gtfs_reload_interval_hours is not None:
+                asyncio.create_task(gtfs_reload_loop(config, holder))
+
+        app.add_event_handler("startup", startup)
+        uvicorn.run(app, host=config.host, port=config.port)
+    else:
+
+        async def run() -> None:
+            tasks = [
+                asyncio.create_task(
+                    poll_loop(config, holder, broadcaster, adapter, overrides, on_snapshot)
+                )
+            ]
+            if config.gtfs_reload_interval_hours is not None:
+                tasks.append(asyncio.create_task(gtfs_reload_loop(config, holder)))
+            await asyncio.gather(*tasks)
+
+        asyncio.run(run())
 
 
 if __name__ == "__main__":

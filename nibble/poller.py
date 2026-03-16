@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Literal
 
@@ -19,6 +20,7 @@ from nibble.config import Settings
 from nibble.gtfs.static import StaticGTFS
 from nibble.models import Position, VehicleEvent
 from nibble.normalizer.base import BaseNormalizer
+from nibble.overrides import OverrideStore
 from nibble.reconciler import reconcile
 from nibble.state import StateStore
 
@@ -126,6 +128,8 @@ async def poll_loop(
     gtfs: StaticGTFS | GtfsHolder,
     broadcaster: Broadcaster,
     adapter: BaseAdapter | None = None,
+    overrides: OverrideStore | None = None,
+    on_snapshot: Callable[[dict[str, VehicleEvent]], Awaitable[None]] | None = None,
 ) -> None:
     """Run the feed poll loop forever, broadcasting SSE events on each cycle.
 
@@ -143,6 +147,12 @@ async def poll_loop(
             each successful poll.
         adapter: Feed adapter to use. If ``None``, a ``GtfsRtAdapter`` is
             created from ``config.gtfs_rt_url`` for backward compatibility.
+        overrides: Optional store of operator-issued manual trip assignments.
+            When provided, the state machine applies these before its normal
+            resolution ladder.
+        on_snapshot: Optional async callback invoked after each successful
+            poll with the current vehicle snapshot. Errors are caught and
+            logged so they never abort the poll loop.
     """
     if adapter is None:
         from nibble.adapters.gtfs_rt import GtfsRtAdapter
@@ -150,7 +160,7 @@ async def poll_loop(
         adapter = GtfsRtAdapter(config.gtfs_rt_url)
 
     normalizer = _get_normalizer(config.normalizer)
-    state_store = StateStore(agency_timezone=config.agency_timezone)
+    state_store = StateStore(agency_timezone=config.agency_timezone, overrides=overrides)
     prev_snapshot: dict[str, VehicleEvent] = {}
 
     async with httpx.AsyncClient() as client:
@@ -162,13 +172,19 @@ async def poll_loop(
                 if feed is not None:
                     feed = normalizer.normalize(feed, current_gtfs)
                     curr_snapshot = _parse_feed(feed)
-                    sse_events = reconcile(
+                    sse_events, resolved_snapshot = reconcile(
                         prev_snapshot, curr_snapshot, state_store, current_gtfs, config
                     )
                     if sse_events:
                         await broadcaster.broadcast(sse_events)
                         broadcaster.last_poll_time = datetime.now(timezone.utc)
+                    broadcaster.vehicle_snapshot = resolved_snapshot
                     prev_snapshot = curr_snapshot
+                    if on_snapshot is not None:
+                        try:
+                            await on_snapshot(curr_snapshot)
+                        except Exception:
+                            logger.exception("Error in on_snapshot callback")
                     duration_ms = round((time.monotonic() - poll_start) * 1000)
                     logger.info(
                         "Poll complete",

@@ -69,7 +69,7 @@ class TestReconcileIntegration:
         curr = _parse_feed(feed_message)
         store = StateStore()
         config = _settings()
-        events = reconcile({}, curr, store, static_gtfs, config)
+        events, _ = reconcile({}, curr, store, static_gtfs, config)
         assert len(events) == 1
         assert events[0].event_type == "reset"
         ids = {d["id"] for d in events[0].data}
@@ -101,7 +101,7 @@ class TestReconcileIntegration:
         e1.vehicle.timestamp = 1704067215
 
         curr2 = _parse_feed(feed2)
-        events = reconcile(curr, curr2, store, static_gtfs, config)
+        events, _ = reconcile(curr, curr2, store, static_gtfs, config)
         update_events = [e for e in events if e.event_type == "update"]
         assert update_events, "Expected at least one update event"
 
@@ -129,7 +129,7 @@ class TestReconcileIntegration:
         e1.vehicle.timestamp = 1704067215
 
         curr2 = _parse_feed(feed2)
-        events = reconcile(curr, curr2, store, static_gtfs, config)
+        events, _ = reconcile(curr, curr2, store, static_gtfs, config)
         remove_events = [e for e in events if e.event_type == "remove"]
         assert remove_events
         removed_ids = {e.data["id"] for e in remove_events}
@@ -160,7 +160,7 @@ class TestReconcileIntegration:
                 timestamp=t1,
             )
         }
-        events = reconcile(prev, curr, store, static_gtfs, config)
+        events, _ = reconcile(prev, curr, store, static_gtfs, config)
         remove_events = [e for e in events if e.event_type == "remove"]
         assert remove_events
 

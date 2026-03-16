@@ -49,6 +49,23 @@ class StaticGTFS:
     route_short_names: dict[str, str] = field(default_factory=dict)
 
 
+def last_stop_sequence(gtfs: StaticGTFS, trip_id: str) -> int | None:
+    """Return the stop_sequence of the final stop for *trip_id*, or ``None`` if unknown.
+
+    Args:
+        gtfs: The loaded static GTFS indexes.
+        trip_id: The GTFS trip identifier to look up.
+
+    Returns:
+        The highest ``stop_sequence`` value for the trip, or ``None`` if the
+        trip has no stop-time data.
+    """
+    times = gtfs.stop_times.get(trip_id)
+    if not times:
+        return None
+    return times[-1].stop_sequence  # stop_times lists are sorted by stop_sequence at load time
+
+
 def get_route_id(gtfs: StaticGTFS, trip_id: str) -> str | None:
     """Return the route_id for a trip_id, or None if not found.
 
@@ -183,6 +200,9 @@ def _gtfs_time_to_seconds(time_str: str | None) -> int | None:
         return None
 
 
+_BEARING_TOLERANCE_DEG = 90.0
+
+
 def infer_trip_from_position(
     lat: float,
     lon: float,
@@ -190,6 +210,7 @@ def infer_trip_from_position(
     gtfs: StaticGTFS,
     timestamp: datetime | None = None,
     agency_timezone: str | None = None,
+    bearing: float | None = None,
 ) -> str | None:
     """Infer the most likely ``trip_id`` for a vehicle given its position and route.
 
@@ -221,6 +242,11 @@ def infer_trip_from_position(
             time-of-day filtering.
         agency_timezone: IANA timezone string (e.g. ``"America/New_York"``).
             Required for time-of-day filtering.
+        bearing: Vehicle heading in degrees clockwise from north (0–359), or
+            ``None`` if not reported.  When provided, trips whose shape runs
+            more than :data:`_BEARING_TOLERANCE_DEG` degrees opposite to the
+            vehicle's heading at the projected point are excluded.  The filter
+            is skipped when no candidates survive it.
 
     Returns:
         The best-matching ``trip_id``, or ``None`` if no match is possible.
@@ -280,6 +306,27 @@ def infer_trip_from_position(
         if time_filtered:
             candidates = time_filtered
 
+    # Apply bearing filter; fall back to all remaining candidates if none survive
+    if bearing is not None:
+        bearing_filtered = []
+        for tid in candidates:
+            shape_id = gtfs.trips[tid].shape_id
+            if shape_id is None:
+                bearing_filtered.append(tid)
+                continue
+            shape_pts = gtfs.shapes.get(shape_id)
+            if not shape_pts:
+                bearing_filtered.append(tid)
+                continue
+            shape_bearing = _shape_bearing_at_projection(lat, lon, shape_pts)
+            if (
+                shape_bearing is None
+                or _angle_difference(bearing, shape_bearing) <= _BEARING_TOLERANCE_DEG
+            ):
+                bearing_filtered.append(tid)
+        if bearing_filtered:
+            candidates = bearing_filtered
+
     return min(candidates, key=scores.__getitem__)
 
 
@@ -330,6 +377,58 @@ def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     dlambda = math.radians(lon2 - lon1)
     a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
     return 2 * R * math.asin(math.sqrt(min(1.0, a)))
+
+
+def _shape_bearing_at_projection(
+    lat: float, lon: float, shape_pts: list[tuple[float, float]]
+) -> float | None:
+    """Return the bearing (degrees, 0–359) of the shape at the point closest to (lat, lon).
+
+    Finds the segment with minimum perpendicular distance using the same
+    flat-earth approximation as :func:`_min_distance_to_polyline`, then
+    returns the haversine initial bearing of that segment.  Returns ``None``
+    for degenerate shapes with fewer than two points.
+    """
+    if len(shape_pts) < 2:
+        return None
+
+    best_dist_sq = math.inf
+    best_seg = 0
+    R = 6_371_000.0
+    RAD = math.pi / 180.0
+
+    for i in range(len(shape_pts) - 1):
+        lat1, lon1 = shape_pts[i]
+        lat2, lon2 = shape_pts[i + 1]
+        cos_lat = math.cos(math.radians((lat1 + lat2) / 2.0))
+
+        ax = (lat - lat1) * R * RAD
+        ay = (lon - lon1) * R * RAD * cos_lat
+        bx = (lat2 - lat1) * R * RAD
+        by = (lon2 - lon1) * R * RAD * cos_lat
+
+        seg_len_sq = bx * bx + by * by
+        t = max(0.0, min(1.0, (ax * bx + ay * by) / seg_len_sq)) if seg_len_sq else 0.0
+        dx = ax - bx * t
+        dy = ay - by * t
+        d_sq = dx * dx + dy * dy
+        if d_sq < best_dist_sq:
+            best_dist_sq = d_sq
+            best_seg = i
+
+    lat1, lon1 = shape_pts[best_seg]
+    lat2, lon2 = shape_pts[best_seg + 1]
+    dlon = math.radians(lon2 - lon1)
+    lat1_r, lat2_r = math.radians(lat1), math.radians(lat2)
+    x = math.sin(dlon) * math.cos(lat2_r)
+    y = math.cos(lat1_r) * math.sin(lat2_r) - math.sin(lat1_r) * math.cos(lat2_r) * math.cos(dlon)
+    return (math.degrees(math.atan2(x, y)) + 360) % 360
+
+
+def _angle_difference(a: float, b: float) -> float:
+    """Return the absolute angular difference between two bearings (0–180 degrees)."""
+    diff = abs(a - b) % 360
+    return diff if diff <= 180 else 360 - diff
 
 
 def _project_onto_polyline(

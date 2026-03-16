@@ -20,8 +20,8 @@ def reconcile(
     state_store: StateStore,
     gtfs: StaticGTFS,
     config: Settings,
-) -> list[SSEEvent]:
-    """Diff prev and curr snapshots and return SSE events.
+) -> tuple[list[SSEEvent], dict[str, VehicleEvent]]:
+    """Diff prev and curr snapshots and return SSE events and the resolved snapshot.
 
     On the first call (empty ``prev``), emits a single ``"reset"`` event containing
     all current vehicles. Subsequent calls emit ``"update"`` for new or changed
@@ -36,8 +36,10 @@ def reconcile(
         config: Application settings (stale threshold, interpolation limits).
 
     Returns:
-        A list of ``SSEEvent`` objects ready to broadcast. May be empty if nothing
-        changed and no stale vehicles were detected.
+        A tuple of (sse_events, resolved_snapshot) where ``sse_events`` is a list of
+        ``SSEEvent`` objects ready to broadcast and ``resolved_snapshot`` is the current
+        vehicle state after state machine resolution (with trip/stop inference applied).
+        ``sse_events`` may be empty if nothing changed and no stale vehicles were detected.
     """
     # Apply state machine resolution to all current vehicles
     resolved: dict[str, VehicleEvent] = {}
@@ -49,9 +51,10 @@ def reconcile(
 
     if not prev:
         data = [to_mbta_v3(e) for e in resolved.values()]
-        return [SSEEvent(event_type="reset", data=data)]
+        return [SSEEvent(event_type="reset", data=data)], resolved
 
     events: list[SSEEvent] = []
+    active: dict[str, VehicleEvent] = {}
 
     removed_ids = set(prev.keys()) - set(curr.keys())
     for vehicle_id in removed_ids:
@@ -69,6 +72,7 @@ def reconcile(
             events.append(SSEEvent(event_type="remove", data={"id": vehicle_id}))
             continue
 
+        active[vehicle_id] = curr_event
         prev_event = prev.get(vehicle_id)
 
         if prev_event is not None and _should_interpolate(prev_event, curr_event, config):
@@ -87,7 +91,7 @@ def reconcile(
         elif _has_meaningful_change(prev_event, curr_event):
             events.append(SSEEvent(event_type="update", data=to_mbta_v3(curr_event)))
 
-    return events
+    return events, active
 
 
 def _has_meaningful_change(prev: VehicleEvent, curr: VehicleEvent) -> bool:
