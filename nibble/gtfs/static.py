@@ -319,7 +319,10 @@ def infer_trip_from_position(
                 bearing_filtered.append(tid)
                 continue
             shape_bearing = _shape_bearing_at_projection(lat, lon, shape_pts)
-            if shape_bearing is None or _angle_difference(bearing, shape_bearing) <= _BEARING_TOLERANCE_DEG:
+            if (
+                shape_bearing is None
+                or _angle_difference(bearing, shape_bearing) <= _BEARING_TOLERANCE_DEG
+            ):
                 bearing_filtered.append(tid)
         if bearing_filtered:
             candidates = bearing_filtered
