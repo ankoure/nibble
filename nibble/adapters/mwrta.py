@@ -38,6 +38,10 @@ from nibble.adapters.base import BaseAdapter
 
 logger = logging.getLogger(__name__)
 
+# Bounding box for MWRTA's service area (MetroWest Massachusetts, with generous margins)
+_LAT_MIN, _LAT_MAX = 41.5, 42.9
+_LON_MIN, _LON_MAX = -72.0, -70.5
+
 
 class MwrtaAdapter(BaseAdapter):
     """Fetches MWRTA JSON vehicle data and converts it to a FeedMessage."""
@@ -100,8 +104,26 @@ class MwrtaAdapter(BaseAdapter):
             lat = vehicle.get("Lat")
             lon = vehicle.get("Long")
             if lat is not None and lon is not None:
-                vp.position.latitude = float(lat)
-                vp.position.longitude = float(lon)
+                try:
+                    flat, flon = float(lat), float(lon)
+                except (TypeError, ValueError):
+                    logger.debug(
+                        "MWRTA: non-numeric lat/lon %r/%r for ID %s — skipping position",
+                        lat,
+                        lon,
+                        vehicle_id,
+                    )
+                else:
+                    if _LAT_MIN <= flat <= _LAT_MAX and _LON_MIN <= flon <= _LON_MAX:
+                        vp.position.latitude = flat
+                        vp.position.longitude = flon
+                    else:
+                        logger.warning(
+                            "MWRTA: out-of-bounds position lat=%s lon=%s for ID %s — skipping",
+                            flat,
+                            flon,
+                            vehicle_id,
+                        )
 
             heading = vehicle.get("Heading")
             if heading is not None:
@@ -120,5 +142,14 @@ class MwrtaAdapter(BaseAdapter):
                     vp.timestamp = int(dt.timestamp())
                 except ValueError:
                     logger.debug("MWRTA unparseable DateTime %r for ID %s", date_time, vehicle_id)
+
+            if not vp.timestamp:
+                logger.debug(
+                    "MWRTA: missing or unparseable DateTime for ID %s, "
+                    "falling back to feed header timestamp %d",
+                    vehicle_id,
+                    feed.header.timestamp,
+                )
+                vp.timestamp = feed.header.timestamp
 
         return feed

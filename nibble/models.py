@@ -40,6 +40,7 @@ class VehicleEvent:
     - ``"observed"`` — directly reported by the GTFS-RT feed
     - ``"inferred"`` — position observed, but trip info carried forward from a prior poll
     - ``"interpolated"`` — synthetic event generated to fill a stop gap between polls
+    - ``"manual"`` — trip assignment issued by an operator via the corrections API
 
     **confidence** — certainty about the vehicle's trip assignment:
 
@@ -52,7 +53,7 @@ class VehicleEvent:
         position: Current GPS position.
         timestamp: UTC timestamp of this observation.
         provenance: How this event was produced (``"observed"``, ``"inferred"``,
-            or ``"interpolated"``).
+            ``"interpolated"``, or ``"manual"``).
         confidence: Certainty about the trip assignment (``"confirmed"``,
             ``"inferred"``, or ``"stale"``).
         trip_id: GTFS trip identifier, or ``None`` if unknown.
@@ -69,7 +70,7 @@ class VehicleEvent:
     vehicle_id: str
     position: Position
     timestamp: datetime
-    provenance: Literal["observed", "inferred", "interpolated"] = "observed"
+    provenance: Literal["observed", "inferred", "interpolated", "manual"] = "observed"
     confidence: Literal["confirmed", "inferred", "stale"] = "confirmed"
     trip_id: str | None = None
     route_id: str | None = None

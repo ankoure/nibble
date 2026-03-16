@@ -7,8 +7,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
 
-from nibble.gtfs.static import StaticGTFS, infer_stop_from_position, infer_trip_from_position
+from nibble.gtfs.static import (
+    StaticGTFS,
+    infer_stop_from_position,
+    infer_trip_from_position,
+    last_stop_sequence,
+)
 from nibble.models import Position, VehicleEvent
+from nibble.overrides import OverrideStore
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +43,7 @@ class StateStore:
     The resolution ladder (evaluated in order) determines confidence and
     carries forward trip information when a feed temporarily drops trip_id:
 
+    0. Manual override present                 → confirmed, provenance="manual"
     1. trip_id present + found in static GTFS  → confirmed
     2. trip_id present + NOT in static GTFS    → confirmed (feed takes precedence), log warning
     3. trip_id missing, within stale threshold → inferred (carry forward last valid trip info)
@@ -44,9 +51,12 @@ class StateStore:
     5. Never seen + no trip_id                 → stale immediately
     """
 
-    def __init__(self, agency_timezone: str | None = None) -> None:
+    def __init__(
+        self, agency_timezone: str | None = None, overrides: OverrideStore | None = None
+    ) -> None:
         self._store: dict[str, VehicleState] = {}
         self._agency_timezone = agency_timezone
+        self._overrides = overrides
 
     def get(self, vehicle_id: str) -> VehicleState | None:
         """Return the stored state for a vehicle, or None if not yet seen.
@@ -79,6 +89,7 @@ class StateStore:
 
         Resolution ladder (evaluated in order):
 
+        0. Manual override present → ``confirmed``, ``provenance="manual"``
         1. trip_id present + found in static GTFS → ``confirmed``
         2. trip_id present + not in static GTFS → ``confirmed`` (feed takes precedence), log warning
         3. trip_id missing, last seen within stale threshold → carry forward, ``inferred``
@@ -97,6 +108,70 @@ class StateStore:
         """
         prev = self._store.get(event.vehicle_id)
         now = event.timestamp
+
+        # Step 0: Manual override — takes priority over everything else.
+        # Auto-expires once the vehicle reaches the last stop of the assigned trip.
+        if self._overrides is not None:
+            override_trip = self._overrides.get(event.vehicle_id)
+            if override_trip is not None:
+                final_seq = last_stop_sequence(gtfs, override_trip)
+                curr_seq = event.current_stop_sequence
+                if final_seq is not None and curr_seq is not None and curr_seq >= final_seq:
+                    # Vehicle has reached the end of the assigned trip — expire the override
+                    logger.info(
+                        "Vehicle %s reached last stop of overridden trip %r (seq %d >= %d); expiring override",
+                        event.vehicle_id,
+                        override_trip,
+                        curr_seq,
+                        final_seq,
+                    )
+                    self._overrides.remove(event.vehicle_id)
+                else:
+                    route_id = event.route_id
+                    if not route_id and override_trip in gtfs.trips:
+                        route_id = gtfs.trips[override_trip].route_id
+
+                    stop_id = event.stop_id
+                    stop_sequence = event.current_stop_sequence
+                    current_status = event.current_status
+                    if stop_id is None and stop_sequence is None:
+                        inferred_stop_id, inferred_seq, inferred_status = infer_stop_from_position(
+                            event.position.latitude, event.position.longitude, override_trip, gtfs
+                        )
+                        if inferred_stop_id is not None:
+                            stop_id = inferred_stop_id
+                            stop_sequence = inferred_seq
+                            current_status = inferred_status
+
+                    direction_id = event.direction_id
+                    if direction_id is None and override_trip in gtfs.trips:
+                        direction_id = gtfs.trips[override_trip].direction_id
+
+                    updated = VehicleEvent(
+                        vehicle_id=event.vehicle_id,
+                        trip_id=override_trip,
+                        route_id=route_id,
+                        stop_id=stop_id,
+                        current_stop_sequence=stop_sequence,
+                        current_status=current_status,
+                        direction_id=direction_id,
+                        label=event.label,
+                        position=event.position,
+                        timestamp=event.timestamp,
+                        provenance="manual",
+                        confidence="confirmed",
+                    )
+                    self._store[event.vehicle_id] = VehicleState(
+                        vehicle_id=event.vehicle_id,
+                        last_seen=now,
+                        confidence="confirmed",
+                        last_valid_trip_id=override_trip,
+                        last_valid_route_id=route_id,
+                        last_valid_stop_id=stop_id,
+                        last_valid_stop_sequence=stop_sequence,
+                        last_position=event.position,
+                    )
+                    return updated
 
         if event.trip_id:
             if event.trip_id in gtfs.trips:
@@ -172,6 +247,7 @@ class StateStore:
                 gtfs,
                 timestamp=event.timestamp,
                 agency_timezone=self._agency_timezone,
+                bearing=event.position.bearing,
             )
             logger.debug(
                 "Vehicle %s: trip inference result -> %r",

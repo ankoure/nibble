@@ -10,4 +10,21 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${NIBBLE_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "true"
+      NIBBLE_S3_BUCKET: ${NIBBLE_S3_BUCKET}
+      NIBBLE_S3_AGENCY_SLUG: ${NIBBLE_S3_AGENCY_SLUG:-}
+      NIBBLE_S3_PREFIX: ${NIBBLE_S3_PREFIX:-gtfs}
+      NIBBLE_S3_ARCHIVED_FEEDS_KEY: ${NIBBLE_S3_ARCHIVED_FEEDS_KEY:-archived_feeds.txt}
+      NIBBLE_S3_REGION: ${NIBBLE_S3_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     restart: unless-stopped
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./nibble
+          target: /app/nibble
+        - action: rebuild
+          path: pyproject.toml
+        - action: rebuild
+          path: uv.lock

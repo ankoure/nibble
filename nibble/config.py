@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,6 +40,10 @@ class Settings(BaseSettings):
             fixed bytes. Requires ``s3_bucket``. Defaults to ``False``.
         s3_bucket: S3 bucket name for publishing fixed GTFS. Required when
             ``gtfs_static_fix`` is ``True``.
+        s3_agency_slug: Optional slug prepended to both ``s3_prefix`` and
+            ``s3_archived_feeds_key``, allowing multiple agencies to share one
+            bucket. E.g. ``"mwrta"`` → keys become ``mwrta/gtfs/…`` and
+            ``mwrta/archived_feeds.txt``. Defaults to ``None``.
         s3_prefix: S3 key prefix for the published GTFS ZIP.
             Defaults to ``"gtfs"``.
         s3_archived_feeds_key: S3 key for the archived feeds index file.
@@ -47,6 +53,26 @@ class Settings(BaseSettings):
             bundle, in hours. When set, a background loop re-downloads the
             feed and reloads the in-memory indexes if ``feed_start_date`` has
             changed. Defaults to ``None`` (no reload).
+        enable_sse: When ``True`` (the default), start the Starlette HTTP
+            server and serve SSE vehicle-event streams. Set to ``False`` to
+            run in a headless polling-only mode (useful when the only output
+            is S3 VehiclePositions). Defaults to ``True``.
+        publish_vehicle_positions: When ``True``, serialize the current
+            vehicle snapshot to a GTFS-RT ``VehiclePositions`` protobuf and
+            upload it to S3 after every successful poll. Requires
+            ``s3_bucket``. Defaults to ``False``.
+        vehicle_positions_s3_key: S3 object key for the published
+            ``VehiclePositions`` protobuf. Defaults to
+            ``"vehicle_positions.pb"``.
+        publish_trip_updates: When ``True``, serialize stop-time predictions
+            for all active vehicles to a GTFS-RT ``TripUpdates`` protobuf and
+            upload it to S3 after every successful poll. Requires
+            ``s3_bucket``. Defaults to ``False``.
+        trip_updates_s3_key: S3 object key for the published ``TripUpdates``
+            protobuf. Defaults to ``"trip_updates.pb"``.
+        overrides_path: Path to the JSON file used to persist manual trip
+            assignment overrides across restarts. Defaults to
+            ``"overrides.json"`` in the working directory.
     """
 
     model_config = SettingsConfigDict(env_prefix="NIBBLE_", env_file=".env")
@@ -66,10 +92,19 @@ class Settings(BaseSettings):
 
     gtfs_static_fix: bool = False
     s3_bucket: str | None = None
+    s3_agency_slug: str | None = None
     s3_prefix: str = "gtfs"
     s3_archived_feeds_key: str = "archived_feeds.txt"
     s3_region: str = "us-east-1"
     gtfs_reload_interval_hours: int | None = None
 
+    enable_sse: bool = True
+    publish_vehicle_positions: bool = False
+    vehicle_positions_s3_key: str = "vehicle_positions.pb"
+    publish_trip_updates: bool = False
+    trip_updates_s3_key: str = "trip_updates.pb"
+
     log_level: str = "INFO"
     log_json: bool = False
+
+    overrides_path: Path = Path("overrides.json")

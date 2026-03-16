@@ -99,6 +99,7 @@ Each relationship's `data` is either a `{"id": "...", "type": "..."}` object or 
 | `"observed"` | Directly reported by the GTFS-RT feed |
 | `"inferred"` | Position was observed, but trip/route/stop was carried forward from a prior poll (vehicle temporarily lost its `trip_id`) |
 | `"interpolated"` | Synthetic event generated to fill a stop gap between two observed polls |
+| `"manual"` | Trip assignment issued by an operator via the corrections API |
 
 Consumers may display `"interpolated"` events differently (e.g. reduced opacity, dashed track line) to reflect that the position is nibble's estimate rather than a direct observation.
 
@@ -160,3 +161,51 @@ A JSON health check endpoint for use with load balancers and uptime monitors.
 | `connected_clients` | int | Number of currently connected SSE clients |
 
 `last_poll_time` is only updated when the feed was fetched and events were broadcast. A stale `last_poll_time` (or `null`) indicates that the feed may be unreachable or returning errors. Check application logs for details.
+
+---
+
+## `POST /trip_assignments`
+
+Create or replace a manual trip assignment for a vehicle. See the [manual trip assignment corrections](how-to/trip-assignment-corrections.md) guide for full details.
+
+**Content-Type:** `application/json`
+
+### Request body
+
+```json
+{ "vehicle_id": "BUS-42", "trip_id": "trip-123" }
+```
+
+### Response `200 OK`
+
+```json
+{ "vehicle_id": "BUS-42", "trip_id": "trip-123", "assigned_at": "2024-06-01T12:34:56.789012+00:00" }
+```
+
+Returns `422` if either field is missing or `trip_id` is not in the loaded static GTFS.
+
+---
+
+## `GET /trip_assignments`
+
+List all currently active manual trip overrides.
+
+**Content-Type:** `application/json`
+
+### Response `200 OK`
+
+```json
+{
+  "BUS-42": { "trip_id": "trip-123", "assigned_at": "2024-06-01T12:34:56.789012+00:00" }
+}
+```
+
+---
+
+## `DELETE /trip_assignments/{vehicle_id}`
+
+Remove the manual override for a vehicle. No-op if none exists.
+
+### Response
+
+`204 No Content`

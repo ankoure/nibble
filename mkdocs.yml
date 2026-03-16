@@ -40,6 +40,11 @@ nav:
   - Home: index.md
   - Architecture: architecture.md
   - API Reference: api.md
+  - How-to guides:
+      - Manual trip assignment corrections: how-to/trip-assignment-corrections.md
+      - Arrival predictions: how-to/arrival-predictions.md
+      - Monitoring headways: how-to/monitoring-headways.md
+      - Publishing GTFS-RT to S3: how-to/publishing-gtfs-rt-to-s3.md
   - Code Reference:
       - Models: reference/models.md
       - Config: reference/config.md

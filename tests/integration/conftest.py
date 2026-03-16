@@ -18,7 +18,8 @@ from starlette.types import ASGIApp
 
 from nibble.config import Settings
 from nibble.gtfs.static import StaticGTFS, _parse_gtfs_zip
-from nibble.server import Broadcaster, create_app
+from nibble.overrides import OverrideStore
+from nibble.server import Broadcaster, GtfsHolder, create_app
 
 
 # ---------------------------------------------------------------------------
@@ -210,8 +211,11 @@ def broadcaster() -> Broadcaster:
 
 
 @pytest.fixture
-def app(settings: Settings, broadcaster: Broadcaster) -> Starlette:
-    return create_app(settings, broadcaster)
+def app(
+    settings: Settings, broadcaster: Broadcaster, static_gtfs: StaticGTFS, tmp_path: Any
+) -> Starlette:
+    overrides = OverrideStore(tmp_path / "overrides.json")
+    return create_app(settings, broadcaster, overrides, GtfsHolder(static_gtfs))
 
 
 @pytest_asyncio.fixture

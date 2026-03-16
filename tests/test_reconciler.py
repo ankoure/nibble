@@ -49,7 +49,7 @@ class TestFirstCall:
         config = _settings()
         store = StateStore()
         curr = {"v1": _event("v1")}
-        events = reconcile({}, curr, store, gtfs, config)
+        events, _ = reconcile({}, curr, store, gtfs, config)
         assert len(events) == 1
         assert events[0].event_type == "reset"
         assert any(d["id"] == "v1" for d in events[0].data)
@@ -62,7 +62,7 @@ class TestFirstCall:
             "v1": _event("v1", "trip-1"),
             "v2": _event("v2", "trip-2"),
         }
-        events = reconcile({}, curr, store, gtfs, config)
+        events, _ = reconcile({}, curr, store, gtfs, config)
         assert len(events) == 1
         assert events[0].event_type == "reset"
         ids = {d["id"] for d in events[0].data}
@@ -83,7 +83,7 @@ class TestSubsequentCalls:
         }
 
         reconcile({}, prev, store, gtfs, config)
-        events = reconcile(prev, curr, store, gtfs, config)
+        events, _ = reconcile(prev, curr, store, gtfs, config)
         add_events = [e for e in events if e.event_type == "add"]
         assert len(add_events) == 1
         assert add_events[0].data["id"] == "v2"
@@ -99,7 +99,7 @@ class TestSubsequentCalls:
 
         # Initialize state
         reconcile({}, prev, store, gtfs, config)
-        events = reconcile(prev, curr, store, gtfs, config)
+        events, _ = reconcile(prev, curr, store, gtfs, config)
         update_events = [e for e in events if e.event_type == "update"]
         assert update_events
 
@@ -110,7 +110,7 @@ class TestSubsequentCalls:
         prev = {"v1": _event("v1")}
         curr: dict[str, VehicleEvent] = {}
         reconcile({}, prev, store, gtfs, config)
-        events = reconcile(prev, curr, store, gtfs, config)
+        events, _ = reconcile(prev, curr, store, gtfs, config)
         remove_events = [e for e in events if e.event_type == "remove"]
         assert remove_events
         assert any(e.data["id"] == "v1" for e in remove_events)
@@ -126,7 +126,7 @@ class TestSubsequentCalls:
         curr = {"v1": _event("v1", seq=5, ts=t1)}
 
         reconcile({}, prev, store, gtfs, config)
-        events = reconcile(prev, curr, store, gtfs, config)
+        events, _ = reconcile(prev, curr, store, gtfs, config)
         update_events = [e for e in events if e.event_type == "update"]
         assert not update_events
 
@@ -141,6 +141,6 @@ class TestSubsequentCalls:
         curr = {"v1": _event("v1", trip_id=None, ts=t1)}
 
         reconcile({}, prev, store, gtfs, config)
-        events = reconcile(prev, curr, store, gtfs, config)
+        events, _ = reconcile(prev, curr, store, gtfs, config)
         remove_events = [e for e in events if e.event_type == "remove"]
         assert remove_events
