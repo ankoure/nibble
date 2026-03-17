@@ -131,7 +131,7 @@ class TestInterpolate:
     # --- Issue 1: max_stops uses actual stop count, not sequence delta ---
 
     def test_noncontiguous_sequences_within_max_stops(self) -> None:
-        """seq_delta=4 but only 2 actual intermediate stops — should not be rejected."""
+        """seq_delta=4 but only 2 actual intermediate stops - should not be rejected."""
         gtfs = StaticGTFS()
         gtfs.trips["trip-1"] = Trip(trip_id="trip-1", route_id="route-1")
         gtfs.stop_times["trip-1"] = [
@@ -283,7 +283,7 @@ class TestScheduledDurations:
         ]
         durations = _scheduled_durations(stop_times, prev_seq=1, curr_seq=3)
         assert len(durations) == 2
-        assert abs(durations[0] - 180.0) < 1.0  # s2 at midpoint of 0–360s
+        assert abs(durations[0] - 180.0) < 1.0  # s2 at midpoint of 0-360s
         assert abs(durations[1] - 360.0) < 1.0  # s3 at 6 minutes
 
     def test_missing_base_stop_time_returns_empty(self) -> None:

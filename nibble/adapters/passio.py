@@ -1,4 +1,4 @@
-"""Passio GO! JSON API adapter — converts to GTFS-RT FeedMessage.
+"""Passio GO! JSON API adapter - converts to GTFS-RT FeedMessage.
 
 Passio GO! returns an array of vehicle objects from its REST API. This
 adapter translates each object into a GTFS-RT VehiclePosition entity so it

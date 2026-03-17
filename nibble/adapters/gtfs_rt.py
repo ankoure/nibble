@@ -1,4 +1,4 @@
-"""GTFS-RT adapter — wraps the existing fetch_feed() function."""
+"""GTFS-RT adapter - wraps the existing fetch_feed() function."""
 
 from __future__ import annotations
 

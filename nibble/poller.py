@@ -35,7 +35,7 @@ def _get_normalizer(name: str) -> BaseNormalizer:
     Imports are deferred to avoid circular dependencies and keep startup fast.
 
     Args:
-        name: Normalizer identifier — ``"default"`` or ``"ripta"``.
+        name: Normalizer identifier - ``"default"`` or ``"ripta"``.
 
     Returns:
         A ``BaseNormalizer`` instance for the given name.
@@ -134,7 +134,7 @@ async def poll_loop(
     """Run the feed poll loop forever, broadcasting SSE events on each cycle.
 
     Handles transient errors (network failures, bad responses, parse errors)
-    gracefully — a failed poll is logged and skipped; the loop continues on
+    gracefully - a failed poll is logged and skipped; the loop continues on
     the next interval. Unexpected exceptions are also caught and logged so
     the loop never crashes the server.
 

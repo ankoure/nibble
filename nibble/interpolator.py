@@ -66,7 +66,7 @@ def interpolate(
     curr_seq = curr.current_stop_sequence
 
     if curr_seq <= prev_seq:
-        # Backwards — likely a new trip, skip interpolation
+        # Backwards - likely a new trip, skip interpolation
         logger.debug(
             "interpolate: backwards sequence vehicle=%s trip=%s prev_seq=%d curr_seq=%d",
             curr.vehicle_id,
@@ -123,7 +123,7 @@ def interpolate(
     if total_seconds <= 0:
         logger.warning(
             "interpolate: non-positive time window vehicle=%s trip=%s "
-            "prev_time=%s curr_time=%s total_seconds=%.1f — skipping",
+            "prev_time=%s curr_time=%s total_seconds=%.1f - skipping",
             curr.vehicle_id,
             trip_id,
             prev_time,
@@ -199,7 +199,7 @@ def _linear_interpolate(prev: VehicleState, curr: VehicleEvent, gap: int) -> lis
     if total_seconds <= 0:
         logger.warning(
             "_linear_interpolate: non-positive time window vehicle=%s "
-            "prev_time=%s curr_time=%s total_seconds=%.1f — skipping",
+            "prev_time=%s curr_time=%s total_seconds=%.1f - skipping",
             curr.vehicle_id,
             prev_time,
             curr_time,

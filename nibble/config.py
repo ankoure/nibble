@@ -21,13 +21,13 @@ class Settings(BaseSettings):
             Defaults to ``15``.
         stale_vehicle_threshold_seconds: Seconds after which a vehicle with
             no ``trip_id`` is considered stale and removed. Defaults to ``90``.
-        normalizer: Name of the feed normalizer plugin — ``"default"``,
+        normalizer: Name of the feed normalizer plugin - ``"default"``,
             ``"ripta"``, or ``"mwrta"``. Defaults to ``"default"``.
         max_interpolation_stops: Maximum stop gap size to interpolate.
             Larger gaps are left as-is. Defaults to ``3``.
         host: Bind address for the HTTP server. Defaults to ``"0.0.0.0"``.
         port: Listen port for the HTTP server. Defaults to ``8080``.
-        adapter: Feed adapter to use — ``"gtfs_rt"`` (default) or ``"passio"``.
+        adapter: Feed adapter to use - ``"gtfs_rt"`` (default) or ``"passio"``.
         agency_id: Agency identifier used by JSON adapters such as Passio GO!.
             Defaults to ``""``.
         agency_timezone: IANA timezone name for the agency (e.g.

@@ -1,4 +1,4 @@
-"""Tests for nibble.adapters.passio — Passio GO! JSON → FeedMessage."""
+"""Tests for nibble.adapters.passio - Passio GO! JSON → FeedMessage."""
 
 from __future__ import annotations
 

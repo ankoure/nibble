@@ -96,7 +96,7 @@ class TestComputeDelay:
 
 class TestPredictArrivals:
     def test_returns_remaining_stops(self):
-        # Vehicle at stop-2; should return stops 2–5
+        # Vehicle at stop-2; should return stops 2-5
         gtfs = _gtfs()
         event = _event(seq=2, ts=datetime(2024, 1, 1, 12, 2, 30, tzinfo=timezone.utc))
         results = predict_arrivals(event, gtfs)

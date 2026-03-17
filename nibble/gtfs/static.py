@@ -175,7 +175,7 @@ def infer_stop_from_position(
         if st.shape_dist_traveled > vehicle_dist:
             return st.stop_id, st.stop_sequence, "IN_TRANSIT_TO"
 
-    # Vehicle is past the last stop — report the last stop
+    # Vehicle is past the last stop - report the last stop
     last = timed[-1]
     return last.stop_id, last.stop_sequence, "IN_TRANSIT_TO"
 
@@ -242,7 +242,7 @@ def infer_trip_from_position(
             time-of-day filtering.
         agency_timezone: IANA timezone string (e.g. ``"America/New_York"``).
             Required for time-of-day filtering.
-        bearing: Vehicle heading in degrees clockwise from north (0–359), or
+        bearing: Vehicle heading in degrees clockwise from north (0-359), or
             ``None`` if not reported.  When provided, trips whose shape runs
             more than :data:`_BEARING_TOLERANCE_DEG` degrees opposite to the
             vehicle's heading at the projected point are excluded.  The filter
@@ -269,7 +269,7 @@ def infer_trip_from_position(
         """Return True if local_tod falls within this trip's scheduled window."""
         times = gtfs.stop_times.get(trip_id)
         if not times:
-            return True  # no schedule data — don't filter out
+            return True  # no schedule data - don't filter out
         secs = []
         for st in times:
             s = _gtfs_time_to_seconds(st.departure_time or st.arrival_time)
@@ -382,7 +382,7 @@ def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 def _shape_bearing_at_projection(
     lat: float, lon: float, shape_pts: list[tuple[float, float]]
 ) -> float | None:
-    """Return the bearing (degrees, 0–359) of the shape at the point closest to (lat, lon).
+    """Return the bearing (degrees, 0-359) of the shape at the point closest to (lat, lon).
 
     Finds the segment with minimum perpendicular distance using the same
     flat-earth approximation as :func:`_min_distance_to_polyline`, then
@@ -426,7 +426,7 @@ def _shape_bearing_at_projection(
 
 
 def _angle_difference(a: float, b: float) -> float:
-    """Return the absolute angular difference between two bearings (0–180 degrees)."""
+    """Return the absolute angular difference between two bearings (0-180 degrees)."""
     diff = abs(a - b) % 360
     return diff if diff <= 180 else 360 - diff
 

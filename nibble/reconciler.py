@@ -67,7 +67,7 @@ def reconcile(
 
     for vehicle_id, curr_event in resolved.items():
         if curr_event.confidence == "stale":
-            # Stale vehicles are silently dropped — they'll be removed next cycle
+            # Stale vehicles are silently dropped - they'll be removed next cycle
             state_store.remove(vehicle_id)
             events.append(SSEEvent(event_type="remove", data={"id": vehicle_id}))
             continue
@@ -97,7 +97,7 @@ def reconcile(
 def _has_meaningful_change(prev: VehicleEvent, curr: VehicleEvent) -> bool:
     """Return True if any stop/trip/status field changed between polls.
 
-    Position-only changes are intentionally ignored — they do not represent
+    Position-only changes are intentionally ignored - they do not represent
     a new transit event and would cause consumers like Gobble to emit
     duplicate ARR/DEP records for the same stop.
 

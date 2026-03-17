@@ -29,28 +29,32 @@ def dates_from_calendar(zf: zipfile.ZipFile) -> tuple[str, str]:
     Returns a ``(start_date, end_date)`` tuple in ``YYYYMMDD`` format.  Falls
     back to empty strings when neither file is present.
     """
-    dates: list[str] = []
+    names = set(zf.namelist())
+    min_date = ""
+    max_date = ""
 
-    if "calendar.txt" in zf.namelist():
+    def _track(val: str) -> None:
+        nonlocal min_date, max_date
+        if val:
+            if not min_date or val < min_date:
+                min_date = val
+            if val > max_date:
+                max_date = val
+
+    if "calendar.txt" in names:
         with zf.open("calendar.txt") as f:
             reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
             for row in reader:
                 for field in ("start_date", "end_date"):
-                    val = row.get(field, "").strip()
-                    if val:
-                        dates.append(val)
+                    _track(row.get(field, "").strip())
 
-    if "calendar_dates.txt" in zf.namelist():
+    if "calendar_dates.txt" in names:
         with zf.open("calendar_dates.txt") as f:
             reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
             for row in reader:
-                val = row.get("date", "").strip()
-                if val:
-                    dates.append(val)
+                _track(row.get("date", "").strip())
 
-    if not dates:
-        return "", ""
-    return min(dates), max(dates)
+    return min_date, max_date
 
 
 def parse_feed_info(zip_content: bytes) -> FeedInfo | None:

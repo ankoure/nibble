@@ -56,7 +56,7 @@ class _StreamingBody(httpx.AsyncByteStream):
 
 
 class StreamingASGITransport(httpx.AsyncBaseTransport):
-    """ASGI transport that delivers chunks incrementally — required for SSE tests."""
+    """ASGI transport that delivers chunks incrementally - required for SSE tests."""
 
     def __init__(self, app: ASGIApp) -> None:
         self._app = app

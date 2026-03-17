@@ -12,13 +12,13 @@ class Position:
     """GPS position reported by a vehicle.
 
     latitude/longitude are WGS84 decimal degrees. bearing is degrees clockwise
-    from north (0–359). speed is meters per second. Both bearing and speed may
+    from north (0-359). speed is meters per second. Both bearing and speed may
     be absent from the feed.
 
     Attributes:
         latitude: WGS84 decimal degrees.
         longitude: WGS84 decimal degrees.
-        bearing: Heading in degrees clockwise from north (0–359), or ``None``
+        bearing: Heading in degrees clockwise from north (0-359), or ``None``
             if the feed does not report it.
         speed: Speed in meters per second, or ``None`` if not reported.
     """
@@ -35,18 +35,18 @@ class VehicleEvent:
 
     Every event carries two quality tags:
 
-    **provenance** — how the event was produced:
+    **provenance** - how the event was produced:
 
-    - ``"observed"`` — directly reported by the GTFS-RT feed
-    - ``"inferred"`` — position observed, but trip info carried forward from a prior poll
-    - ``"interpolated"`` — synthetic event generated to fill a stop gap between polls
-    - ``"manual"`` — trip assignment issued by an operator via the corrections API
+    - ``"observed"`` - directly reported by the GTFS-RT feed
+    - ``"inferred"`` - position observed, but trip info carried forward from a prior poll
+    - ``"interpolated"`` - synthetic event generated to fill a stop gap between polls
+    - ``"manual"`` - trip assignment issued by an operator via the corrections API
 
-    **confidence** — certainty about the vehicle's trip assignment:
+    **confidence** - certainty about the vehicle's trip assignment:
 
-    - ``"confirmed"`` — vehicle reported a trip_id in this poll
-    - ``"inferred"`` — trip_id carried forward; vehicle may have changed trips
-    - ``"stale"`` — vehicle exceeded the stale threshold; a remove event follows
+    - ``"confirmed"`` - vehicle reported a trip_id in this poll
+    - ``"inferred"`` - trip_id carried forward; vehicle may have changed trips
+    - ``"stale"`` - vehicle exceeded the stale threshold; a remove event follows
 
     Attributes:
         vehicle_id: Stable identifier for the vehicle (from the GTFS-RT feed).
@@ -61,7 +61,7 @@ class VehicleEvent:
         stop_id: Current stop identifier, or ``None`` if unknown.
         current_stop_sequence: Stop sequence number within the current trip,
             or ``None`` if unknown.
-        current_status: Vehicle status relative to the current stop —
+        current_status: Vehicle status relative to the current stop -
             ``"INCOMING_AT"``, ``"STOPPED_AT"``, or ``"IN_TRANSIT_TO"``.
         direction_id: GTFS direction (``0`` or ``1``), or ``None`` if unknown.
         label: Human-readable vehicle label (e.g. bus number), or ``None``.
@@ -86,15 +86,15 @@ class SSEEvent:
     """An SSE envelope ready for broadcast to clients.
 
     Attributes:
-        event_type: The SSE event name — ``"reset"``, ``"add"``, ``"update"``, or ``"remove"``.
+        event_type: The SSE event name - ``"reset"``, ``"add"``, ``"update"``, or ``"remove"``.
 
-            - ``"reset"`` — full snapshot of all known vehicles; sent once to new subscribers;
+            - ``"reset"`` - full snapshot of all known vehicles; sent once to new subscribers;
               ``data`` is a list of serialized vehicle dicts (JSON:API format).
-            - ``"add"`` — a vehicle has appeared in the feed for the first time since the last
+            - ``"add"`` - a vehicle has appeared in the feed for the first time since the last
               reset; ``data`` is a single serialized vehicle dict (JSON:API format).
-            - ``"update"`` — a vehicle already in the feed changed state; ``data`` is a single
+            - ``"update"`` - a vehicle already in the feed changed state; ``data`` is a single
               serialized vehicle dict (JSON:API format).
-            - ``"remove"`` — a single vehicle has left the feed; ``data`` is ``{"id": ...}``.
+            - ``"remove"`` - a single vehicle has left the feed; ``data`` is ``{"id": ...}``.
         data: A single serialized vehicle dict for ``"add"``/``"update"``/``"remove"`` events,
             or a list of vehicle dicts for ``"reset"`` events.
     """

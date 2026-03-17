@@ -111,14 +111,14 @@ class TestParseFeed:
         assert snap["v1"].position.speed is None
 
     def test_bearing_zero_becomes_none(self) -> None:
-        # bearing=0.0 (due north) is falsy — treated as None by _parse_feed
+        # bearing=0.0 (due north) is falsy - treated as None by _parse_feed
         feed = _feed()
         _add_vehicle(feed, bearing=0.0)
         snap = _parse_feed(feed)
         assert snap["v1"].position.bearing is None
 
     def test_speed_zero_becomes_none(self) -> None:
-        # speed=0.0 (stopped) is falsy — treated as None by _parse_feed
+        # speed=0.0 (stopped) is falsy - treated as None by _parse_feed
         feed = _feed()
         _add_vehicle(feed, speed=0.0)
         snap = _parse_feed(feed)

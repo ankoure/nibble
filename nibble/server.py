@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+import io
 import json
 import logging
 import sys
 import time
+import zipfile
 from collections.abc import MutableMapping
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any, AsyncIterator
 
 import uvicorn
@@ -34,9 +36,6 @@ from nibble.models import SSEEvent, VehicleEvent
 from nibble.overrides import OverrideStore
 from nibble.poller import poll_loop
 from nibble.predictions import predict_arrivals, compute_delay
-import zipfile
-import io
-from datetime import date
 
 
 class GtfsHolder:
@@ -275,13 +274,13 @@ def create_app(
     Returns:
         A configured ``FastAPI`` application with the following routes:
 
-        - ``GET /vehicles`` — SSE stream of vehicle events
-        - ``GET /health`` — JSON health check
-        - ``POST /trip_assignments`` — create a manual trip assignment
-        - ``GET /trip_assignments`` — list active manual trip assignments
-        - ``DELETE /trip_assignments/{vehicle_id}`` — remove a manual assignment
-        - ``GET /trips/{trip_id}/predictions`` — arrival predictions for a trip
-        - ``GET /routes/{route_id}/headways`` — headway metrics for a route
+        - ``GET /vehicles`` - SSE stream of vehicle events
+        - ``GET /health`` - JSON health check
+        - ``POST /trip_assignments`` - create a manual trip assignment
+        - ``GET /trip_assignments`` - list active manual trip assignments
+        - ``DELETE /trip_assignments/{vehicle_id}`` - remove a manual assignment
+        - ``GET /trips/{trip_id}/predictions`` - arrival predictions for a trip
+        - ``GET /routes/{route_id}/headways`` - headway metrics for a route
     """
     app = FastAPI(title="nibble", version="0.1.0")
     app.add_middleware(LoggingMiddleware)
@@ -375,8 +374,8 @@ def create_app(
         )
 
     @app.get("/trip_assignments", response_model=dict[str, AssignmentDetail])
-    async def get_trip_assignments() -> JSONResponse:
-        return JSONResponse(overrides.all())
+    async def get_trip_assignments() -> dict[str, dict[str, str]]:
+        return overrides.all()
 
     @app.delete("/trip_assignments/{vehicle_id}", status_code=204)
     async def delete_trip_assignment(vehicle_id: str) -> None:

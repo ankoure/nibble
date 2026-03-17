@@ -1,7 +1,7 @@
 """Integration tests for the full GTFS-RT → SSE event pipeline.
 
 Tests wire together _parse_feed, StateStore, reconcile, and interpolate
-using real data objects — no HTTP mocking required.
+using real data objects - no HTTP mocking required.
 """
 
 from __future__ import annotations

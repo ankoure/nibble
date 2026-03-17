@@ -73,7 +73,7 @@ Each item in a `reset` or `update` data array is a JSON:API vehicle resource:
 | `label` | string \| null | Human-readable vehicle label (e.g. bus number) |
 | `latitude` | float | WGS84 decimal degrees |
 | `longitude` | float | WGS84 decimal degrees |
-| `bearing` | float \| null | Heading in degrees (0–359), clockwise from north |
+| `bearing` | float \| null | Heading in degrees (0-359), clockwise from north |
 | `speed` | float \| null | Speed in meters per second |
 | `updated_at` | ISO 8601 string | Timestamp of this event |
 | `occupancy_status` | null | Always null; reserved for future use |

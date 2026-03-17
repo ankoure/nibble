@@ -1,4 +1,4 @@
-"""Tests for nibble.gtfs.feed_info — date derivation from calendar files."""
+"""Tests for nibble.gtfs.feed_info - date derivation from calendar files."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ def _make_zip(**files: str) -> zipfile.ZipFile:
     return zipfile.ZipFile(buf)
 
 
-def testdates_from_calendar_txt() -> None:
+def test_dates_from_calendar_txt() -> None:
     content = (
         "service_id,start_date,end_date,monday,tuesday,wednesday,thursday,friday,saturday,sunday\n"
     )
@@ -30,7 +30,7 @@ def testdates_from_calendar_txt() -> None:
     assert end == "20260630"
 
 
-def testdates_from_calendar_dates_txt() -> None:
+def test_dates_from_calendar_dates_txt() -> None:
     content = "service_id,date,exception_type\n"
     content += "WD,20260301,1\n"
     content += "WD,20260615,1\n"

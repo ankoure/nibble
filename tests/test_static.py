@@ -183,7 +183,7 @@ class TestShapeBearingAtProjection:
     def test_picks_nearest_segment(self) -> None:
         # Shape: northbound then turns eastbound; vehicle is clearly near the eastbound segment
         shape = [(42.00, -71.0), (42.10, -71.0), (42.10, -70.9)]
-        # Vehicle near the eastbound leg — expected bearing ~90°
+        # Vehicle near the eastbound leg - expected bearing ~90°
         bearing = _shape_bearing_at_projection(42.10, -70.95, shape)
         assert bearing is not None
         assert abs(bearing - 90.0) < 5.0
@@ -227,13 +227,13 @@ class TestInferTripFromPositionBearing:
 
     def test_no_bearing_returns_closest_by_distance(self) -> None:
         # Without bearing, both trips are equidistant (same position on mirrored shapes)
-        # — just verify it returns one of them without error
+        # - just verify it returns one of them without error
         gtfs = _gtfs_with_two_trips()
         result = infer_trip_from_position(42.05, -71.0, "route-1", gtfs, bearing=None)
         assert result in ("trip-nb", "trip-sb")
 
     def test_bearing_filter_falls_back_when_all_filtered(self) -> None:
-        # Perpendicular bearing (90°) filters both trips — should still return a result
+        # Perpendicular bearing (90°) filters both trips - should still return a result
         gtfs = _gtfs_with_two_trips()
         result = infer_trip_from_position(42.05, -71.0, "route-1", gtfs, bearing=90.0)
         assert result in ("trip-nb", "trip-sb")

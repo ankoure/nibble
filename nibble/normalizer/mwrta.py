@@ -39,7 +39,7 @@ class MwrtaNormalizer(BaseNormalizer):
             ", ".join(list(gtfs.route_trips)[:5]),
         )
         for entity in feed.entity:
-            # Avoid HasField — in proto3 accessing an unset message field returns
+            # Avoid HasField - in proto3 accessing an unset message field returns
             # a default instance, and unset string fields return "".
             route_id = entity.vehicle.trip.route_id
             logger.debug(
@@ -53,7 +53,7 @@ class MwrtaNormalizer(BaseNormalizer):
                 entity.vehicle.trip.route_id = uuid
             else:
                 logger.warning(
-                    "MWRTA: unknown route_id %r — not in routes.txt (known short names: %s)",
+                    "MWRTA: unknown route_id %r - not in routes.txt (known short names: %s)",
                     route_id,
                     ", ".join(sorted(gtfs.route_short_names)[:10]),
                 )

@@ -109,7 +109,7 @@ class StateStore:
         prev = self._store.get(event.vehicle_id)
         now = event.timestamp
 
-        # Step 0: Manual override — takes priority over everything else.
+        # Step 0: Manual override - takes priority over everything else.
         # Auto-expires once the vehicle reaches the last stop of the assigned trip.
         if self._overrides is not None:
             override_trip = self._overrides.get(event.vehicle_id)
@@ -117,7 +117,7 @@ class StateStore:
                 final_seq = last_stop_sequence(gtfs, override_trip)
                 curr_seq = event.current_stop_sequence
                 if final_seq is not None and curr_seq is not None and curr_seq >= final_seq:
-                    # Vehicle has reached the end of the assigned trip — expire the override
+                    # Vehicle has reached the end of the assigned trip - expire the override
                     logger.info(
                         "Vehicle %s reached last stop of overridden trip %r (seq %d >= %d); expiring override",
                         event.vehicle_id,
@@ -228,7 +228,7 @@ class StateStore:
             )
             return updated
 
-        # No trip_id — try to infer from position + route_id before falling back to stale logic
+        # No trip_id - try to infer from position + route_id before falling back to stale logic
         if event.route_id:
             route_known = event.route_id in gtfs.route_trips
             logger.debug(
@@ -286,9 +286,9 @@ class StateStore:
                 )
                 return updated
 
-        # No trip_id and no route_id match — check stale threshold
+        # No trip_id and no route_id match - check stale threshold
         if prev is None:
-            # Never seen before and no trip_id — treat as stale immediately
+            # Never seen before and no trip_id - treat as stale immediately
             self._store[event.vehicle_id] = VehicleState(
                 vehicle_id=event.vehicle_id,
                 last_seen=now,
@@ -322,7 +322,7 @@ class StateStore:
             )
             self._store[event.vehicle_id] = VehicleState(
                 vehicle_id=event.vehicle_id,
-                last_seen=prev.last_seen,  # don't update last_seen — use original valid time
+                last_seen=prev.last_seen,  # don't update last_seen - use original valid time
                 confidence="inferred",
                 last_valid_trip_id=prev.last_valid_trip_id,
                 last_valid_route_id=prev.last_valid_route_id,
