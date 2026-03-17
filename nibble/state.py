@@ -32,6 +32,7 @@ class VehicleState:
     confidence: Literal["confirmed", "inferred", "stale"] = "confirmed"
     last_valid_trip_id: str | None = None
     last_valid_route_id: str | None = None
+    last_valid_direction_id: int | None = None
     last_valid_stop_id: str | None = None
     last_valid_stop_sequence: int | None = None
     last_position: Position | None = None
@@ -167,6 +168,7 @@ class StateStore:
                         confidence="confirmed",
                         last_valid_trip_id=override_trip,
                         last_valid_route_id=route_id,
+                        last_valid_direction_id=direction_id,
                         last_valid_stop_id=stop_id,
                         last_valid_stop_sequence=stop_sequence,
                         last_position=event.position,
@@ -222,6 +224,7 @@ class StateStore:
                 confidence=confidence,
                 last_valid_trip_id=event.trip_id,
                 last_valid_route_id=route_id,
+                last_valid_direction_id=event.direction_id,
                 last_valid_stop_id=stop_id,
                 last_valid_stop_sequence=stop_sequence,
                 last_position=event.position,
@@ -280,6 +283,7 @@ class StateStore:
                     confidence="confirmed",
                     last_valid_trip_id=inferred_trip_id,
                     last_valid_route_id=route_id,
+                    last_valid_direction_id=direction_id,
                     last_valid_stop_id=stop_id,
                     last_valid_stop_sequence=stop_sequence,
                     last_position=event.position,
@@ -313,7 +317,7 @@ class StateStore:
                 stop_id=prev.last_valid_stop_id,
                 current_stop_sequence=prev.last_valid_stop_sequence,
                 current_status=event.current_status,
-                direction_id=event.direction_id,
+                direction_id=prev.last_valid_direction_id,
                 label=event.label,
                 position=event.position,
                 timestamp=event.timestamp,
@@ -326,6 +330,7 @@ class StateStore:
                 confidence="inferred",
                 last_valid_trip_id=prev.last_valid_trip_id,
                 last_valid_route_id=prev.last_valid_route_id,
+                last_valid_direction_id=prev.last_valid_direction_id,
                 last_valid_stop_id=prev.last_valid_stop_id,
                 last_valid_stop_sequence=prev.last_valid_stop_sequence,
                 last_position=event.position,
@@ -338,6 +343,7 @@ class StateStore:
             confidence="stale",
             last_valid_trip_id=prev.last_valid_trip_id,
             last_valid_route_id=prev.last_valid_route_id,
+            last_valid_direction_id=prev.last_valid_direction_id,
             last_valid_stop_id=prev.last_valid_stop_id,
             last_valid_stop_sequence=prev.last_valid_stop_sequence,
             last_position=event.position,

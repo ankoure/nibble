@@ -1,7 +1,7 @@
 [project]
 name = "nibble"
 version = "0.1.0"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "httpx>=0.27",
     "fastapi>=0.115",
@@ -35,16 +35,17 @@ dev = [
     "mkdocstrings[python]>=0.25",
     "moto[s3]>=5.0",
     "boto3>=1.34",
+    "vulture>=2.15",
 ]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 strict = true
 disable_error_code = ["import-untyped"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"

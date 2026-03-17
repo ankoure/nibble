@@ -26,8 +26,6 @@ from nibble.state import StateStore
 
 logger = logging.getLogger(__name__)
 
-_NORMALIZER_REGISTRY: dict[str, type[BaseNormalizer]] = {}
-
 
 def _get_normalizer(name: str) -> BaseNormalizer:
     """Instantiate a normalizer by name.
@@ -98,6 +96,8 @@ def _parse_feed(feed: gtfs_realtime_pb2.FeedMessage) -> dict[str, VehicleEvent]:
         ts = datetime.fromtimestamp(v.timestamp, tz=timezone.utc) if v.timestamp else feed_time
         label = v.vehicle.label if v.HasField("vehicle") and v.vehicle.label else None
         stop_id = v.stop_id if v.stop_id else None
+        # In proto3 all int fields default to 0, which is indistinguishable from
+        # "not set". GTFS stop sequences start at 1 in practice, so 0 means unset.
         seq = v.current_stop_sequence if v.current_stop_sequence else None
 
         status_map: dict[int, Literal["INCOMING_AT", "STOPPED_AT", "IN_TRANSIT_TO"]] = {

@@ -59,11 +59,12 @@ def reconcile(
     removed_ids = set(prev.keys()) - set(curr.keys())
     for vehicle_id in removed_ids:
         prev_state = state_store.get(vehicle_id)
-        # Only emit remove if vehicle was previously known with non-stale confidence
+        state_store.remove(vehicle_id)
+        # Only emit remove if vehicle was previously known with non-stale confidence;
+        # stale vehicles were never added to the stream so there's nothing to remove.
         if prev_state and prev_state.confidence != "stale":
             logger.debug("Vehicle %s removed from feed", vehicle_id)
-        state_store.remove(vehicle_id)
-        events.append(SSEEvent(event_type="remove", data={"id": vehicle_id}))
+            events.append(SSEEvent(event_type="remove", data={"id": vehicle_id}))
 
     for vehicle_id, curr_event in resolved.items():
         if curr_event.confidence == "stale":

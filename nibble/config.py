@@ -53,7 +53,7 @@ class Settings(BaseSettings):
             bundle, in hours. When set, a background loop re-downloads the
             feed and reloads the in-memory indexes if ``feed_start_date`` has
             changed. Defaults to ``None`` (no reload).
-        enable_sse: When ``True`` (the default), start the Starlette HTTP
+        enable_sse: When ``True`` (the default), start the FastAPI HTTP
             server and serve SSE vehicle-event streams. Set to ``False`` to
             run in a headless polling-only mode (useful when the only output
             is S3 VehiclePositions). Defaults to ``True``.

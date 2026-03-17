@@ -9,9 +9,10 @@ import logging
 import sys
 import time
 import zipfile
-from collections.abc import MutableMapping
+from collections.abc import AsyncIterator, Awaitable, Callable, MutableMapping
+from contextlib import asynccontextmanager
 from datetime import date, datetime, timezone
-from typing import Any, AsyncIterator
+from typing import Any
 
 import uvicorn
 from fastapi import FastAPI, Query
@@ -22,6 +23,7 @@ from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from nibble.adapters import get_adapter
+from nibble.adapters.base import BaseAdapter
 from nibble.config import Settings
 from nibble.gtfs.feed_info import FeedInfo, dates_from_calendar, parse_feed_info
 from nibble.gtfs.fixer import fix_gtfs_zip
@@ -39,11 +41,12 @@ from nibble.predictions import predict_arrivals, compute_delay
 
 
 class GtfsHolder:
-    """Thread-safe container for the current ``StaticGTFS`` instance.
+    """Container for the current ``StaticGTFS`` instance, safe for asyncio use.
 
     The reload loop swaps :attr:`gtfs` in place; the poll loop always reads
-    the latest value without needing a lock (Python attribute assignment is
-    atomic for simple object references).
+    the latest value without needing a lock.  This is safe because both loops
+    run in the same asyncio event loop — there are no ``await`` points between
+    reading and using ``holder.gtfs``, so no other coroutine can interleave.
     """
 
     def __init__(self, gtfs: StaticGTFS) -> None:
@@ -179,18 +182,15 @@ class Broadcaster:
         """
         for event in events:
             if event.event_type == "reset":
-                for item in event.data:  # type: ignore[union-attr]
-                    if "id" in item:
+                for item in event.data:
+                    if isinstance(item, dict) and "id" in item:
                         self._current_snapshot[item["id"]] = item
             elif event.event_type == "update":
-                item = event.data
-                assert isinstance(item, dict)
-                if "id" in item:
-                    self._current_snapshot[item["id"]] = item
+                if isinstance(event.data, dict) and "id" in event.data:
+                    self._current_snapshot[event.data["id"]] = event.data
             elif event.event_type == "remove":
-                item = event.data
-                assert isinstance(item, dict)
-                self._current_snapshot.pop(item.get("id", ""), None)
+                if isinstance(event.data, dict):
+                    self._current_snapshot.pop(event.data.get("id", ""), None)
 
         for q in list(self._subscribers):
             for event in events:
@@ -260,8 +260,15 @@ def create_app(
     broadcaster: Broadcaster,
     overrides: OverrideStore,
     gtfs_holder: GtfsHolder,
+    adapter: BaseAdapter | None = None,
+    on_snapshot: Callable[[dict[str, VehicleEvent]], Awaitable[None]] | None = None,
 ) -> FastAPI:
     """Build and return the FastAPI ASGI application.
+
+    When *adapter* is provided, the poll loop and optional GTFS reload loop are
+    started as background tasks during the FastAPI lifespan and cancelled cleanly
+    on shutdown.  When *adapter* is ``None`` (e.g. for OpenAPI schema generation),
+    no background tasks are started.
 
     Args:
         config: Application settings.
@@ -270,6 +277,9 @@ def create_app(
         overrides: Store for operator-issued manual trip assignment corrections.
         gtfs_holder: Shared container for the current static GTFS indexes, used
             to validate trip IDs submitted via the corrections API.
+        adapter: Feed adapter to use. When supplied, the poll loop is started
+            as part of the application lifespan.
+        on_snapshot: Optional async callback invoked after each successful poll.
 
     Returns:
         A configured ``FastAPI`` application with the following routes:
@@ -282,7 +292,26 @@ def create_app(
         - ``GET /trips/{trip_id}/predictions`` - arrival predictions for a trip
         - ``GET /routes/{route_id}/headways`` - headway metrics for a route
     """
-    app = FastAPI(title="nibble", version="0.1.0")
+
+    @asynccontextmanager
+    async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+        tasks: list[asyncio.Task[None]] = []
+        if adapter is not None:
+            tasks.append(
+                asyncio.create_task(
+                    poll_loop(config, gtfs_holder, broadcaster, adapter, overrides, on_snapshot)
+                )
+            )
+        if config.gtfs_reload_interval_hours is not None:
+            tasks.append(asyncio.create_task(gtfs_reload_loop(config, gtfs_holder)))
+        try:
+            yield
+        finally:
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+
+    app = FastAPI(title="nibble", version="0.1.0", lifespan=_lifespan)
     app.add_middleware(LoggingMiddleware)
 
     @app.get(
@@ -313,7 +342,7 @@ def create_app(
         async def stream() -> AsyncIterator[dict[str, Any]]:
             known_ids: set[str] = set()
             try:
-                filtered = [v for v in reset.data if matches_route(v)]
+                filtered = [v for v in reset.data if isinstance(v, dict) and matches_route(v)]
                 known_ids = {v["id"] for v in filtered}
                 yield {"event": "reset", "data": json.dumps(filtered)}
                 while True:
@@ -321,17 +350,22 @@ def create_app(
                     if event is None:
                         break
                     if event.event_type == "reset":
-                        assert isinstance(event.data, list)
-                        filtered = [v for v in event.data if matches_route(v)]
+                        if not isinstance(event.data, list):
+                            continue
+                        filtered = [
+                            v for v in event.data if isinstance(v, dict) and matches_route(v)
+                        ]
                         known_ids = {v["id"] for v in filtered}
                         yield {"event": "reset", "data": json.dumps(filtered)}
                     elif event.event_type == "remove":
-                        assert isinstance(event.data, dict)
+                        if not isinstance(event.data, dict):
+                            continue
                         if event.data.get("id") in known_ids:
                             known_ids.discard(event.data["id"])
                             yield {"event": event.event_type, "data": json.dumps(event.data)}
                     else:
-                        assert isinstance(event.data, dict)
+                        if not isinstance(event.data, dict):
+                            continue
                         if matches_route(event.data):
                             known_ids.add(event.data["id"])
                             yield {"event": event.event_type, "data": json.dumps(event.data)}
@@ -578,7 +612,7 @@ def print_openapi() -> None:
     from unittest.mock import MagicMock
 
     app = create_app(
-        Settings(gtfs_rt_url="http://x", gtfs_static_url="http://x"),  # type: ignore[call-arg]
+        Settings(gtfs_rt_url="http://x", gtfs_static_url="http://x"),
         Broadcaster(),
         MagicMock(spec=OverrideStore),
         MagicMock(spec=GtfsHolder),
@@ -652,16 +686,7 @@ def main() -> None:
         on_snapshot = _on_snapshot
 
     if config.enable_sse:
-        app = create_app(config, broadcaster, overrides, holder)
-
-        async def startup() -> None:
-            asyncio.create_task(
-                poll_loop(config, holder, broadcaster, adapter, overrides, on_snapshot)
-            )
-            if config.gtfs_reload_interval_hours is not None:
-                asyncio.create_task(gtfs_reload_loop(config, holder))
-
-        app.add_event_handler("startup", startup)
+        app = create_app(config, broadcaster, overrides, holder, adapter, on_snapshot)
         uvicorn.run(app, host=config.host, port=config.port)
     else:
 
@@ -673,7 +698,12 @@ def main() -> None:
             ]
             if config.gtfs_reload_interval_hours is not None:
                 tasks.append(asyncio.create_task(gtfs_reload_loop(config, holder)))
-            await asyncio.gather(*tasks)
+            try:
+                await asyncio.gather(*tasks)
+            finally:
+                for task in tasks:
+                    task.cancel()
+                await asyncio.gather(*tasks, return_exceptions=True)
 
         asyncio.run(run())
 
