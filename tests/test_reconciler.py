@@ -18,7 +18,7 @@ def _settings(**kwargs: Any) -> Settings:
         max_interpolation_stops=3,
     )
     defaults.update(kwargs)
-    return Settings(**defaults)
+    return Settings(_env_file=None, **defaults)
 
 
 def _gtfs(trip_ids: list[str] | None = None) -> StaticGTFS:

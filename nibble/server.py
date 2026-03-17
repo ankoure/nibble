@@ -1,4 +1,4 @@
-"""Starlette ASGI server: SSE endpoint, health check, and startup orchestration."""
+"""FastAPI ASGI server: SSE endpoint, health check, and startup orchestration."""
 
 from __future__ import annotations
 
@@ -12,17 +12,16 @@ from datetime import datetime, timezone
 from typing import Any, AsyncIterator
 
 import uvicorn
+from fastapi import FastAPI, Query
+from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
-from starlette.applications import Starlette
-from starlette.middleware import Middleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from starlette.routing import Route
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from nibble.adapters import get_adapter
 from nibble.config import Settings
-from nibble.gtfs.feed_info import parse_feed_info
+from nibble.gtfs.feed_info import FeedInfo, dates_from_calendar, parse_feed_info
 from nibble.gtfs.fixer import fix_gtfs_zip
 from nibble.gtfs.static import (
     StaticGTFS,
@@ -35,6 +34,9 @@ from nibble.models import SSEEvent, VehicleEvent
 from nibble.overrides import OverrideStore
 from nibble.poller import poll_loop
 from nibble.predictions import predict_arrivals, compute_delay
+import zipfile
+import io
+from datetime import date
 
 
 class GtfsHolder:
@@ -213,13 +215,54 @@ class Broadcaster:
         return len(self._subscribers)
 
 
+class TripAssignmentRequest(BaseModel):
+    vehicle_id: str
+    trip_id: str
+
+
+class TripAssignmentResponse(BaseModel):
+    vehicle_id: str
+    trip_id: str
+    assigned_at: str
+
+
+class AssignmentDetail(BaseModel):
+    trip_id: str
+    assigned_at: str
+
+
+class StopPrediction(BaseModel):
+    stop_id: str
+    stop_sequence: int
+    scheduled_arrival: str
+    predicted_arrival: str
+    delay_seconds: int
+
+
+class TripPredictionsResponse(BaseModel):
+    trip_id: str
+    vehicle_id: str
+    delay_seconds: int | None
+    stop_predictions: list[StopPrediction]
+
+
+class HealthResponse(BaseModel):
+    status: str
+    last_poll_time: str | None
+    connected_clients: int
+
+
+class ErrorResponse(BaseModel):
+    error: str
+
+
 def create_app(
     config: Settings,
     broadcaster: Broadcaster,
     overrides: OverrideStore,
     gtfs_holder: GtfsHolder,
-) -> Starlette:
-    """Build and return the Starlette ASGI application.
+) -> FastAPI:
+    """Build and return the FastAPI ASGI application.
 
     Args:
         config: Application settings.
@@ -230,21 +273,32 @@ def create_app(
             to validate trip IDs submitted via the corrections API.
 
     Returns:
-        A configured ``Starlette`` application with the following routes:
+        A configured ``FastAPI`` application with the following routes:
 
         - ``GET /vehicles`` — SSE stream of vehicle events
         - ``GET /health`` — JSON health check
         - ``POST /trip_assignments`` — create a manual trip assignment
         - ``GET /trip_assignments`` — list active manual trip assignments
         - ``DELETE /trip_assignments/{vehicle_id}`` — remove a manual assignment
+        - ``GET /trips/{trip_id}/predictions`` — arrival predictions for a trip
+        - ``GET /routes/{route_id}/headways`` — headway metrics for a route
     """
+    app = FastAPI(title="nibble", version="0.1.0")
+    app.add_middleware(LoggingMiddleware)
 
-    async def vehicles(request: Request) -> EventSourceResponse:
-        filter_param = request.query_params.get("filter[route]")
-        if filter_param is None:
+    @app.get(
+        "/vehicles",
+        response_class=EventSourceResponse,
+        responses={200: {"description": "SSE stream of vehicle events (reset/add/update/remove)"}},
+    )
+    async def vehicles(
+        request: Request,
+        filter_route: str | None = Query(default=None, alias="filter[route]"),
+    ) -> EventSourceResponse:
+        if filter_route is None:
             route_filter_set = None  # param absent → no filter, return all
-        elif filter_param:
-            route_filter_set = set(filter_param.split(","))
+        elif filter_route:
+            route_filter_set = set(filter_route.split(","))
         else:
             route_filter_set = set()  # param present but empty → match nothing
         q = broadcaster.subscribe()
@@ -267,7 +321,12 @@ def create_app(
                     event = await q.get()
                     if event is None:
                         break
-                    if event.event_type == "remove":
+                    if event.event_type == "reset":
+                        assert isinstance(event.data, list)
+                        filtered = [v for v in event.data if matches_route(v)]
+                        known_ids = {v["id"] for v in filtered}
+                        yield {"event": "reset", "data": json.dumps(filtered)}
+                    elif event.event_type == "remove":
                         assert isinstance(event.data, dict)
                         if event.data.get("id") in known_ids:
                             known_ids.discard(event.data["id"])
@@ -282,27 +341,26 @@ def create_app(
 
         return EventSourceResponse(stream())
 
-    async def health(request: Request) -> JSONResponse:
-        return JSONResponse(
-            {
-                "status": "ok",
-                "last_poll_time": broadcaster.last_poll_time.isoformat()
-                if broadcaster.last_poll_time
-                else None,
-                "connected_clients": broadcaster.client_count,
-            }
+    @app.get("/health", response_model=HealthResponse)
+    async def health() -> HealthResponse:
+        return HealthResponse(
+            status="ok",
+            last_poll_time=broadcaster.last_poll_time.isoformat()
+            if broadcaster.last_poll_time
+            else None,
+            connected_clients=broadcaster.client_count,
         )
 
-    async def post_trip_assignment(request: Request) -> JSONResponse:
-        try:
-            body = await request.json()
-        except Exception:
-            return JSONResponse({"error": "invalid JSON body"}, status_code=400)
-
-        vehicle_id = body.get("vehicle_id")
-        trip_id = body.get("trip_id")
-        if not vehicle_id or not trip_id:
-            return JSONResponse({"error": "vehicle_id and trip_id are required"}, status_code=422)
+    @app.post(
+        "/trip_assignments",
+        response_model=TripAssignmentResponse,
+        responses={422: {"model": ErrorResponse}},
+    )
+    async def post_trip_assignment(
+        body: TripAssignmentRequest,
+    ) -> TripAssignmentResponse | JSONResponse:
+        vehicle_id = body.vehicle_id
+        trip_id = body.trip_id
 
         if last_stop_sequence(gtfs_holder.gtfs, trip_id) is None:
             return JSONResponse(
@@ -312,20 +370,24 @@ def create_app(
 
         assigned_at = overrides.set(vehicle_id, trip_id)
         logger.info("Manual trip assignment: vehicle=%s trip=%s", vehicle_id, trip_id)
-        return JSONResponse(
-            {"vehicle_id": vehicle_id, "trip_id": trip_id, "assigned_at": assigned_at}
+        return TripAssignmentResponse(
+            vehicle_id=vehicle_id, trip_id=trip_id, assigned_at=assigned_at
         )
 
-    async def get_trip_assignments(request: Request) -> JSONResponse:
+    @app.get("/trip_assignments", response_model=dict[str, AssignmentDetail])
+    async def get_trip_assignments() -> JSONResponse:
         return JSONResponse(overrides.all())
 
-    async def delete_trip_assignment(request: Request) -> JSONResponse:
-        vehicle_id = request.path_params["vehicle_id"]
+    @app.delete("/trip_assignments/{vehicle_id}", status_code=204)
+    async def delete_trip_assignment(vehicle_id: str) -> None:
         overrides.remove(vehicle_id)
-        return JSONResponse(None, status_code=204)
 
-    async def trip_predictions(request: Request) -> JSONResponse:
-        trip_id = request.path_params["trip_id"]
+    @app.get(
+        "/trips/{trip_id}/predictions",
+        response_model=TripPredictionsResponse,
+        responses={404: {"model": ErrorResponse}},
+    )
+    async def trip_predictions(trip_id: str) -> TripPredictionsResponse | JSONResponse:
         vehicle = next(
             (e for e in broadcaster.vehicle_snapshot.values() if e.trip_id == trip_id),
             None,
@@ -337,32 +399,19 @@ def create_app(
             )
         delay = compute_delay(vehicle, gtfs_holder.gtfs, config.agency_timezone)
         stop_predictions = predict_arrivals(vehicle, gtfs_holder.gtfs, config.agency_timezone)
-        return JSONResponse(
-            {
-                "trip_id": trip_id,
-                "vehicle_id": vehicle.vehicle_id,
-                "delay_seconds": delay,
-                "stop_predictions": stop_predictions,
-            }
+        return TripPredictionsResponse(
+            trip_id=trip_id,
+            vehicle_id=vehicle.vehicle_id,
+            delay_seconds=delay,
+            stop_predictions=stop_predictions,
         )
 
-    async def route_headways(request: Request) -> JSONResponse:
-        route_id = request.path_params["route_id"]
+    @app.get("/routes/{route_id}/headways")
+    async def route_headways(route_id: str) -> JSONResponse:
         result = compute_headways(route_id, broadcaster.vehicle_snapshot, gtfs_holder.gtfs)
         return JSONResponse(result)
 
-    return Starlette(
-        routes=[
-            Route("/vehicles", vehicles),
-            Route("/health", health),
-            Route("/trip_assignments", post_trip_assignment, methods=["POST"]),
-            Route("/trip_assignments", get_trip_assignments, methods=["GET"]),
-            Route("/trip_assignments/{vehicle_id}", delete_trip_assignment, methods=["DELETE"]),
-            Route("/trips/{trip_id}/predictions", trip_predictions),
-            Route("/routes/{route_id}/headways", route_headways),
-        ],
-        middleware=[Middleware(LoggingMiddleware)],
-    )
+    return app
 
 
 def _load_gtfs(config: Settings) -> StaticGTFS:
@@ -403,13 +452,18 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
 
         feed_info = parse_feed_info(fixed_zip)
         if feed_info is None:
-            logger.warning("feed_info.txt not found in GTFS ZIP; using today as feed_start_date")
-            from datetime import date
+            logger.warning(
+                "feed_info.txt not found in GTFS ZIP; deriving dates from calendar files"
+            )
 
             today = date.today().strftime("%Y%m%d")
-            from nibble.gtfs.feed_info import FeedInfo
-
-            feed_info = FeedInfo(feed_start_date=today, feed_end_date=today, feed_version="unknown")
+            with zipfile.ZipFile(io.BytesIO(fixed_zip)) as zf:
+                start_date, end_date = dates_from_calendar(zf)
+            feed_info = FeedInfo(
+                feed_start_date=start_date or today,
+                feed_end_date=end_date,
+                feed_version="unknown",
+            )
 
         slug = config.s3_agency_slug
         publish_gtfs_to_s3(
@@ -514,6 +568,23 @@ async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
             logger.exception("Error during GTFS reload check")
 
         await asyncio.sleep(interval_seconds)
+
+
+def print_openapi() -> None:
+    """Print the OpenAPI schema to stdout as JSON.
+
+    Constructs the app with stub dependencies so no live GTFS or network
+    access is required. Pipe to a file to save: ``nibble-openapi > openapi.json``
+    """
+    from unittest.mock import MagicMock
+
+    app = create_app(
+        Settings(gtfs_rt_url="http://x", gtfs_static_url="http://x"),  # type: ignore[call-arg]
+        Broadcaster(),
+        MagicMock(spec=OverrideStore),
+        MagicMock(spec=GtfsHolder),
+    )
+    print(json.dumps(app.openapi(), indent=2))
 
 
 def main() -> None:

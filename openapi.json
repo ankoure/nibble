@@ -1,0 +1,472 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "nibble",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/vehicles": {
+      "get": {
+        "summary": "Vehicles",
+        "operationId": "vehicles_vehicles_get",
+        "parameters": [
+          {
+            "name": "filter[route]",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Filter[Route]"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE stream of vehicle events (reset/add/update/remove)"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trip_assignments": {
+      "get": {
+        "summary": "Get Trip Assignments",
+        "operationId": "get_trip_assignments_trip_assignments_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/AssignmentDetail"
+                  },
+                  "type": "object",
+                  "title": "Response Get Trip Assignments Trip Assignments Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Post Trip Assignment",
+        "operationId": "post_trip_assignment_trip_assignments_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripAssignmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripAssignmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trip_assignments/{vehicle_id}": {
+      "delete": {
+        "summary": "Delete Trip Assignment",
+        "operationId": "delete_trip_assignment_trip_assignments__vehicle_id__delete",
+        "parameters": [
+          {
+            "name": "vehicle_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vehicle Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trips/{trip_id}/predictions": {
+      "get": {
+        "summary": "Trip Predictions",
+        "operationId": "trip_predictions_trips__trip_id__predictions_get",
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Trip Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripPredictionsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/routes/{route_id}/headways": {
+      "get": {
+        "summary": "Route Headways",
+        "operationId": "route_headways_routes__route_id__headways_get",
+        "parameters": [
+          {
+            "name": "route_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Route Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AssignmentDetail": {
+        "properties": {
+          "trip_id": {
+            "type": "string",
+            "title": "Trip Id"
+          },
+          "assigned_at": {
+            "type": "string",
+            "title": "Assigned At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "trip_id",
+          "assigned_at"
+        ],
+        "title": "AssignmentDetail"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "last_poll_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Poll Time"
+          },
+          "connected_clients": {
+            "type": "integer",
+            "title": "Connected Clients"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "last_poll_time",
+          "connected_clients"
+        ],
+        "title": "HealthResponse"
+      },
+      "StopPrediction": {
+        "properties": {
+          "stop_id": {
+            "type": "string",
+            "title": "Stop Id"
+          },
+          "stop_sequence": {
+            "type": "integer",
+            "title": "Stop Sequence"
+          },
+          "scheduled_arrival": {
+            "type": "string",
+            "title": "Scheduled Arrival"
+          },
+          "predicted_arrival": {
+            "type": "string",
+            "title": "Predicted Arrival"
+          },
+          "delay_seconds": {
+            "type": "integer",
+            "title": "Delay Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stop_id",
+          "stop_sequence",
+          "scheduled_arrival",
+          "predicted_arrival",
+          "delay_seconds"
+        ],
+        "title": "StopPrediction"
+      },
+      "TripAssignmentRequest": {
+        "properties": {
+          "vehicle_id": {
+            "type": "string",
+            "title": "Vehicle Id"
+          },
+          "trip_id": {
+            "type": "string",
+            "title": "Trip Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vehicle_id",
+          "trip_id"
+        ],
+        "title": "TripAssignmentRequest"
+      },
+      "TripAssignmentResponse": {
+        "properties": {
+          "vehicle_id": {
+            "type": "string",
+            "title": "Vehicle Id"
+          },
+          "trip_id": {
+            "type": "string",
+            "title": "Trip Id"
+          },
+          "assigned_at": {
+            "type": "string",
+            "title": "Assigned At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vehicle_id",
+          "trip_id",
+          "assigned_at"
+        ],
+        "title": "TripAssignmentResponse"
+      },
+      "TripPredictionsResponse": {
+        "properties": {
+          "trip_id": {
+            "type": "string",
+            "title": "Trip Id"
+          },
+          "vehicle_id": {
+            "type": "string",
+            "title": "Vehicle Id"
+          },
+          "delay_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delay Seconds"
+          },
+          "stop_predictions": {
+            "items": {
+              "$ref": "#/components/schemas/StopPrediction"
+            },
+            "type": "array",
+            "title": "Stop Predictions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "trip_id",
+          "vehicle_id",
+          "delay_seconds",
+          "stop_predictions"
+        ],
+        "title": "TripPredictionsResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

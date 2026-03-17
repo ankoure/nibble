@@ -23,6 +23,36 @@ class FeedInfo:
     feed_version: str
 
 
+def dates_from_calendar(zf: zipfile.ZipFile) -> tuple[str, str]:
+    """Derive feed start/end dates from calendar.txt and calendar_dates.txt.
+
+    Returns a ``(start_date, end_date)`` tuple in ``YYYYMMDD`` format.  Falls
+    back to empty strings when neither file is present.
+    """
+    dates: list[str] = []
+
+    if "calendar.txt" in zf.namelist():
+        with zf.open("calendar.txt") as f:
+            reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
+            for row in reader:
+                for field in ("start_date", "end_date"):
+                    val = row.get(field, "").strip()
+                    if val:
+                        dates.append(val)
+
+    if "calendar_dates.txt" in zf.namelist():
+        with zf.open("calendar_dates.txt") as f:
+            reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
+            for row in reader:
+                val = row.get("date", "").strip()
+                if val:
+                    dates.append(val)
+
+    if not dates:
+        return "", ""
+    return min(dates), max(dates)
+
+
 def parse_feed_info(zip_content: bytes) -> FeedInfo | None:
     """Extract FeedInfo from a GTFS ZIP's feed_info.txt.
 
