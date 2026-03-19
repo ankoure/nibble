@@ -66,7 +66,6 @@ def last_stop_sequence(gtfs: StaticGTFS, trip_id: str) -> int | None:
     return times[-1].stop_sequence  # stop_times lists are sorted by stop_sequence at load time
 
 
-
 def load_static_gtfs(url: str) -> StaticGTFS:
     """Download and parse a static GTFS ZIP from a URL. Synchronous; runs at startup.
 

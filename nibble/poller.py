@@ -53,6 +53,14 @@ def _get_normalizer(name: str) -> BaseNormalizer:
         from nibble.normalizer.mwrta import MwrtaNormalizer
 
         return MwrtaNormalizer()
+    if name == "brta":
+        from nibble.normalizer.brta import BrtaNormalizer
+
+        return BrtaNormalizer()
+    if name == "vta":
+        from nibble.normalizer.vta import VtaNormalizer
+
+        return VtaNormalizer()
     raise ValueError(f"Unknown normalizer: {name!r}")
 
 

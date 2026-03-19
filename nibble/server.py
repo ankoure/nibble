@@ -444,6 +444,18 @@ def create_app(
         result = compute_headways(route_id, broadcaster.vehicle_snapshot, gtfs_holder.gtfs)
         return JSONResponse(result)
 
+    @app.get("/unknown_routes")
+    async def get_unknown_routes() -> JSONResponse:
+        from nibble import unknown_routes
+
+        return JSONResponse(unknown_routes.all_entries())
+
+    @app.delete("/unknown_routes", status_code=204)
+    async def delete_unknown_routes() -> None:
+        from nibble import unknown_routes
+
+        unknown_routes.clear()
+
     return app
 
 

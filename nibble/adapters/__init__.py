@@ -39,4 +39,16 @@ def get_adapter(
         from nibble.adapters.trillium import TrilliumAdapter
 
         return TrilliumAdapter(url, agency_id)
+    if adapter_name == "swiv":
+        from nibble.adapters.swiv import SwivAdapter
+
+        return SwivAdapter(url, agency_id)
+    if adapter_name == "routematch":
+        from nibble.adapters.routematch import RouteMatchAdapter
+
+        return RouteMatchAdapter(url, agency_id)
+    if adapter_name == "vta":
+        from nibble.adapters.vta import VtaAdapter
+
+        return VtaAdapter(url, agency_id, agency_timezone)
     raise ValueError(f"Unknown adapter: {adapter_name!r}")

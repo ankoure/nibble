@@ -27,7 +27,8 @@ class Settings(BaseSettings):
             Larger gaps are left as-is. Defaults to ``3``.
         host: Bind address for the HTTP server. Defaults to ``"0.0.0.0"``.
         port: Listen port for the HTTP server. Defaults to ``8080``.
-        adapter: Feed adapter to use - ``"gtfs_rt"`` (default) or ``"passio"``.
+        adapter: Feed adapter to use - ``"gtfs_rt"`` (default), ``"passio"``,
+            ``"mwrta"``, ``"trillium"``, or ``"swiv"``.
         agency_id: Agency identifier used by JSON adapters such as Passio GO!.
             Defaults to ``""``.
         agency_timezone: IANA timezone name for the agency (e.g.

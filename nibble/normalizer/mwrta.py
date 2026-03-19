@@ -57,4 +57,7 @@ class MwrtaNormalizer(BaseNormalizer):
                     route_id,
                     ", ".join(sorted(gtfs.route_short_names)[:10]),
                 )
+                from nibble import unknown_routes
+
+                unknown_routes.record(route_id)
         return feed
