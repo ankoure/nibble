@@ -25,6 +25,20 @@ class VtaNormalizer(BaseNormalizer):
     def normalize(
         self, feed: gtfs_realtime_pb2.FeedMessage, gtfs: StaticGTFS
     ) -> gtfs_realtime_pb2.FeedMessage:
+        """Remap VTA ``headsignText`` route identifiers to internal GTFS route IDs.
+
+        The MyTransitRide API sets ``trip.route_id`` to a ``route_short_name``
+        value (e.g. ``"3"``, ``"10"``). This method replaces those values with
+        the corresponding internal ``route_id`` from ``routes.txt``, logging a
+        warning and recording any unmatched identifiers in ``unknown_routes``.
+
+        Args:
+            feed: The raw FeedMessage from the VTA adapter.
+            gtfs: Loaded static GTFS providing the ``route_short_names`` index.
+
+        Returns:
+            The same FeedMessage with ``route_id`` fields remapped in place.
+        """
         for entity in feed.entity:
             route_id = entity.vehicle.trip.route_id
             if not route_id or route_id in gtfs.route_trips:

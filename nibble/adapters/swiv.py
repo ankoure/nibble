@@ -55,10 +55,24 @@ class SwivAdapter(BaseAdapter):
     """Fetches Swiv JSON vehicle data and converts it to a FeedMessage."""
 
     def __init__(self, url: str, agency_id: str = "") -> None:
+        """
+        Args:
+            url: Swiv REST API endpoint URL.
+            agency_id: Unused; kept for interface compatibility.
+        """
         self._url = url
         self._agency_id = agency_id
 
     async def fetch(self, client: httpx.AsyncClient) -> gtfs_realtime_pb2.FeedMessage | None:
+        """GET the Swiv vehicle data and convert it to a GTFS-RT FeedMessage.
+
+        Appends a ``_tmp`` millisecond timestamp to the URL to bust caches.
+        Speed values (``vitesse``) are converted from km/h to m/s; implausible
+        values (> 150 km/h) are dropped. Out-of-bounds positions are skipped.
+
+        Returns:
+            A FeedMessage containing one entity per vehicle, or None on error.
+        """
         parsed = urlparse(self._url)
         params = parse_qs(parsed.query, keep_blank_values=True)
         params["_tmp"] = [str(int(time.time() * 1000))]

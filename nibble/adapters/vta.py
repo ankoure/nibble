@@ -53,11 +53,27 @@ class VtaAdapter(BaseAdapter):
     """Fetches VTA MyTransitRide JSON vehicle data and converts it to a FeedMessage."""
 
     def __init__(self, url: str, agency_id: str = "", agency_timezone: str | None = None) -> None:
+        """
+        Args:
+            url: VTA MyTransitRide API endpoint URL (must include ``patternIds`` query param).
+            agency_id: Unused; kept for interface compatibility.
+            agency_timezone: IANA timezone name (e.g. ``"America/New_York"``) used to
+                interpret naive ``lastUpdate`` values.  Defaults to UTC.
+        """
         self._url = url
         self._agency_id = agency_id
         self._tz = zoneinfo.ZoneInfo(agency_timezone) if agency_timezone else timezone.utc
 
     async def fetch(self, client: httpx.AsyncClient) -> gtfs_realtime_pb2.FeedMessage | None:
+        """GET the VTA vehicle data and convert it to a GTFS-RT FeedMessage.
+
+        Speed values (``velocity``) are converted from mph to m/s. ``lastUpdate``
+        is a naive local datetime interpreted with the configured agency timezone.
+        Out-of-bounds positions (outside Martha's Vineyard bounding box) are skipped.
+
+        Returns:
+            A FeedMessage containing one entity per vehicle, or None on error.
+        """
         try:
             response = await client.get(self._url, timeout=30)
         except httpx.RequestError as exc:

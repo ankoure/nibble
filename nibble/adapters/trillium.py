@@ -46,10 +46,23 @@ class TrilliumAdapter(BaseAdapter):
     """Fetches Trillium Transit JSON vehicle data and converts it to a FeedMessage."""
 
     def __init__(self, url: str, agency_id: str = "") -> None:
+        """
+        Args:
+            url: Trillium Transit JSON API endpoint URL.
+            agency_id: Unused; kept for interface compatibility.
+        """
         self._url = url
         self._agency_id = agency_id
 
     async def fetch(self, client: httpx.AsyncClient) -> gtfs_realtime_pb2.FeedMessage | None:
+        """GET the Trillium vehicle data and convert it to a GTFS-RT FeedMessage.
+
+        Extracts vehicles from the top-level ``data`` array. ``lastUpdated``
+        timestamps are parsed as ISO 8601 UTC.
+
+        Returns:
+            A FeedMessage containing one entity per vehicle, or None on error.
+        """
         try:
             response = await client.get(self._url, timeout=30)
         except httpx.RequestError as exc:

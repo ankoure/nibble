@@ -53,10 +53,25 @@ class RouteMatchAdapter(BaseAdapter):
     """Fetches RouteMatch JSON vehicle data and converts it to a FeedMessage."""
 
     def __init__(self, url: str, agency_id: str = "") -> None:
+        """
+        Args:
+            url: RouteMatch REST API endpoint URL.
+            agency_id: Unused; kept for interface compatibility.
+        """
         self._url = url
         self._agency_id = agency_id
 
     async def fetch(self, client: httpx.AsyncClient) -> gtfs_realtime_pb2.FeedMessage | None:
+        """GET the RouteMatch vehicle data and convert it to a GTFS-RT FeedMessage.
+
+        Deadheading vehicles are skipped. Speed values (``speed``) are converted
+        from mph to m/s; implausible values (> 100 mph) are dropped. Out-of-bounds
+        positions are skipped. Falls back to the feed header timestamp when
+        ``lastUpdate`` is absent or unparseable.
+
+        Returns:
+            A FeedMessage containing one entity per non-deadheading vehicle, or None on error.
+        """
         try:
             response = await client.get(self._url, timeout=30)
         except httpx.RequestError as exc:
