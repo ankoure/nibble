@@ -39,7 +39,7 @@ async def _read_sse_events(
 
     The stream cleanup after breaking (server-side awaiting queue.get()) may be
     slow to detect the disconnect. asyncio.timeout() cancels the entire block
-    after `timeout` seconds — by then `collected` is already populated from before
+    after `timeout` seconds - by then `collected` is already populated from before
     the break, so the TimeoutError is suppressed and events are returned normally.
     """
     collected: list[tuple[str, str]] = []

@@ -95,7 +95,7 @@ class OverrideStore:
             if isinstance(loaded, dict):
                 self._data = loaded
                 logger.info("Loaded %d override(s) from %s", len(self._data), self.path)
-        except Exception:
+        except (OSError, json.JSONDecodeError):
             logger.exception(
                 "Failed to load overrides from %s; starting with empty store", self.path
             )
@@ -106,6 +106,6 @@ class OverrideStore:
         try:
             tmp.write_text(json.dumps(self._data, indent=2), encoding="utf-8")
             os.replace(tmp, self.path)
-        except Exception:
+        except OSError:
             logger.exception("Failed to persist overrides to %s", self.path)
             tmp.unlink(missing_ok=True)

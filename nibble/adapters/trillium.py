@@ -1,4 +1,4 @@
-"""Trillium Transit JSON API adapter — converts to GTFS-RT FeedMessage.
+"""Trillium Transit JSON API adapter - converts to GTFS-RT FeedMessage.
 
 Trillium returns a JSON object with a top-level ``data`` array of vehicle
 objects. This adapter translates each object into a GTFS-RT VehiclePosition

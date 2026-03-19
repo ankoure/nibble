@@ -1,7 +1,7 @@
 """Integration tests verifying that normalizations applied in one pipeline stage
 produce correct outcomes in downstream stages.
 
-Each test chains two components — the normalization in stage N is what enables
+Each test chains two components - the normalization in stage N is what enables
 correct behavior in stage N+1. This is distinct from unit tests (which verify
 a normalization was applied) and from pipeline tests (which verify overall flow).
 """
@@ -249,7 +249,7 @@ class TestFeedParsingNormalizationsFlowThrough:
         """A feed entity with empty vehicle.id but non-empty entity.id must be
         keyed by entity.id through _parse_feed and into StateStore.
 
-        Proves: the vehicle_id fallback normalization is consistent — the same
+        Proves: the vehicle_id fallback normalization is consistent - the same
         key used in _parse_feed is the key used in the StateStore.
         """
         feed = gtfs_realtime_pb2.FeedMessage()
@@ -257,7 +257,7 @@ class TestFeedParsingNormalizationsFlowThrough:
         feed.header.timestamp = 1704067200
         entity = feed.entity.add()
         entity.id = "e1"
-        # Do NOT set entity.vehicle.vehicle — HasField("vehicle") will be False,
+        # Do NOT set entity.vehicle.vehicle - HasField("vehicle") will be False,
         # so _parse_feed falls back to entity.id.
         entity.vehicle.trip.trip_id = "trip-1"
         entity.vehicle.trip.route_id = "route-1"
@@ -279,7 +279,7 @@ class TestFeedParsingNormalizationsFlowThrough:
 
 class TestNormalizerPipelineIntegration:
     """The RIPTA normalizer must produce trip_ids that resolve as
-    confidence='confirmed' in the StateStore — not just a correctly-parsed
+    confidence='confirmed' in the StateStore - not just a correctly-parsed
     string value."""
 
     def test_ripta_suffix_strip_produces_confirmed_confidence(

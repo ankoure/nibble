@@ -12,8 +12,8 @@ from typing import Any, cast
 import pytest
 import pytest_asyncio
 import httpx
+from fastapi import FastAPI
 from google.transit import gtfs_realtime_pb2
-from starlette.applications import Starlette
 from starlette.types import ASGIApp
 
 from nibble.config import Settings
@@ -56,7 +56,7 @@ class _StreamingBody(httpx.AsyncByteStream):
 
 
 class StreamingASGITransport(httpx.AsyncBaseTransport):
-    """ASGI transport that delivers chunks incrementally — required for SSE tests."""
+    """ASGI transport that delivers chunks incrementally - required for SSE tests."""
 
     def __init__(self, app: ASGIApp) -> None:
         self._app = app
@@ -200,6 +200,7 @@ def feed_message() -> gtfs_realtime_pb2.FeedMessage:
 @pytest.fixture
 def settings() -> Settings:
     return Settings(
+        _env_file=None,
         gtfs_rt_url="http://example.com/rt",
         gtfs_static_url="http://example.com/static.zip",
     )
@@ -213,14 +214,14 @@ def broadcaster() -> Broadcaster:
 @pytest.fixture
 def app(
     settings: Settings, broadcaster: Broadcaster, static_gtfs: StaticGTFS, tmp_path: Any
-) -> Starlette:
+) -> FastAPI:
     overrides = OverrideStore(tmp_path / "overrides.json")
     return create_app(settings, broadcaster, overrides, GtfsHolder(static_gtfs))
 
 
 @pytest_asyncio.fixture
-async def async_client(app: Starlette) -> AsyncGenerator[httpx.AsyncClient, None]:
-    """Async HTTPX client backed by the Starlette ASGI app (streaming transport for SSE)."""
+async def async_client(app: FastAPI) -> AsyncGenerator[httpx.AsyncClient, None]:
+    """Async HTTPX client backed by the FastAPI ASGI app (streaming transport for SSE)."""
     transport = StreamingASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         yield client

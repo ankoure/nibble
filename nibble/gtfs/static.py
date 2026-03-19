@@ -66,20 +66,6 @@ def last_stop_sequence(gtfs: StaticGTFS, trip_id: str) -> int | None:
     return times[-1].stop_sequence  # stop_times lists are sorted by stop_sequence at load time
 
 
-def get_route_id(gtfs: StaticGTFS, trip_id: str) -> str | None:
-    """Return the route_id for a trip_id, or None if not found.
-
-    Args:
-        gtfs: The loaded static GTFS indexes.
-        trip_id: The GTFS trip identifier to look up.
-
-    Returns:
-        The ``route_id`` string, or ``None`` if the trip is not in the index.
-    """
-    trip = gtfs.trips.get(trip_id)
-    return trip.route_id if trip else None
-
-
 def load_static_gtfs(url: str) -> StaticGTFS:
     """Download and parse a static GTFS ZIP from a URL. Synchronous; runs at startup.
 
@@ -166,16 +152,14 @@ def infer_stop_from_position(
     vehicle_dist = _project_onto_polyline(lat, lon, shape_pts)
 
     for st in timed:
-        assert st.shape_dist_traveled is not None
-        if abs(st.shape_dist_traveled - vehicle_dist) <= _STOPPED_THRESHOLD_M:
+        if abs((st.shape_dist_traveled or 0.0) - vehicle_dist) <= _STOPPED_THRESHOLD_M:
             return st.stop_id, st.stop_sequence, "STOPPED_AT"
 
     for st in timed:
-        assert st.shape_dist_traveled is not None
-        if st.shape_dist_traveled > vehicle_dist:
+        if (st.shape_dist_traveled or 0.0) > vehicle_dist:
             return st.stop_id, st.stop_sequence, "IN_TRANSIT_TO"
 
-    # Vehicle is past the last stop — report the last stop
+    # Vehicle is past the last stop - report the last stop
     last = timed[-1]
     return last.stop_id, last.stop_sequence, "IN_TRANSIT_TO"
 
@@ -242,7 +226,7 @@ def infer_trip_from_position(
             time-of-day filtering.
         agency_timezone: IANA timezone string (e.g. ``"America/New_York"``).
             Required for time-of-day filtering.
-        bearing: Vehicle heading in degrees clockwise from north (0–359), or
+        bearing: Vehicle heading in degrees clockwise from north (0-359), or
             ``None`` if not reported.  When provided, trips whose shape runs
             more than :data:`_BEARING_TOLERANCE_DEG` degrees opposite to the
             vehicle's heading at the projected point are excluded.  The filter
@@ -269,7 +253,7 @@ def infer_trip_from_position(
         """Return True if local_tod falls within this trip's scheduled window."""
         times = gtfs.stop_times.get(trip_id)
         if not times:
-            return True  # no schedule data — don't filter out
+            return True  # no schedule data - don't filter out
         secs = []
         for st in times:
             s = _gtfs_time_to_seconds(st.departure_time or st.arrival_time)
@@ -277,8 +261,9 @@ def infer_trip_from_position(
                 secs.append(s)
         if not secs:
             return True
+        if local_tod is None:
+            return True
         first, last = min(secs), max(secs)
-        assert local_tod is not None
         # Check both the current calendar day and the "extended" day (handles
         # post-midnight trips that use HH > 23 in GTFS)
         for tod in (local_tod, local_tod + 86400):
@@ -305,6 +290,13 @@ def infer_trip_from_position(
         time_filtered = [tid for tid in candidates if _in_time_window(tid)]
         if time_filtered:
             candidates = time_filtered
+        else:
+            logger.debug(
+                "infer_trip_from_position: time filter eliminated all candidates for "
+                "route %r at tod=%ds; falling back to geometry-only",
+                route_id,
+                local_tod,
+            )
 
     # Apply bearing filter; fall back to all remaining candidates if none survive
     if bearing is not None:
@@ -326,6 +318,13 @@ def infer_trip_from_position(
                 bearing_filtered.append(tid)
         if bearing_filtered:
             candidates = bearing_filtered
+        else:
+            logger.debug(
+                "infer_trip_from_position: bearing filter eliminated all candidates for "
+                "route %r (vehicle bearing=%.1f); falling back to time-filtered set",
+                route_id,
+                bearing,
+            )
 
     return min(candidates, key=scores.__getitem__)
 
@@ -382,7 +381,7 @@ def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 def _shape_bearing_at_projection(
     lat: float, lon: float, shape_pts: list[tuple[float, float]]
 ) -> float | None:
-    """Return the bearing (degrees, 0–359) of the shape at the point closest to (lat, lon).
+    """Return the bearing (degrees, 0-359) of the shape at the point closest to (lat, lon).
 
     Finds the segment with minimum perpendicular distance using the same
     flat-earth approximation as :func:`_min_distance_to_polyline`, then
@@ -426,7 +425,7 @@ def _shape_bearing_at_projection(
 
 
 def _angle_difference(a: float, b: float) -> float:
-    """Return the absolute angular difference between two bearings (0–180 degrees)."""
+    """Return the absolute angular difference between two bearings (0-180 degrees)."""
     diff = abs(a - b) % 360
     return diff if diff <= 180 else 360 - diff
 
@@ -525,6 +524,12 @@ def _fill_shape_dist_traveled(gtfs: StaticGTFS) -> None:
         for st in times:
             coords = gtfs.stops.get(st.stop_id)
             if coords is None:
+                logger.warning(
+                    "Stop %r on trip %r has no coordinates in stops.txt; "
+                    "shape_dist_traveled will be None and stop inference may be impaired",
+                    st.stop_id,
+                    trip_id,
+                )
                 continue
             st.shape_dist_traveled = _project_onto_polyline(coords[0], coords[1], shape_pts, cum)
 
@@ -567,6 +572,8 @@ def _parse_gtfs_zip(content: bytes) -> StaticGTFS:
                     route_id = row.get("route_id", "").strip()
                     if not route_id:
                         continue
+                    # Index by both short and long name so feeds that report either
+                    # value as their route identifier can be resolved.
                     for col in ("route_short_name", "route_long_name"):
                         name = row.get(col, "").strip()
                         if name:

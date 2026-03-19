@@ -26,8 +26,6 @@ from nibble.state import StateStore
 
 logger = logging.getLogger(__name__)
 
-_NORMALIZER_REGISTRY: dict[str, type[BaseNormalizer]] = {}
-
 
 def _get_normalizer(name: str) -> BaseNormalizer:
     """Instantiate a normalizer by name.
@@ -35,7 +33,7 @@ def _get_normalizer(name: str) -> BaseNormalizer:
     Imports are deferred to avoid circular dependencies and keep startup fast.
 
     Args:
-        name: Normalizer identifier — ``"default"`` or ``"ripta"``.
+        name: Normalizer identifier - ``"default"`` or ``"ripta"``.
 
     Returns:
         A ``BaseNormalizer`` instance for the given name.
@@ -55,6 +53,14 @@ def _get_normalizer(name: str) -> BaseNormalizer:
         from nibble.normalizer.mwrta import MwrtaNormalizer
 
         return MwrtaNormalizer()
+    if name == "brta":
+        from nibble.normalizer.brta import BrtaNormalizer
+
+        return BrtaNormalizer()
+    if name == "vta":
+        from nibble.normalizer.vta import VtaNormalizer
+
+        return VtaNormalizer()
     raise ValueError(f"Unknown normalizer: {name!r}")
 
 
@@ -98,6 +104,8 @@ def _parse_feed(feed: gtfs_realtime_pb2.FeedMessage) -> dict[str, VehicleEvent]:
         ts = datetime.fromtimestamp(v.timestamp, tz=timezone.utc) if v.timestamp else feed_time
         label = v.vehicle.label if v.HasField("vehicle") and v.vehicle.label else None
         stop_id = v.stop_id if v.stop_id else None
+        # In proto3 all int fields default to 0, which is indistinguishable from
+        # "not set". GTFS stop sequences start at 1 in practice, so 0 means unset.
         seq = v.current_stop_sequence if v.current_stop_sequence else None
 
         status_map: dict[int, Literal["INCOMING_AT", "STOPPED_AT", "IN_TRANSIT_TO"]] = {
@@ -134,7 +142,7 @@ async def poll_loop(
     """Run the feed poll loop forever, broadcasting SSE events on each cycle.
 
     Handles transient errors (network failures, bad responses, parse errors)
-    gracefully — a failed poll is logged and skipped; the loop continues on
+    gracefully - a failed poll is logged and skipped; the loop continues on
     the next interval. Unexpected exceptions are also caught and logged so
     the loop never crashes the server.
 

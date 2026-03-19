@@ -1,4 +1,4 @@
-"""Tests for nibble.adapters.mwrta — MWRTA JSON → FeedMessage."""
+"""Tests for nibble.adapters.mwrta - MWRTA JSON → FeedMessage."""
 
 from __future__ import annotations
 
@@ -87,7 +87,7 @@ async def test_zero_coordinates_rejected() -> None:
     async with httpx.AsyncClient() as client:
         feed = await adapter.fetch(client)
     assert feed is not None
-    # Position should not be set — protobuf defaults are 0.0, but a valid vehicle
+    # Position should not be set - protobuf defaults are 0.0, but a valid vehicle
     # at (42.276, -71.412) round-trips; for the invalid vehicle, lat stays at 0.0
     # because the adapter skipped it. We verify by checking a valid vehicle differs.
     entity = feed.entity[0]
@@ -98,7 +98,7 @@ async def test_zero_coordinates_rejected() -> None:
 @pytest.mark.asyncio
 @respx.mock
 async def test_out_of_bounds_coordinates_rejected() -> None:
-    vehicle = _vehicle(Lat=51.5, Long=-0.1)  # London — clearly out of MWRTA area
+    vehicle = _vehicle(Lat=51.5, Long=-0.1)  # London - clearly out of MWRTA area
     respx.get(URL).mock(return_value=httpx.Response(200, json=[vehicle]))
     adapter = MwrtaAdapter(url=URL, agency_timezone="America/New_York")
     async with httpx.AsyncClient() as client:

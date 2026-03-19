@@ -1,7 +1,14 @@
 -include .env
 export
 
-.PHONY: fix-gtfs
+.PHONY: fix-gtfs lint typecheck
+
+lint: ## Run ruff and vulture
+	uv run ruff check nibble/ tests/
+	uv run vulture nibble/ whitelist_vulture.py --min-confidence 80
+
+typecheck: ## Run mypy
+	uv run mypy nibble/
 
 fix-gtfs: ## Download and fix the GTFS static bundle, writing fixed.zip
 	python3 -c "\

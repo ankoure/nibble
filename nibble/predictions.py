@@ -136,11 +136,11 @@ def _to_local(ts: datetime, agency_timezone: str | None) -> datetime:
     """Convert *ts* to the given timezone, falling back to UTC."""
     if agency_timezone:
         try:
-            from zoneinfo import ZoneInfo
+            from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
             tz = ZoneInfo(agency_timezone)
             return ts.astimezone(tz)
-        except Exception:
+        except (ZoneInfoNotFoundError, KeyError):
             logger.warning("Unknown agency_timezone %r; falling back to UTC", agency_timezone)
     if ts.tzinfo is None:
         ts = ts.replace(tzinfo=timezone.utc)

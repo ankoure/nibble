@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
-from nibble.models import SSEEvent, VehicleEvent
+from nibble.models import VehicleEvent
 
 
 def to_mbta_v3(event: VehicleEvent) -> dict[str, Any]:
@@ -58,21 +57,3 @@ def to_mbta_v3(event: VehicleEvent) -> dict[str, Any]:
         "attributes": attributes,
         "relationships": relationships,
     }
-
-
-def build_sse_payload(sse_event: SSEEvent) -> str:
-    """Serialize an SSEEvent to MBTA V3 SSE wire format.
-
-    Args:
-        sse_event: The SSE event to serialize.
-
-    Returns:
-        A JSON string with ``"event"`` and ``"data"`` keys, suitable for
-        writing directly to an ``text/event-stream`` response.
-    """
-    return json.dumps(
-        {
-            "event": sse_event.event_type,
-            "data": sse_event.data,
-        }
-    )

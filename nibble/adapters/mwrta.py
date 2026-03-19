@@ -1,4 +1,4 @@
-"""MWRTA JSON API adapter — converts to GTFS-RT FeedMessage.
+"""MWRTA JSON API adapter - converts to GTFS-RT FeedMessage.
 
 MWRTA returns an array of vehicle objects from its REST API. This adapter
 translates each object into a GTFS-RT VehiclePosition entity.
@@ -108,7 +108,7 @@ class MwrtaAdapter(BaseAdapter):
                     flat, flon = float(lat), float(lon)
                 except (TypeError, ValueError):
                     logger.debug(
-                        "MWRTA: non-numeric lat/lon %r/%r for ID %s — skipping position",
+                        "MWRTA: non-numeric lat/lon %r/%r for ID %s - skipping position",
                         lat,
                         lon,
                         vehicle_id,
@@ -119,7 +119,7 @@ class MwrtaAdapter(BaseAdapter):
                         vp.position.longitude = flon
                     else:
                         logger.warning(
-                            "MWRTA: out-of-bounds position lat=%s lon=%s for ID %s — skipping",
+                            "MWRTA: out-of-bounds position lat=%s lon=%s for ID %s - skipping",
                             flat,
                             flon,
                             vehicle_id,

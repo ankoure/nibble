@@ -7,10 +7,11 @@ from nibble.gtfs.static import (
     _angle_difference,
     _parse_gtfs_zip,
     _shape_bearing_at_projection,
+    infer_stop_from_position,
     infer_trip_from_position,
 )
 from nibble.gtfs.static import StaticGTFS
-from nibble.models import Trip
+from nibble.models import StopTime, Trip
 
 
 def _make_zip(**files: str) -> bytes:
@@ -183,7 +184,7 @@ class TestShapeBearingAtProjection:
     def test_picks_nearest_segment(self) -> None:
         # Shape: northbound then turns eastbound; vehicle is clearly near the eastbound segment
         shape = [(42.00, -71.0), (42.10, -71.0), (42.10, -70.9)]
-        # Vehicle near the eastbound leg — expected bearing ~90°
+        # Vehicle near the eastbound leg - expected bearing ~90°
         bearing = _shape_bearing_at_projection(42.10, -70.95, shape)
         assert bearing is not None
         assert abs(bearing - 90.0) < 5.0
@@ -227,13 +228,13 @@ class TestInferTripFromPositionBearing:
 
     def test_no_bearing_returns_closest_by_distance(self) -> None:
         # Without bearing, both trips are equidistant (same position on mirrored shapes)
-        # — just verify it returns one of them without error
+        # - just verify it returns one of them without error
         gtfs = _gtfs_with_two_trips()
         result = infer_trip_from_position(42.05, -71.0, "route-1", gtfs, bearing=None)
         assert result in ("trip-nb", "trip-sb")
 
     def test_bearing_filter_falls_back_when_all_filtered(self) -> None:
-        # Perpendicular bearing (90°) filters both trips — should still return a result
+        # Perpendicular bearing (90°) filters both trips - should still return a result
         gtfs = _gtfs_with_two_trips()
         result = infer_trip_from_position(42.05, -71.0, "route-1", gtfs, bearing=90.0)
         assert result in ("trip-nb", "trip-sb")
@@ -248,3 +249,95 @@ class TestInferTripFromPositionBearing:
         # All trips pass the filter (no-shape trips are always kept); result is one of the valid ones
         result = infer_trip_from_position(42.05, -71.0, "route-1", gtfs, bearing=0.0)
         assert result is not None
+
+
+def _gtfs_with_shape_and_stops() -> StaticGTFS:
+    """Build a minimal StaticGTFS suitable for infer_stop_from_position testing.
+
+    Shape: two points running north along lon=-71.
+    Trip has two stops with shape_dist_traveled values.
+    """
+    gtfs = StaticGTFS()
+    gtfs.trips["trip-1"] = Trip(trip_id="trip-1", route_id="route-1", shape_id="shape-1")
+    gtfs.shapes["shape-1"] = [(42.00, -71.0), (42.10, -71.0)]
+    # Stop A at 0m (42.00, -71.0), stop B at ~11km (42.10, -71.0)
+    gtfs.stops["stop-A"] = (42.00, -71.0)
+    gtfs.stops["stop-B"] = (42.10, -71.0)
+    shape_len = 11131.9  # approximate metres between the two shape points
+    gtfs.stop_times["trip-1"] = [
+        StopTime(
+            trip_id="trip-1",
+            stop_id="stop-A",
+            stop_sequence=1,
+            arrival_time="12:00:00",
+            departure_time="12:00:30",
+            shape_dist_traveled=0.0,
+        ),
+        StopTime(
+            trip_id="trip-1",
+            stop_id="stop-B",
+            stop_sequence=2,
+            arrival_time="12:10:00",
+            departure_time="12:10:30",
+            shape_dist_traveled=shape_len,
+        ),
+    ]
+    return gtfs
+
+
+class TestInferStopFromPosition:
+    def test_vehicle_at_first_stop_is_stopped_at(self) -> None:
+        gtfs = _gtfs_with_shape_and_stops()
+        stop_id, seq, status = infer_stop_from_position(42.00, -71.0, "trip-1", gtfs)
+        assert stop_id == "stop-A"
+        assert seq == 1
+        assert status == "STOPPED_AT"
+
+    def test_vehicle_at_second_stop_is_stopped_at(self) -> None:
+        gtfs = _gtfs_with_shape_and_stops()
+        stop_id, seq, status = infer_stop_from_position(42.10, -71.0, "trip-1", gtfs)
+        assert stop_id == "stop-B"
+        assert seq == 2
+        assert status == "STOPPED_AT"
+
+    def test_vehicle_midway_is_in_transit_to_second_stop(self) -> None:
+        gtfs = _gtfs_with_shape_and_stops()
+        # At ~42.05, well past stop-A but not yet stop-B
+        stop_id, seq, status = infer_stop_from_position(42.05, -71.0, "trip-1", gtfs)
+        assert stop_id == "stop-B"
+        assert seq == 2
+        assert status == "IN_TRANSIT_TO"
+
+    def test_vehicle_past_last_stop_returns_last_stop(self) -> None:
+        gtfs = _gtfs_with_shape_and_stops()
+        # Vehicle past the end of the shape - projects onto the last vertex, which is
+        # within stopped threshold of stop-B, so it appears STOPPED_AT the last stop.
+        stop_id, seq, status = infer_stop_from_position(42.15, -71.0, "trip-1", gtfs)
+        assert stop_id == "stop-B"
+        assert seq == 2
+        assert status == "STOPPED_AT"
+
+    def test_unknown_trip_returns_nones(self) -> None:
+        gtfs = _gtfs_with_shape_and_stops()
+        stop_id, seq, status = infer_stop_from_position(42.05, -71.0, "no-such-trip", gtfs)
+        assert stop_id is None
+        assert seq is None
+        assert status == "IN_TRANSIT_TO"
+
+    def test_trip_without_shape_returns_nones(self) -> None:
+        gtfs = _gtfs_with_shape_and_stops()
+        gtfs.trips["trip-no-shape"] = Trip(trip_id="trip-no-shape", route_id="r", shape_id=None)
+        gtfs.stop_times["trip-no-shape"] = gtfs.stop_times["trip-1"]
+        stop_id, seq, status = infer_stop_from_position(42.05, -71.0, "trip-no-shape", gtfs)
+        assert stop_id is None
+        assert seq is None
+
+    def test_no_stop_times_with_shape_dist_returns_nones(self) -> None:
+        gtfs = _gtfs_with_shape_and_stops()
+        # Strip shape_dist_traveled from all stop times
+        for st in gtfs.stop_times["trip-1"]:
+            st.shape_dist_traveled = None
+        # _fill_shape_dist_traveled would normally fill these, but we test the raw guard
+        stop_id, seq, status = infer_stop_from_position(42.05, -71.0, "trip-1", gtfs)
+        # Without shape_dist_traveled the function returns nones
+        assert stop_id is None

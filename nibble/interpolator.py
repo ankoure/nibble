@@ -66,7 +66,7 @@ def interpolate(
     curr_seq = curr.current_stop_sequence
 
     if curr_seq <= prev_seq:
-        # Backwards — likely a new trip, skip interpolation
+        # Backwards - likely a new trip, skip interpolation
         logger.debug(
             "interpolate: backwards sequence vehicle=%s trip=%s prev_seq=%d curr_seq=%d",
             curr.vehicle_id,
@@ -123,7 +123,7 @@ def interpolate(
     if total_seconds <= 0:
         logger.warning(
             "interpolate: non-positive time window vehicle=%s trip=%s "
-            "prev_time=%s curr_time=%s total_seconds=%.1f — skipping",
+            "prev_time=%s curr_time=%s total_seconds=%.1f - skipping",
             curr.vehicle_id,
             trip_id,
             prev_time,
@@ -199,7 +199,7 @@ def _linear_interpolate(prev: VehicleState, curr: VehicleEvent, gap: int) -> lis
     if total_seconds <= 0:
         logger.warning(
             "_linear_interpolate: non-positive time window vehicle=%s "
-            "prev_time=%s curr_time=%s total_seconds=%.1f — skipping",
+            "prev_time=%s curr_time=%s total_seconds=%.1f - skipping",
             curr.vehicle_id,
             prev_time,
             curr_time,
@@ -218,7 +218,7 @@ def _linear_interpolate(prev: VehicleState, curr: VehicleEvent, gap: int) -> lis
                 trip_id=curr.trip_id,
                 route_id=curr.route_id,
                 stop_id=curr.stop_id if is_last else None,
-                current_stop_sequence=(prev.last_valid_stop_sequence or 0) + i
+                current_stop_sequence=prev.last_valid_stop_sequence + i
                 if prev.last_valid_stop_sequence is not None
                 else None,
                 current_status=curr.current_status if is_last else "IN_TRANSIT_TO",
@@ -235,7 +235,14 @@ def _linear_interpolate(prev: VehicleState, curr: VehicleEvent, gap: int) -> lis
 
 def _state_timestamp(state: VehicleState) -> datetime | None:
     """Return state.last_seen if it is timezone-aware, else None."""
-    return state.last_seen if state.last_seen.tzinfo else None
+    if not state.last_seen.tzinfo:
+        logger.warning(
+            "VehicleState.last_seen for %s is timezone-naive; "
+            "falling back to 60s-per-stop estimate for interpolation",
+            state.vehicle_id,
+        )
+        return None
+    return state.last_seen
 
 
 def _scheduled_durations(stop_times: list[StopTime], prev_seq: int, curr_seq: int) -> list[float]:
@@ -284,7 +291,15 @@ def _scheduled_durations(stop_times: list[StopTime], prev_seq: int, curr_seq: in
     base = filled[0]
     if base is None:
         return []
-    return [max(0.0, v - base) for v in filled[1:]]  # type: ignore[operator]
+    durations = [max(0.0, v - base) for v in filled[1:]]  # type: ignore[operator]
+    if any(d == 0.0 for d in durations[:-1]):
+        logger.debug(
+            "_scheduled_durations: non-monotonic scheduled times clamped to 0 "
+            "for trip with prev_seq=%d curr_seq=%d",
+            prev_seq,
+            curr_seq,
+        )
+    return durations
 
 
 def _stop_bearing(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

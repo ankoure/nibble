@@ -21,13 +21,14 @@ class Settings(BaseSettings):
             Defaults to ``15``.
         stale_vehicle_threshold_seconds: Seconds after which a vehicle with
             no ``trip_id`` is considered stale and removed. Defaults to ``90``.
-        normalizer: Name of the feed normalizer plugin — ``"default"``,
+        normalizer: Name of the feed normalizer plugin - ``"default"``,
             ``"ripta"``, or ``"mwrta"``. Defaults to ``"default"``.
         max_interpolation_stops: Maximum stop gap size to interpolate.
             Larger gaps are left as-is. Defaults to ``3``.
         host: Bind address for the HTTP server. Defaults to ``"0.0.0.0"``.
         port: Listen port for the HTTP server. Defaults to ``8080``.
-        adapter: Feed adapter to use — ``"gtfs_rt"`` (default) or ``"passio"``.
+        adapter: Feed adapter to use - ``"gtfs_rt"`` (default), ``"passio"``,
+            ``"mwrta"``, ``"trillium"``, or ``"swiv"``.
         agency_id: Agency identifier used by JSON adapters such as Passio GO!.
             Defaults to ``""``.
         agency_timezone: IANA timezone name for the agency (e.g.
@@ -53,7 +54,7 @@ class Settings(BaseSettings):
             bundle, in hours. When set, a background loop re-downloads the
             feed and reloads the in-memory indexes if ``feed_start_date`` has
             changed. Defaults to ``None`` (no reload).
-        enable_sse: When ``True`` (the default), start the Starlette HTTP
+        enable_sse: When ``True`` (the default), start the FastAPI HTTP
             server and serve SSE vehicle-event streams. Set to ``False`` to
             run in a headless polling-only mode (useful when the only output
             is S3 VehiclePositions). Defaults to ``True``.

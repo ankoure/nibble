@@ -1,4 +1,4 @@
-"""Tests for nibble.gtfs.publisher — uses moto to mock S3."""
+"""Tests for nibble.gtfs.publisher - uses moto to mock S3."""
 
 from __future__ import annotations
 

@@ -1,7 +1,7 @@
 """Integration tests for the full GTFS-RT → SSE event pipeline.
 
 Tests wire together _parse_feed, StateStore, reconcile, and interpolate
-using real data objects — no HTTP mocking required.
+using real data objects - no HTTP mocking required.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ def _settings(**kwargs: Any) -> Settings:
         max_interpolation_stops=3,
     )
     defaults.update(kwargs)
-    return Settings(**defaults)
+    return Settings(_env_file=None, **defaults)
 
 
 def _ts(offset_seconds: int = 0) -> datetime:
