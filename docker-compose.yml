@@ -25,13 +25,16 @@ x-s3-common: &s3-common
   NIBBLE_S3_BUCKET: ${NIBBLE_S3_BUCKET}
   NIBBLE_S3_REGION: ${NIBBLE_S3_REGION:-us-east-1}
 
+x-nibble-env-defaults: &nibble-env-defaults
+  NIBBLE_GTFS_RELOAD_INTERVAL_HOURS: "24"
+
 services:
   nibble-bat:
     <<: *nibble-base
     ports:
       - "8080:8080"
     environment:
-      <<: [*aws, *s3-common]
+      <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: passio
       NIBBLE_NORMALIZER: default
       NIBBLE_GTFS_RT_URL: ${BAT_GTFS_RT_URL}
@@ -46,7 +49,7 @@ services:
     ports:
       - "8081:8080"
     environment:
-      <<: [*aws, *s3-common]
+      <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: routematch
       NIBBLE_NORMALIZER: brta
       NIBBLE_GTFS_RT_URL: ${BRTA_GTFS_RT_URL}
@@ -61,7 +64,7 @@ services:
     ports:
       - "8082:8080"
     environment:
-      <<: [*aws, *s3-common]
+      <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: trillium
       NIBBLE_NORMALIZER: default
       NIBBLE_GTFS_RT_URL: ${CATA_GTFS_RT_URL}
@@ -76,7 +79,7 @@ services:
     ports:
       - "8083:8080"
     environment:
-      <<: [*aws, *s3-common]
+      <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: mwrta
       NIBBLE_NORMALIZER: mwrta
       NIBBLE_GTFS_RT_URL: ${CCRTA_GTFS_RT_URL}
@@ -91,7 +94,7 @@ services:
     ports:
       - "8084:8080"
     environment:
-      <<: [*aws, *s3-common]
+      <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: passio
       NIBBLE_NORMALIZER: default
       NIBBLE_GTFS_RT_URL: ${FRTA_GTFS_RT_URL}
@@ -106,7 +109,7 @@ services:
     ports:
       - "8085:8080"
     environment:
-      <<: [*aws, *s3-common]
+      <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: swiv
       NIBBLE_NORMALIZER: default
       NIBBLE_GTFS_RT_URL: ${GATRA_GTFS_RT_URL}
@@ -121,7 +124,7 @@ services:
     ports:
       - "8086:8080"
     environment:
-      <<: [*aws, *s3-common]
+      <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: swiv
       NIBBLE_NORMALIZER: default
       NIBBLE_GTFS_RT_URL: ${LRTA_GTFS_RT_URL}
@@ -136,7 +139,7 @@ services:
     ports:
       - "8087:8080"
     environment:
-      <<: [*aws, *s3-common]
+      <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: passio
       NIBBLE_NORMALIZER: default
       NIBBLE_GTFS_RT_URL: ${MART_GTFS_RT_URL}
@@ -145,13 +148,14 @@ services:
       NIBBLE_POLL_INTERVAL_SECONDS: 15
       NIBBLE_GTFS_STATIC_FIX: "false"
       NIBBLE_S3_AGENCY_SLUG: mart
+      NIBBLE_IGNORE_UNKNOWN_TRIP_IDS: "true"
 
   nibble-meva:
     <<: *nibble-base
     ports:
       - "8088:8080"
     environment:
-      <<: [*aws, *s3-common]
+      <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: gtfs_rt
       NIBBLE_NORMALIZER: default
       NIBBLE_GTFS_RT_URL: ${MEVA_GTFS_RT_URL}
@@ -166,7 +170,7 @@ services:
     ports:
       - "8089:8080"
     environment:
-      <<: [*aws, *s3-common]
+      <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: mwrta
       NIBBLE_NORMALIZER: mwrta
       NIBBLE_GTFS_RT_URL: ${MWRTA_GTFS_RT_URL}
@@ -181,7 +185,7 @@ services:
     ports:
       - "8090:8080"
     environment:
-      <<: [*aws, *s3-common]
+      <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: gtfs_rt
       NIBBLE_NORMALIZER: default
       NIBBLE_GTFS_RT_URL: ${PVTA_GTFS_RT_URL}
@@ -190,13 +194,16 @@ services:
       NIBBLE_POLL_INTERVAL_SECONDS: 15
       NIBBLE_GTFS_STATIC_FIX: "false"
       NIBBLE_S3_AGENCY_SLUG: pvta
+      NIBBLE_AUTH_TYPE: header
+      NIBBLE_AUTH_HEADER_NAME: Authorization
+      NIBBLE_AUTH_SECRET: ${PVTA_GTFS_RT_API_KEY}
 
   nibble-vta:
     <<: *nibble-base
     ports:
       - "8091:8080"
     environment:
-      <<: [*aws, *s3-common]
+      <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: vta
       NIBBLE_NORMALIZER: vta
       NIBBLE_GTFS_RT_URL: ${VTA_GTFS_RT_URL}
@@ -211,7 +218,7 @@ services:
     ports:
       - "8092:8080"
     environment:
-      <<: [*aws, *s3-common]
+      <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: swiv
       NIBBLE_NORMALIZER: default
       NIBBLE_GTFS_RT_URL: ${WRTA_GTFS_RT_URL}
@@ -226,7 +233,7 @@ services:
     ports:
       - "8093:8080"
     environment:
-      <<: [*aws, *s3-common]
+      <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: gtfs_rt
       NIBBLE_NORMALIZER: cttransit
       NIBBLE_GTFS_RT_URL: ${CTTRANSIT_GTFS_RT_URL}
@@ -235,3 +242,299 @@ services:
       NIBBLE_POLL_INTERVAL_SECONDS: 15
       NIBBLE_GTFS_STATIC_FIX: "false"
       NIBBLE_S3_AGENCY_SLUG: cttransit
+
+  nibble-ace:
+    <<: *nibble-base
+    ports:
+      - "8094:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${ACE_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${ACE_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: ace
+      NIBBLE_AUTH_TYPE: query_param
+      NIBBLE_AUTH_SECRET: ${ACE_AUTH_SECRET}
+
+  nibble-caltrain:
+    <<: *nibble-base
+    ports:
+      - "8095:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${CALTRAIN_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${CALTRAIN_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: caltrain
+      NIBBLE_AUTH_TYPE: query_param
+      NIBBLE_AUTH_SECRET: ${CALTRAIN_AUTH_SECRET}
+
+  nibble-capitol-corridor:
+    <<: *nibble-base
+    ports:
+      - "8096:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${CAPITOL_CORRIDOR_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${CAPITOL_CORRIDOR_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: capitol-corridor
+      NIBBLE_AUTH_TYPE: query_param
+      NIBBLE_AUTH_SECRET: ${CAPITOL_CORRIDOR_AUTH_SECRET}
+
+  nibble-smart:
+    <<: *nibble-base
+    ports:
+      - "8097:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${SMART_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${SMART_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: smart
+      NIBBLE_AUTH_TYPE: query_param
+      NIBBLE_AUTH_SECRET: ${SMART_AUTH_SECRET}
+
+  nibble-capmetro:
+    <<: *nibble-base
+    ports:
+      - "8098:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${CAPMETRO_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${CAPMETRO_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Chicago
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: capmetro
+
+  nibble-dcta:
+    <<: *nibble-base
+    ports:
+      - "8099:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${DCTA_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${DCTA_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Chicago
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: dcta
+      NIBBLE_AUTH_TYPE: header
+      NIBBLE_AUTH_HEADER_NAME: Authorization
+      NIBBLE_AUTH_SECRET: ${DCTA_AUTH_SECRET}
+
+  nibble-nctd:
+    <<: *nibble-base
+    ports:
+      - "8100:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${NCTD_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${NCTD_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: nctd
+      NIBBLE_AUTH_TYPE: header
+      NIBBLE_AUTH_HEADER_NAME: Authorization
+      NIBBLE_AUTH_SECRET: ${NCTD_AUTH_SECRET}
+
+  nibble-uta:
+    <<: *nibble-base
+    ports:
+      - "8101:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${UTA_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${UTA_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Denver
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: uta
+
+  nibble-marc:
+    <<: *nibble-base
+    ports:
+      - "8102:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${MARC_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${MARC_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: marc
+
+  nibble-metra:
+    <<: *nibble-base
+    ports:
+      - "8104:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${METRA_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${METRA_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Chicago
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: metra
+      NIBBLE_AUTH_TYPE: query_param
+      NIBBLE_AUTH_PARAM_NAME: api_token
+      NIBBLE_AUTH_SECRET: ${METRA_AUTH_SECRET}
+
+  nibble-metrolink:
+    <<: *nibble-base
+    ports:
+      - "8105:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${METROLINK_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${METROLINK_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: metrolink
+      NIBBLE_AUTH_TYPE: header
+      NIBBLE_AUTH_HEADER_NAME: X-Api-Key
+      NIBBLE_AUTH_SECRET: ${METROLINK_AUTH_SECRET}
+
+  nibble-rtd:
+    <<: *nibble-base
+    ports:
+      - "8106:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${RTD_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${RTD_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Denver
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: rtd
+
+  nibble-septa:
+    <<: *nibble-base
+    ports:
+      - "8107:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${SEPTA_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${SEPTA_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: septa
+
+  nibble-sounder:
+    <<: *nibble-base
+    ports:
+      - "8108:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${SOUNDER_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${SOUNDER_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: sounder
+      NIBBLE_AUTH_TYPE: query_param
+      NIBBLE_AUTH_PARAM_NAME: key
+      NIBBLE_AUTH_SECRET: ${SOUNDER_AUTH_SECRET}
+
+  nibble-trirail:
+    <<: *nibble-base
+    ports:
+      - "8109:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${TRIRAIL_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${TRIRAIL_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: trirail
+
+  nibble-vre:
+    <<: *nibble-base
+    ports:
+      - "8110:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${VRE_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${VRE_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: vre
+
+  nibble-wego-star:
+    <<: *nibble-base
+    ports:
+      - "8111:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${WEGO_STAR_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${WEGO_STAR_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Chicago
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: wego-star
+
+  nibble-trimet:
+    <<: *nibble-base
+    ports:
+      - "8112:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${TRIMET_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${TRIMET_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: trimet
+      NIBBLE_AUTH_TYPE: query_param
+      NIBBLE_AUTH_PARAM_NAME: appID
+      NIBBLE_AUTH_SECRET: ${TRIMET_AUTH_SECRET}
