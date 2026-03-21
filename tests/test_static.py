@@ -4,13 +4,13 @@ import io
 import zipfile
 
 from nibble.gtfs.static import (
+    StaticGTFS,
     _angle_difference,
     _parse_gtfs_zip,
     _shape_bearing_at_projection,
     infer_stop_from_position,
     infer_trip_from_position,
 )
-from nibble.gtfs.static import StaticGTFS
 from nibble.models import StopTime, Trip
 
 

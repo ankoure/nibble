@@ -37,7 +37,7 @@ from nibble.headways import compute_headways
 from nibble.models import SSEEvent, VehicleEvent
 from nibble.overrides import OverrideStore
 from nibble.poller import poll_loop
-from nibble.predictions import predict_arrivals, compute_delay
+from nibble.predictions import compute_delay, predict_arrivals
 
 
 class GtfsHolder:
@@ -581,9 +581,10 @@ async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
                         raise ValueError(
                             "NIBBLE_S3_BUCKET must be set when NIBBLE_GTFS_STATIC_FIX=true"
                         )
-                    from nibble.gtfs.publisher import publish_gtfs_to_s3
-                    from nibble.gtfs.feed_info import FeedInfo
                     from datetime import date
+
+                    from nibble.gtfs.feed_info import FeedInfo
+                    from nibble.gtfs.publisher import publish_gtfs_to_s3
 
                     if feed_info is None:
                         today = date.today().strftime("%Y%m%d")

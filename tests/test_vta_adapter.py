@@ -9,7 +9,7 @@ import httpx
 import pytest
 import respx
 
-from nibble.adapters.vta import VtaAdapter, _MPH_TO_MS
+from nibble.adapters.vta import _MPH_TO_MS, VtaAdapter
 
 URL = "https://vta.mytransitride.com/api/VehicleStatuses?patternIds=1394,1395"
 

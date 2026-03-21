@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+import pytest
+
 from nibble.gtfs.static import StaticGTFS
 from nibble.headways import compute_headways
 from nibble.models import Position, StopTime, Trip, VehicleEvent
-import pytest
 
 
 def _gtfs() -> StaticGTFS:

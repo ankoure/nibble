@@ -9,9 +9,9 @@ from collections.abc import AsyncGenerator, AsyncIterator, MutableMapping
 from contextlib import suppress
 from typing import Any, cast
 
+import httpx
 import pytest
 import pytest_asyncio
-import httpx
 from fastapi import FastAPI
 from google.transit import gtfs_realtime_pb2
 from starlette.types import ASGIApp
@@ -20,7 +20,6 @@ from nibble.config import Settings
 from nibble.gtfs.static import StaticGTFS, _parse_gtfs_zip
 from nibble.overrides import OverrideStore
 from nibble.server import Broadcaster, GtfsHolder, create_app
-
 
 # ---------------------------------------------------------------------------
 # Streaming ASGI transport (required for SSE)

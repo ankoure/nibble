@@ -8,7 +8,7 @@ import httpx
 import pytest
 import respx
 
-from nibble.adapters.routematch import RouteMatchAdapter, _MPH_TO_MS
+from nibble.adapters.routematch import _MPH_TO_MS, RouteMatchAdapter
 
 URL = "https://routematch.example.com/vehicles"
 

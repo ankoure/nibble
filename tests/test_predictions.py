@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-
 from nibble.gtfs.static import StaticGTFS
 from nibble.models import Position, StopTime, Trip, VehicleEvent
 from nibble.predictions import compute_delay, predict_arrivals

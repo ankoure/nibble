@@ -53,5 +53,8 @@ disable_error_code = ["import-untyped"]
 line-length = 100
 target-version = "py312"
 
+[tool.ruff.lint]
+select = ["I"]
+
 [tool.ruff.lint.per-file-ignores]
 "whitelist_vulture.py" = ["F821"]

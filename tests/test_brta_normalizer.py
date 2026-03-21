@@ -7,7 +7,6 @@ from google.transit import gtfs_realtime_pb2
 
 from nibble.normalizer.brta import BrtaNormalizer, _candidate_short_name
 
-
 # --- _candidate_short_name unit tests ---
 
 

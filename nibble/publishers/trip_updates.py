@@ -10,8 +10,8 @@ import logging
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
-from nibble.predictions import compute_delay
 from nibble.gtfs.static import _gtfs_time_to_seconds
+from nibble.predictions import compute_delay
 
 if TYPE_CHECKING:
     from nibble.gtfs.static import StaticGTFS
