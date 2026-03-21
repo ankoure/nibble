@@ -61,6 +61,10 @@ def _get_normalizer(name: str) -> BaseNormalizer:
         from nibble.normalizer.vta import VtaNormalizer
 
         return VtaNormalizer()
+    if name == "cttransit":
+        from nibble.normalizer.cttransit import CttransitNormalizer
+
+        return CttransitNormalizer()
     raise ValueError(f"Unknown normalizer: {name!r}")
 
 
@@ -163,15 +167,24 @@ async def poll_loop(
             logged so they never abort the poll loop.
     """
     if adapter is None:
-        from nibble.adapters.gtfs_rt import GtfsRtAdapter
+        from nibble.adapters import get_adapter
 
-        adapter = GtfsRtAdapter(config.gtfs_rt_url)
+        adapter = get_adapter(
+            config.adapter,
+            config.gtfs_rt_url,
+            agency_id=config.agency_id,
+            agency_timezone=config.agency_timezone,
+            auth_type=config.auth_type,
+            auth_secret=config.auth_secret,
+        )
 
     normalizer = _get_normalizer(config.normalizer)
     state_store = StateStore(agency_timezone=config.agency_timezone, overrides=overrides)
     prev_snapshot: dict[str, VehicleEvent] = {}
 
-    async with httpx.AsyncClient() as client:
+    from nibble.auth import build_httpx_auth
+
+    async with httpx.AsyncClient(auth=build_httpx_auth(config)) as client:
         while True:
             try:
                 current_gtfs = gtfs.gtfs if hasattr(gtfs, "gtfs") else gtfs

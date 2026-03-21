@@ -220,3 +220,18 @@ services:
       NIBBLE_POLL_INTERVAL_SECONDS: 15
       NIBBLE_GTFS_STATIC_FIX: "false"
       NIBBLE_S3_AGENCY_SLUG: wrta
+
+  nibble-cttransit:
+    <<: *nibble-base
+    ports:
+      - "8093:8080"
+    environment:
+      <<: [*aws, *s3-common]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: cttransit
+      NIBBLE_GTFS_RT_URL: ${CTTRANSIT_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${CTTRANSIT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: cttransit

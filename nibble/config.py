@@ -109,3 +109,12 @@ class Settings(BaseSettings):
     log_json: bool = False
 
     overrides_path: Path = Path("overrides.json")
+
+    auth_type: str = "none"
+    """Auth method: ``"none"`` (default), ``"query_param"``, ``"header"``, or ``"path"``."""
+    auth_secret: str | None = None
+    """The API key or token value. Always supply via environment variable."""
+    auth_param_name: str = "api_key"
+    """Query parameter name when ``auth_type="query_param"``."""
+    auth_header_name: str = "X-API-Key"
+    """Header name when ``auth_type="header"``."""
