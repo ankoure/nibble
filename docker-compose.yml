@@ -86,7 +86,8 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${CCRTA_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
+      NIBBLE_S3_BUCKET: ccrta-performance-data
       NIBBLE_S3_AGENCY_SLUG: ccrta
 
   nibble-frta:
@@ -101,7 +102,8 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${FRTA_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
+      NIBBLE_S3_BUCKET: frta-performance-data
       NIBBLE_S3_AGENCY_SLUG: frta
 
   nibble-gatra:
@@ -116,7 +118,8 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${GATRA_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
+      NIBBLE_S3_BUCKET: gatra-performance-data
       NIBBLE_S3_AGENCY_SLUG: gatra
 
   nibble-lrta:
@@ -131,7 +134,8 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${LRTA_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
+      NIBBLE_S3_BUCKET: lrta-performance-data
       NIBBLE_S3_AGENCY_SLUG: lrta
 
   nibble-mart:
@@ -146,7 +150,8 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${MART_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
+      NIBBLE_S3_BUCKET: mart-performance-data
       NIBBLE_S3_AGENCY_SLUG: mart
       NIBBLE_IGNORE_UNKNOWN_TRIP_IDS: "true"
 
@@ -192,7 +197,8 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${PVTA_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
+      NIBBLE_S3_BUCKET: pvta-performance-data
       NIBBLE_S3_AGENCY_SLUG: pvta
       NIBBLE_AUTH_TYPE: header
       NIBBLE_AUTH_HEADER_NAME: Authorization
@@ -210,7 +216,8 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${VTA_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
+      NIBBLE_S3_BUCKET: vta-performance-data
       NIBBLE_S3_AGENCY_SLUG: vta
 
   nibble-wrta:
@@ -225,7 +232,8 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${WRTA_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
+      NIBBLE_S3_BUCKET: wrta-performance-data
       NIBBLE_S3_AGENCY_SLUG: wrta
 
   nibble-cttransit:
