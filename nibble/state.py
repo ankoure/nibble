@@ -53,11 +53,15 @@ class StateStore:
     """
 
     def __init__(
-        self, agency_timezone: str | None = None, overrides: OverrideStore | None = None
+        self,
+        agency_timezone: str | None = None,
+        overrides: OverrideStore | None = None,
+        ignore_unknown_trip_ids: bool = False,
     ) -> None:
         self._store: dict[str, VehicleState] = {}
         self._agency_timezone = agency_timezone
         self._overrides = overrides
+        self._ignore_unknown_trip_ids = ignore_unknown_trip_ids
 
     def get(self, vehicle_id: str) -> VehicleState | None:
         """Return the stored state for a vehicle, or None if not yet seen.
@@ -174,6 +178,25 @@ class StateStore:
                         last_position=event.position,
                     )
                     return updated
+
+        if event.trip_id and event.trip_id not in gtfs.trips and self._ignore_unknown_trip_ids:
+            logger.debug(
+                "Vehicle %s has trip_id %r not found in static GTFS; ignoring (ignore_unknown_trip_ids=True)",
+                event.vehicle_id,
+                event.trip_id,
+            )
+            event = VehicleEvent(
+                vehicle_id=event.vehicle_id,
+                trip_id=None,
+                route_id=event.route_id,
+                stop_id=event.stop_id,
+                current_stop_sequence=event.current_stop_sequence,
+                current_status=event.current_status,
+                direction_id=event.direction_id,
+                label=event.label,
+                position=event.position,
+                timestamp=event.timestamp,
+            )
 
         if event.trip_id:
             if event.trip_id in gtfs.trips:

@@ -110,6 +110,12 @@ class Settings(BaseSettings):
 
     overrides_path: Path = Path("overrides.json")
 
+    ignore_unknown_trip_ids: bool = False
+    """When ``True``, trip IDs from the real-time feed that are not present in
+    the static GTFS are discarded rather than passed through.  Useful when the
+    real-time source (e.g. PassioGO) uses an internal trip ID namespace that
+    does not match the static feed, so position inference runs instead."""
+
     auth_type: str = "none"
     """Auth method: ``"none"`` (default), ``"query_param"``, ``"header"``, or ``"path"``."""
     auth_secret: str | None = None
