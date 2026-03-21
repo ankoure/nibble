@@ -179,7 +179,11 @@ async def poll_loop(
         )
 
     normalizer = _get_normalizer(config.normalizer)
-    state_store = StateStore(agency_timezone=config.agency_timezone, overrides=overrides)
+    state_store = StateStore(
+        agency_timezone=config.agency_timezone,
+        overrides=overrides,
+        ignore_unknown_trip_ids=config.ignore_unknown_trip_ids,
+    )
     prev_snapshot: dict[str, VehicleEvent] = {}
 
     from nibble.auth import build_httpx_auth

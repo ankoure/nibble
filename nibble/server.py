@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import io
 import json
 import logging
@@ -530,10 +531,11 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
 async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
     """Periodically re-download the static GTFS and reload if the feed has changed.
 
-    Compares ``feed_start_date`` from the newly downloaded bundle against the
-    currently loaded one. If it differs (or if ``feed_info.txt`` is absent),
-    the fixed ZIP is published to S3 (when ``gtfs_static_fix`` is enabled) and
-    the holder's ``gtfs`` reference is swapped to the new indexes.
+    Uses ``feed_start_date`` from ``feed_info.txt`` as the change fingerprint
+    when available, falling back to an MD5 hash of the ZIP for feeds that omit
+    ``feed_info.txt``. If the fingerprint differs from the last-seen value, the
+    fixed ZIP is published to S3 (when ``gtfs_static_fix`` is enabled) and the
+    holder's ``gtfs`` reference is swapped to the new indexes.
 
     Args:
         config: Application settings. ``gtfs_reload_interval_hours`` controls
@@ -541,7 +543,7 @@ async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
         holder: Shared container whose ``gtfs`` attribute is replaced on reload.
     """
     interval_seconds = (config.gtfs_reload_interval_hours or 24) * 3600
-    current_start_date: str | None = None
+    current_fingerprint: str | None = None
 
     await asyncio.sleep(interval_seconds)
 
@@ -562,18 +564,21 @@ async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
                 candidate_zip = raw_zip
 
             feed_info = parse_feed_info(candidate_zip)
-            new_start_date = feed_info.feed_start_date if feed_info else None
+            if feed_info is not None:
+                new_fingerprint = feed_info.feed_start_date
+            else:
+                new_fingerprint = hashlib.md5(candidate_zip).hexdigest()
 
-            if new_start_date == current_start_date:
+            if new_fingerprint == current_fingerprint:
                 logger.info(
-                    "Static GTFS unchanged (feed_start_date=%s); skipping reload",
-                    current_start_date,
+                    "Static GTFS unchanged (%s); skipping reload",
+                    current_fingerprint,
                 )
             else:
                 logger.info(
                     "New static GTFS detected (old=%s, new=%s); reloading",
-                    current_start_date,
-                    new_start_date,
+                    current_fingerprint,
+                    new_fingerprint,
                 )
 
                 if config.gtfs_static_fix:
@@ -607,7 +612,7 @@ async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
 
                 holder.gtfs = load_static_gtfs_from_bytes(candidate_zip)
 
-                current_start_date = new_start_date
+                current_fingerprint = new_fingerprint
                 logger.info("Static GTFS reloaded successfully")
 
         except Exception:
