@@ -6,10 +6,8 @@ import csv
 import io
 import zipfile
 
-
 from nibble.gtfs.feed_info import parse_feed_info
 from nibble.gtfs.fixer import fix_gtfs_zip
-
 
 # ---------------------------------------------------------------------------
 # Helpers

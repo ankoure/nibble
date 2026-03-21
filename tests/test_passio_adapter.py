@@ -8,7 +8,7 @@ import httpx
 import pytest
 import respx
 
-from nibble.adapters.passio import PassioAdapter, _ENDPOINT
+from nibble.adapters.passio import _ENDPOINT, PassioAdapter
 
 SYSTEM_ID = "2046"
 

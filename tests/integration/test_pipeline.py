@@ -13,7 +13,7 @@ from google.transit import gtfs_realtime_pb2
 
 from nibble.config import Settings
 from nibble.gtfs.static import StaticGTFS
-from nibble.models import VehicleEvent, Position
+from nibble.models import Position, VehicleEvent
 from nibble.normalizer.ripta import RiptaNormalizer
 from nibble.poller import _parse_feed
 from nibble.reconciler import reconcile

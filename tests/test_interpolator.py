@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 
 import pytest
 
-
 from nibble.gtfs.static import StaticGTFS
 from nibble.interpolator import _scheduled_durations, _stop_bearing, interpolate
 from nibble.models import Position, StopTime, Trip, VehicleEvent

@@ -5,7 +5,13 @@ from datetime import datetime, timezone
 import pytest
 from google.transit import gtfs_realtime_pb2
 
-from nibble.poller import _parse_feed
+from nibble.normalizer.brta import BrtaNormalizer
+from nibble.normalizer.cttransit import CttransitNormalizer
+from nibble.normalizer.default import DefaultNormalizer
+from nibble.normalizer.mwrta import MwrtaNormalizer
+from nibble.normalizer.ripta import RiptaNormalizer
+from nibble.normalizer.vta import VtaNormalizer
+from nibble.poller import _get_normalizer, _parse_feed
 
 FEED_TS = 1704067200  # 2024-01-01 00:00:00 UTC
 VEHICLE_TS = 1704067260  # 2024-01-01 00:01:00 UTC
@@ -176,3 +182,27 @@ class TestParseFeed:
         snap = _parse_feed(feed)
         assert set(snap.keys()) == {"v1", "v2"}
         assert snap["v2"].trip_id == "trip-2"
+
+
+class TestGetNormalizer:
+    def test_default(self) -> None:
+        assert isinstance(_get_normalizer("default"), DefaultNormalizer)
+
+    def test_ripta(self) -> None:
+        assert isinstance(_get_normalizer("ripta"), RiptaNormalizer)
+
+    def test_mwrta(self) -> None:
+        assert isinstance(_get_normalizer("mwrta"), MwrtaNormalizer)
+
+    def test_brta(self) -> None:
+        assert isinstance(_get_normalizer("brta"), BrtaNormalizer)
+
+    def test_vta(self) -> None:
+        assert isinstance(_get_normalizer("vta"), VtaNormalizer)
+
+    def test_cttransit(self) -> None:
+        assert isinstance(_get_normalizer("cttransit"), CttransitNormalizer)
+
+    def test_unknown_raises_value_error(self) -> None:
+        with pytest.raises(ValueError, match="Unknown normalizer"):
+            _get_normalizer("bogus")

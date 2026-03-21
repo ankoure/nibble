@@ -6,7 +6,12 @@ from nibble.adapters.base import BaseAdapter
 
 
 def get_adapter(
-    adapter_name: str, url: str, agency_id: str = "", agency_timezone: str | None = None
+    adapter_name: str,
+    url: str,
+    agency_id: str = "",
+    agency_timezone: str | None = None,
+    auth_type: str = "none",
+    auth_secret: str | None = None,
 ) -> BaseAdapter:
     """Return the appropriate adapter for the given adapter name.
 
@@ -16,6 +21,10 @@ def get_adapter(
         agency_id: Optional agency identifier used by some JSON adapters.
         agency_timezone: IANA timezone name used to localise naive timestamps
             from adapters that report local time without a UTC offset.
+        auth_type: Auth method - ``"none"``, ``"query_param"``, ``"header"``,
+            or ``"path"``. Only ``"path"`` affects the URL here; the others are
+            handled by the httpx client via ``build_httpx_auth``.
+        auth_secret: The API key or token value used for ``"path"`` substitution.
 
     Returns:
         A ``BaseAdapter`` instance ready to use in the poll loop.
@@ -23,6 +32,9 @@ def get_adapter(
     Raises:
         ValueError: If ``adapter_name`` does not match a known adapter.
     """
+    from nibble.auth import resolve_url
+
+    url = resolve_url(url, auth_type, auth_secret)
     if adapter_name == "passio":
         from nibble.adapters.passio import PassioAdapter
 

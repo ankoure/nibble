@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import math
 from datetime import datetime, timedelta
-
 from typing import Literal
 
 from nibble.gtfs.static import StaticGTFS, _gtfs_time_to_seconds
