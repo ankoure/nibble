@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import csv
 import hashlib
 import io
 import json
@@ -466,7 +467,7 @@ def create_app(
             503: {"model": ErrorResponse},
         },
     )
-    async def get_archived_feeds() -> Response | JSONResponse:
+    async def get_archived_feeds(request: Request) -> Response | JSONResponse:
         if not config.s3_bucket:
             return JSONResponse(
                 {"error": "S3 is not configured (NIBBLE_S3_BUCKET is unset)"},
@@ -498,7 +499,18 @@ def create_app(
             logger.exception("Failed to read archived_feeds from S3")
             return JSONResponse({"error": "failed to read archived feeds from S3"}, status_code=503)
 
-        return Response(content=content, media_type="text/csv")
+        base_url = str(request.base_url).rstrip("/")
+        reader = csv.DictReader(io.StringIO(content.decode()))
+        buf = io.StringIO()
+        writer = csv.DictWriter(buf, fieldnames=reader.fieldnames or [], lineterminator="\n")
+        writer.writeheader()
+        for row in reader:
+            url = row.get("archive_url", "")
+            if url.startswith("/"):
+                row["archive_url"] = f"{base_url}{url}"
+            writer.writerow(row)
+
+        return Response(content=buf.getvalue(), media_type="text/csv")
 
     @app.get(
         "/gtfs/{filename}",
