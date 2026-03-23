@@ -67,7 +67,7 @@ async def test_vehicle_fields_mapped(adapter: TrilliumAdapter) -> None:
     vp = entity.vehicle
     assert vp.vehicle.id == "8819"
     assert vp.vehicle.label == "1204"
-    assert vp.trip.route_id == "10729"
+    assert vp.trip.route_id == "16"  # route_short_name preferred over internal route_id
     assert abs(vp.position.latitude - 42.76554) < 1e-5
     assert abs(vp.position.longitude - (-71.09184)) < 1e-5
     assert abs(vp.position.bearing - 314.0) < 1e-5
@@ -87,6 +87,30 @@ async def test_missing_optional_fields_skipped(adapter: TrilliumAdapter) -> None
     vp2 = feed.entity[1].vehicle
     # bearing not set - proto3 default is 0.0
     assert vp2.position.bearing == 0.0
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_route_short_name_preferred_over_route_id(adapter: TrilliumAdapter) -> None:
+    """route_short_name should be used as route_id when present."""
+    vehicles = [{"id": 1, "lat": 42.0, "lon": -71.0, "route_id": "10729", "route_short_name": "16"}]
+    respx.get(URL).mock(return_value=httpx.Response(200, json={"data": vehicles}))
+    async with httpx.AsyncClient() as client:
+        feed = await adapter.fetch(client)
+    assert feed is not None
+    assert feed.entity[0].vehicle.trip.route_id == "16"
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_route_id_used_when_no_short_name(adapter: TrilliumAdapter) -> None:
+    """Falls back to route_id when route_short_name is absent."""
+    vehicles = [{"id": 1, "lat": 42.0, "lon": -71.0, "route_id": "10729"}]
+    respx.get(URL).mock(return_value=httpx.Response(200, json={"data": vehicles}))
+    async with httpx.AsyncClient() as client:
+        feed = await adapter.fetch(client)
+    assert feed is not None
+    assert feed.entity[0].vehicle.trip.route_id == "10729"
 
 
 @respx.mock
