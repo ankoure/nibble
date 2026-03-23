@@ -30,7 +30,7 @@ async def fetch_feed(
     try:
         response = await client.get(url, timeout=30)
     except httpx.RequestError as exc:
-        logger.warning("GTFS-RT request error: %s", exc)
+        logger.warning("GTFS-RT request error: %s: %s", type(exc).__name__, exc)
         return None
 
     if response.status_code != 200:
