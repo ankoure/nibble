@@ -40,10 +40,6 @@ from nibble.adapters.base import BaseAdapter
 
 logger = logging.getLogger(__name__)
 
-# Bounding box for Martha's Vineyard (with generous margins)
-_LAT_MIN, _LAT_MAX = 41.1, 41.7
-_LON_MIN, _LON_MAX = -71.1, -70.3
-
 # Sanity cap on speed (mph)
 _MAX_SPEED_MPH = 100.0
 _MPH_TO_MS = 0.44704
@@ -69,7 +65,6 @@ class VtaAdapter(BaseAdapter):
 
         Speed values (``velocity``) are converted from mph to m/s. ``lastUpdate``
         is a naive local datetime interpreted with the configured agency timezone.
-        Out-of-bounds positions (outside Martha's Vineyard bounding box) are skipped.
 
         Returns:
             A FeedMessage containing one entity per vehicle, or None on error.
@@ -130,16 +125,8 @@ class VtaAdapter(BaseAdapter):
                         vehicle_id,
                     )
                 else:
-                    if _LAT_MIN <= flat <= _LAT_MAX and _LON_MIN <= flng <= _LON_MAX:
-                        vp.position.latitude = flat
-                        vp.position.longitude = flng
-                    else:
-                        logger.warning(
-                            "VTA: out-of-bounds position lat=%s lng=%s for id %s - skipping",
-                            flat,
-                            flng,
-                            vehicle_id,
-                        )
+                    vp.position.latitude = flat
+                    vp.position.longitude = flng
 
             bearing = vehicle.get("bearing")
             if bearing is not None:
