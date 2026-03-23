@@ -12,6 +12,7 @@ def get_adapter(
     agency_timezone: str | None = None,
     auth_type: str = "none",
     auth_secret: str | None = None,
+    passio_static_routes_file: str | None = None,
 ) -> BaseAdapter:
     """Return the appropriate adapter for the given adapter name.
 
@@ -38,7 +39,7 @@ def get_adapter(
     if adapter_name == "passio":
         from nibble.adapters.passio import PassioAdapter
 
-        return PassioAdapter(url, agency_id)
+        return PassioAdapter(url, agency_id, static_routes_file=passio_static_routes_file)
     if adapter_name == "gtfs_rt":
         from nibble.adapters.gtfs_rt import GtfsRtAdapter
 
