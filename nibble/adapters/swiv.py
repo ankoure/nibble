@@ -25,6 +25,30 @@ Expected JSON shape (fields used by this adapter):
       ]
     }
 
+When a ``topo_url`` is provided, the adapter also fetches the Swiv topology
+endpoint on startup and periodically thereafter, parsing the
+``idLigne → nomCommercial`` mapping from the ``topo[].ligne[]`` array:
+
+    {
+      "topo": [
+        {
+          "ligne": [
+            {
+              "idLigne": 27298,
+              "nomCommercial": "14",
+              ...
+            },
+            ...
+          ]
+        },
+        ...
+      ]
+    }
+
+When the map is populated, ``idLigne`` values in the vehicle feed are replaced
+with the corresponding ``nomCommercial`` before the FeedMessage is returned,
+so downstream normalizers and the state machine see human-readable route IDs.
+
 ``vitesse`` is assumed to be in km/h and is converted to m/s. Fields that
 are absent or null are omitted from the protobuf message.
 """
@@ -42,37 +66,94 @@ from nibble.adapters.base import BaseAdapter
 
 logger = logging.getLogger(__name__)
 
-# Bounding box covering Massachusetts (with generous margins)
-_LAT_MIN, _LAT_MAX = 41.0, 43.5
-_LON_MIN, _LON_MAX = -73.5, -69.9
-
 # Sanity cap on speed before unit conversion (km/h); GPS glitches can produce
 # absurd values like 652 km/h for a stationary bus.
 _MAX_SPEED_KMH = 150.0
+
+# How often to re-fetch the topo endpoint (seconds). Routes change rarely so
+# once per day is sufficient; the first fetch happens on the first poll call.
+_TOPO_REFRESH_INTERVAL = 86_400
 
 
 class SwivAdapter(BaseAdapter):
     """Fetches Swiv JSON vehicle data and converts it to a FeedMessage."""
 
-    def __init__(self, url: str, agency_id: str = "") -> None:
+    def __init__(self, url: str, agency_id: str = "", topo_url: str | None = None) -> None:
         """
         Args:
             url: Swiv REST API endpoint URL.
             agency_id: Unused; kept for interface compatibility.
+            topo_url: Swiv topology endpoint URL. When ``None``, derived
+                automatically by stripping ``/vehicules`` from ``url`` if
+                present (the standard Swiv URL convention).
         """
         self._url = url
         self._agency_id = agency_id
+        if topo_url is not None:
+            self._topo_url: str | None = topo_url
+        elif url.rstrip("/").endswith("/vehicules"):
+            self._topo_url = url.rstrip("/")[: -len("/vehicules")]
+        else:
+            self._topo_url = None
+        self._ligne_map: dict[str, str] = {}
+        self._last_topo_fetch: float = 0.0
+
+    async def _refresh_topo(self, client: httpx.AsyncClient) -> None:
+        """Fetch the topo endpoint and rebuild the idLigne → nomCommercial map."""
+        assert self._topo_url is not None
+        parsed = urlparse(self._topo_url)
+        params = parse_qs(parsed.query, keep_blank_values=True)
+        params["_tmp"] = [str(int(time.time() * 1000))]
+        url = urlunparse(parsed._replace(query=urlencode(params, doseq=True)))
+        try:
+            response = await client.get(url, timeout=30)
+        except httpx.RequestError as exc:
+            logger.warning("Swiv topo request error: %s", exc)
+            return
+
+        if response.status_code != 200:
+            logger.warning("Swiv topo non-200 response: %d", response.status_code)
+            return
+
+        try:
+            data = response.json()
+        except Exception as exc:
+            logger.warning("Swiv topo JSON parse error: %s", exc)
+            return
+
+        new_map: dict[str, str] = {}
+        for group in data.get("topo", []):
+            for ligne in group.get("ligne", []):
+                id_ligne = ligne.get("idLigne")
+                nom = str(ligne.get("nomCommercial", "")).strip()
+                if id_ligne is not None and nom:
+                    new_map[str(id_ligne)] = nom
+
+        if new_map:
+            self._ligne_map = new_map
+            logger.info("Swiv topo: loaded %d idLigne→nomCommercial mappings", len(new_map))
+        else:
+            logger.warning("Swiv topo: response parsed but no idLigne mappings found")
+
+        self._last_topo_fetch = time.time()
 
     async def fetch(self, client: httpx.AsyncClient) -> gtfs_realtime_pb2.FeedMessage | None:
         """GET the Swiv vehicle data and convert it to a GTFS-RT FeedMessage.
 
         Appends a ``_tmp`` millisecond timestamp to the URL to bust caches.
         Speed values (``vitesse``) are converted from km/h to m/s; implausible
-        values (> 150 km/h) are dropped. Out-of-bounds positions are skipped.
+        values (> 150 km/h) are dropped.
+
+        If a ``topo_url`` was provided, the topo mapping is refreshed on the
+        first call and every 24 hours thereafter; ``idLigne`` values are
+        replaced with the corresponding ``nomCommercial`` in the returned feed.
 
         Returns:
             A FeedMessage containing one entity per vehicle, or None on error.
         """
+        if self._topo_url and (time.time() - self._last_topo_fetch) > _TOPO_REFRESH_INTERVAL:
+            await self._refresh_topo(client)
+
         parsed = urlparse(self._url)
         params = parse_qs(parsed.query, keep_blank_values=True)
         params["_tmp"] = [str(int(time.time() * 1000))]
@@ -121,7 +202,8 @@ class SwivAdapter(BaseAdapter):
             conduite = vehicle.get("conduite") or {}
             ligne = conduite.get("idLigne")
             if ligne is not None:
-                vp.trip.route_id = str(ligne)
+                id_str = str(ligne)
+                vp.trip.route_id = self._ligne_map.get(id_str, id_str)
 
             loc = vehicle.get("localisation") or {}
             lat = loc.get("lat")
@@ -137,16 +219,8 @@ class SwivAdapter(BaseAdapter):
                         vehicle_id,
                     )
                 else:
-                    if _LAT_MIN <= flat <= _LAT_MAX and _LON_MIN <= flng <= _LON_MAX:
-                        vp.position.latitude = flat
-                        vp.position.longitude = flng
-                    else:
-                        logger.warning(
-                            "Swiv: out-of-bounds position lat=%s lng=%s for id %s - skipping",
-                            flat,
-                            flng,
-                            vehicle_id,
-                        )
+                    vp.position.latitude = flat
+                    vp.position.longitude = flng
 
             cap = loc.get("cap")
             if cap is not None:
