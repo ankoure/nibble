@@ -736,6 +736,7 @@ def print_openapi() -> None:
     access is required. Pipe to a file to save: ``nibble-openapi > openapi.json``
     """
     from unittest.mock import MagicMock
+
     from pydantic_settings import PydanticBaseSettingsSource
 
     class _SchemaSettings(Settings):
@@ -780,7 +781,10 @@ def main() -> None:
 
     holder = GtfsHolder(_load_gtfs(config))
     adapter = get_adapter(
-        config.adapter, config.gtfs_rt_url, config.agency_id, config.agency_timezone
+        config.adapter,
+        config.gtfs_rt_url,
+        config.agency_id,
+        config.agency_timezone,
     )
 
     overrides = OverrideStore(config.overrides_path)

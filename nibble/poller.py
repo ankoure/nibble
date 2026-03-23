@@ -53,6 +53,10 @@ def _get_normalizer(name: str) -> BaseNormalizer:
         from nibble.normalizer.mwrta import MwrtaNormalizer
 
         return MwrtaNormalizer()
+    if name == "ccrta":
+        from nibble.normalizer.ccrta import CcrtaNormalizer
+
+        return CcrtaNormalizer()
     if name == "brta":
         from nibble.normalizer.brta import BrtaNormalizer
 
@@ -65,6 +69,18 @@ def _get_normalizer(name: str) -> BaseNormalizer:
         from nibble.normalizer.cttransit import CttransitNormalizer
 
         return CttransitNormalizer()
+    if name == "swiv":
+        from nibble.normalizer.swiv import SwivNormalizer
+
+        return SwivNormalizer()
+    if name == "wrta":
+        from nibble.normalizer.wrta import WrtaNormalizer
+
+        return WrtaNormalizer()
+    if name == "passio":
+        from nibble.normalizer.passio import PassioNormalizer
+
+        return PassioNormalizer()
     raise ValueError(f"Unknown normalizer: {name!r}")
 
 
@@ -176,6 +192,7 @@ async def poll_loop(
             agency_timezone=config.agency_timezone,
             auth_type=config.auth_type,
             auth_secret=config.auth_secret,
+            passio_static_routes_file=config.passio_static_routes_file,
         )
 
     normalizer = _get_normalizer(config.normalizer)
@@ -212,7 +229,10 @@ async def poll_loop(
                             logger.exception("Error in on_snapshot callback")
                     duration_ms = round((time.monotonic() - poll_start) * 1000)
                     logger.info(
-                        "Poll complete",
+                        "Poll complete: %d vehicles, %d events (%dms)",
+                        len(curr_snapshot),
+                        len(sse_events),
+                        duration_ms,
                         extra={
                             "vehicle_count": len(curr_snapshot),
                             "sse_event_count": len(sse_events),
