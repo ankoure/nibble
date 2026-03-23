@@ -28,6 +28,11 @@ x-s3-common: &s3-common
 x-nibble-env-defaults: &nibble-env-defaults
   NIBBLE_GTFS_RELOAD_INTERVAL_HOURS: "24"
 
+x-oba-puget-sound-auth: &oba-puget-sound-auth
+  NIBBLE_AUTH_TYPE: query_param
+  NIBBLE_AUTH_PARAM_NAME: key
+  NIBBLE_AUTH_SECRET: ${OBA_PUGET_SOUND_API_KEY}
+
 services:
   nibble-bat:
     <<: *nibble-base
@@ -56,7 +61,7 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${BRTA_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
       NIBBLE_S3_AGENCY_SLUG: brta
 
   nibble-cata:
@@ -71,7 +76,7 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${CATA_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
       NIBBLE_S3_AGENCY_SLUG: cata
 
   nibble-ccrta:
@@ -81,7 +86,7 @@ services:
     environment:
       <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: mwrta
-      NIBBLE_NORMALIZER: mwrta
+      NIBBLE_NORMALIZER: ccrta
       NIBBLE_GTFS_RT_URL: ${CCRTA_GTFS_RT_URL}
       NIBBLE_GTFS_STATIC_URL: ${CCRTA_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
@@ -113,7 +118,7 @@ services:
     environment:
       <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: swiv
-      NIBBLE_NORMALIZER: default
+      NIBBLE_NORMALIZER: swiv
       NIBBLE_GTFS_RT_URL: ${GATRA_GTFS_RT_URL}
       NIBBLE_GTFS_STATIC_URL: ${GATRA_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
@@ -129,7 +134,7 @@ services:
     environment:
       <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: swiv
-      NIBBLE_NORMALIZER: default
+      NIBBLE_NORMALIZER: swiv
       NIBBLE_GTFS_RT_URL: ${LRTA_GTFS_RT_URL}
       NIBBLE_GTFS_STATIC_URL: ${LRTA_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
@@ -145,9 +150,11 @@ services:
     environment:
       <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: passio
-      NIBBLE_NORMALIZER: default
+      NIBBLE_NORMALIZER: passio
       NIBBLE_GTFS_RT_URL: ${MART_GTFS_RT_URL}
       NIBBLE_GTFS_STATIC_URL: ${MART_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_ID: ${MART_PASSIO_DEVICE_ID}
+      NIBBLE_PASSIO_STATIC_ROUTES_FILE: /app/nibble/adapters/data/mart_routes.json
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
       NIBBLE_GTFS_STATIC_FIX: "true"
@@ -227,7 +234,7 @@ services:
     environment:
       <<: [*aws, *s3-common, *nibble-env-defaults]
       NIBBLE_ADAPTER: swiv
-      NIBBLE_NORMALIZER: default
+      NIBBLE_NORMALIZER: wrta
       NIBBLE_GTFS_RT_URL: ${WRTA_GTFS_RT_URL}
       NIBBLE_GTFS_STATIC_URL: ${WRTA_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
@@ -546,3 +553,198 @@ services:
       NIBBLE_AUTH_TYPE: query_param
       NIBBLE_AUTH_PARAM_NAME: appID
       NIBBLE_AUTH_SECRET: ${TRIMET_AUTH_SECRET}
+
+  nibble-gptd:
+    <<: *nibble-base
+    ports:
+      - "8113:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: https://gtfsrt.gptd.cadavl.com/ProfilGtfsRt2_0RSProducer-GPTD/VehiclePosition.pb
+      NIBBLE_GTFS_STATIC_URL: https://gtfs.gptd.cadavl.com/GPTD/GTFS/GTFS_GPTD.zip
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "true"
+      NIBBLE_S3_AGENCY_SLUG: gptd
+
+  nibble-king-county-metro:
+    <<: *nibble-base
+    ports:
+      - "8114:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults, *oba-puget-sound-auth]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${KING_COUNTY_METRO_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${KING_COUNTY_METRO_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: king-county-metro
+
+  nibble-seattle-streetcar:
+    <<: *nibble-base
+    ports:
+      - "8115:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults, *oba-puget-sound-auth]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${SEATTLE_STREETCAR_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${SEATTLE_STREETCAR_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: seattle-streetcar
+
+  nibble-pierce-transit:
+    <<: *nibble-base
+    ports:
+      - "8116:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults, *oba-puget-sound-auth]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${PIERCE_TRANSIT_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${PIERCE_TRANSIT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: pierce-transit
+
+  nibble-community-transit:
+    <<: *nibble-base
+    ports:
+      - "8117:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults, *oba-puget-sound-auth]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${COMMUNITY_TRANSIT_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${COMMUNITY_TRANSIT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: community-transit
+
+  nibble-intercity-transit:
+    <<: *nibble-base
+    ports:
+      - "8118:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults, *oba-puget-sound-auth]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${INTERCITY_TRANSIT_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${INTERCITY_TRANSIT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: intercity-transit
+
+  nibble-wsf:
+    <<: *nibble-base
+    ports:
+      - "8119:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults, *oba-puget-sound-auth]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${WSF_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${WSF_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: wsf
+
+  nibble-amtrak-wa:
+    <<: *nibble-base
+    ports:
+      - "8120:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults, *oba-puget-sound-auth]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${AMTRAK_WA_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${AMTRAK_WA_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: amtrak-wa
+
+  nibble-sound-transit:
+    <<: *nibble-base
+    ports:
+      - "8121:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults, *oba-puget-sound-auth]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${SOUND_TRANSIT_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${SOUND_TRANSIT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: sound-transit
+
+  nibble-seattle-monorail:
+    <<: *nibble-base
+    ports:
+      - "8122:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults, *oba-puget-sound-auth]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${SEATTLE_MONORAIL_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${SEATTLE_MONORAIL_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: seattle-monorail
+
+  nibble-everett-transit:
+    <<: *nibble-base
+    ports:
+      - "8123:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults, *oba-puget-sound-auth]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${EVERETT_TRANSIT_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${EVERETT_TRANSIT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: everett-transit
+
+  nibble-kitsap-transit:
+    <<: *nibble-base
+    ports:
+      - "8124:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults, *oba-puget-sound-auth]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${KITSAP_TRANSIT_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${KITSAP_TRANSIT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/Los_Angeles
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: kitsap-transit
+
+  nibble-gcrta:
+    <<: *nibble-base
+    ports:
+      - "8125:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: default
+      NIBBLE_GTFS_RT_URL: ${GCRTA_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${GCRTA_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "true"
+      NIBBLE_S3_AGENCY_SLUG: gcrta
