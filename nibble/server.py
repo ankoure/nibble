@@ -744,8 +744,8 @@ def print_openapi() -> None:
 
         @classmethod
         def settings_customise_sources(
-            cls,
-            settings_cls: type[Settings],
+            _cls,
+            _settings_cls: type[Settings],
             init_settings: PydanticBaseSettingsSource,
             **_kwargs: object,
         ) -> tuple[PydanticBaseSettingsSource, ...]:
