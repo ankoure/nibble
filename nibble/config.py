@@ -116,6 +116,11 @@ class Settings(BaseSettings):
     real-time source (e.g. PassioGO) uses an internal trip ID namespace that
     does not match the static feed, so position inference runs instead."""
 
+    passio_static_routes_file: str | None = None
+    """Path to a static JSON routes file (``{"all": [...]}`` format) used by
+    the Passio adapter as a fallback when the live routes endpoint is
+    inaccessible.  Loaded once at startup."""
+
     auth_type: str = "none"
     """Auth method: ``"none"`` (default), ``"query_param"``, ``"header"``, or ``"path"``."""
     auth_secret: str | None = None
