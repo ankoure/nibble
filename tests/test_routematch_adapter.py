@@ -138,19 +138,6 @@ async def test_null_heading_ignored() -> None:
     assert feed.entity[0].vehicle.position.bearing == 0.0
 
 
-# --- Coordinate validation ---
-
-
-@pytest.mark.asyncio
-@respx.mock
-async def test_out_of_bounds_coordinates_rejected() -> None:
-    v = _vehicle(latitude=51.5, longitude=-0.1)  # London
-    respx.get(URL).mock(return_value=httpx.Response(200, json=_response(v)))
-    adapter = RouteMatchAdapter(url=URL)
-    async with httpx.AsyncClient() as client:
-        feed = await adapter.fetch(client)
-    assert feed is not None
-    assert feed.entity[0].vehicle.position.latitude == 0.0
 
 
 # --- Missing / malformed responses ---

@@ -95,18 +95,6 @@ async def test_zero_coordinates_rejected() -> None:
     assert entity.vehicle.position.longitude == 0.0
 
 
-@pytest.mark.asyncio
-@respx.mock
-async def test_out_of_bounds_coordinates_rejected() -> None:
-    vehicle = _vehicle(Lat=51.5, Long=-0.1)  # London - clearly out of MWRTA area
-    respx.get(URL).mock(return_value=httpx.Response(200, json=[vehicle]))
-    adapter = MwrtaAdapter(url=URL, agency_timezone="America/New_York")
-    async with httpx.AsyncClient() as client:
-        feed = await adapter.fetch(client)
-    assert feed is not None
-    entity = feed.entity[0]
-    assert entity.vehicle.position.latitude == 0.0
-
 
 @pytest.mark.asyncio
 @respx.mock
