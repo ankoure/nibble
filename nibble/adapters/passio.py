@@ -25,9 +25,9 @@ Expected JSON shape:
 The vehicle ID "-1" is a sentinel used by PassioGO for system metadata and
 is skipped.
 
-When a ``device_id`` is provided, the adapter also fetches the Passio routes
-endpoint on startup and periodically thereafter, building a ``myid →
-display_name`` mapping from the ``all[]`` array:
+The adapter also fetches the Passio routes endpoint on startup and
+periodically thereafter, building a ``myid → display_name`` mapping from
+the ``all[]`` array:
 
     {
       "all": [
@@ -79,17 +79,13 @@ class PassioAdapter(BaseAdapter):
         """
         Args:
             system_id: PassioGO system ID (e.g. "2046" for BAT).
-            agency_id: PassioGO device ID used to fetch the routes endpoint.
-                When provided, the adapter fetches ``mapGetData.php?getRoutes=2``
-                on startup and maps ``routeId`` → GTFS-compatible route names.
-                When empty, route IDs are passed through unchanged.
+            agency_id: Unused; kept for interface compatibility.
             static_routes_file: Path to a JSON file with the same ``{"all": [...]}``
                 structure as the Passio routes endpoint.  Loaded on startup as an
-                initial fallback; the live endpoint (if ``agency_id`` is set) will
-                overwrite it on the first successful fetch.
+                initial fallback; the live endpoint will overwrite it on the first
+                successful fetch.
         """
         self._system_id = system_id
-        self._device_id = agency_id
         self._route_map: dict[str, str] = {}  # myid → shortName (or name)
         self._last_routes_fetch: float = 0.0
 
@@ -124,7 +120,7 @@ class PassioAdapter(BaseAdapter):
 
     async def _refresh_routes(self, client: httpx.AsyncClient) -> None:
         """Fetch the routes endpoint and rebuild the myid → display_name map."""
-        url = f"{_ROUTES_ENDPOINT}&deviceId={self._device_id}"
+        url = _ROUTES_ENDPOINT
         try:
             response = await client.post(
                 url,
@@ -175,14 +171,14 @@ class PassioAdapter(BaseAdapter):
     async def fetch(self, client: httpx.AsyncClient) -> gtfs_realtime_pb2.FeedMessage | None:
         """POST to PassioGO and convert the response to a GTFS-RT FeedMessage.
 
-        When a ``device_id`` was supplied, fetches (or refreshes) the routes map
-        before the first poll and every 24 hours thereafter, then translates
-        ``routeId`` values to GTFS-compatible route names.
+        Fetches (or refreshes) the routes map before the first poll and every
+        24 hours thereafter, then translates ``routeId`` values to
+        GTFS-compatible route names.
 
         Returns:
             A FeedMessage built from the buses dict, or None on error.
         """
-        if self._device_id and (time.time() - self._last_routes_fetch) > _ROUTES_REFRESH_INTERVAL:
+        if (time.time() - self._last_routes_fetch) > _ROUTES_REFRESH_INTERVAL:
             await self._refresh_routes(client)
 
         try:
