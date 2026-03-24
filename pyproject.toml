@@ -59,3 +59,5 @@ select = ["I"]
 
 [tool.ruff.lint.per-file-ignores]
 "whitelist_vulture.py" = ["F821"]
+"nibble/protos/**/*_pb2.py" = ["I001"]
+"nibble/protos/**/*_pb2.pyi" = ["I001"]
