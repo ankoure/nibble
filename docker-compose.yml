@@ -36,6 +36,7 @@ x-oba-puget-sound-auth: &oba-puget-sound-auth
 services:
   nibble-bat:
     <<: *nibble-base
+    profiles: [ma, new-england, bus]
     ports:
       - "8080:8080"
     environment:
@@ -51,6 +52,7 @@ services:
 
   nibble-brta:
     <<: *nibble-base
+    profiles: [ma, new-england, bus]
     ports:
       - "8081:8080"
     environment:
@@ -66,6 +68,7 @@ services:
 
   nibble-cata:
     <<: *nibble-base
+    profiles: [ma, new-england, bus]
     ports:
       - "8082:8080"
     environment:
@@ -81,6 +84,7 @@ services:
 
   nibble-ccrta:
     <<: *nibble-base
+    profiles: [ma, new-england, bus]
     ports:
       - "8083:8080"
     environment:
@@ -97,6 +101,7 @@ services:
 
   nibble-frta:
     <<: *nibble-base
+    profiles: [ma, new-england, bus]
     ports:
       - "8084:8080"
     environment:
@@ -114,6 +119,7 @@ services:
 
   nibble-gatra:
     <<: *nibble-base
+    profiles: [ma, new-england, bus]
     ports:
       - "8085:8080"
     environment:
@@ -130,6 +136,7 @@ services:
 
   nibble-lrta:
     <<: *nibble-base
+    profiles: [ma, new-england, bus]
     ports:
       - "8086:8080"
     environment:
@@ -146,6 +153,7 @@ services:
 
   nibble-mart:
     <<: *nibble-base
+    profiles: [ma, new-england, bus]
     ports:
       - "8087:8080"
     environment:
@@ -154,7 +162,6 @@ services:
       NIBBLE_NORMALIZER: passio
       NIBBLE_GTFS_RT_URL: ${MART_GTFS_RT_URL}
       NIBBLE_GTFS_STATIC_URL: ${MART_GTFS_STATIC_URL}
-      NIBBLE_AGENCY_ID: ${MART_PASSIO_DEVICE_ID}
       NIBBLE_PASSIO_STATIC_ROUTES_FILE: /app/nibble/adapters/data/mart_routes.json
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
@@ -165,6 +172,7 @@ services:
 
   nibble-meva:
     <<: *nibble-base
+    profiles: [ma, new-england, bus]
     ports:
       - "8088:8080"
     environment:
@@ -180,6 +188,7 @@ services:
 
   nibble-mwrta:
     <<: *nibble-base
+    profiles: [ma, new-england, bus]
     ports:
       - "8089:8080"
     environment:
@@ -195,6 +204,7 @@ services:
 
   nibble-pvta:
     <<: *nibble-base
+    profiles: [ma, new-england, bus]
     ports:
       - "8090:8080"
     environment:
@@ -214,6 +224,7 @@ services:
 
   nibble-vta:
     <<: *nibble-base
+    profiles: [ma, new-england, bus]
     ports:
       - "8091:8080"
     environment:
@@ -230,6 +241,7 @@ services:
 
   nibble-wrta:
     <<: *nibble-base
+    profiles: [ma, new-england, bus]
     ports:
       - "8092:8080"
     environment:
@@ -246,6 +258,7 @@ services:
 
   nibble-cttransit:
     <<: *nibble-base
+    profiles: [ct, new-england, bus]
     ports:
       - "8093:8080"
     environment:
@@ -261,6 +274,7 @@ services:
 
   nibble-ace:
     <<: *nibble-base
+    profiles: [ca, california, commuter-rail]
     ports:
       - "8094:8080"
     environment:
@@ -278,6 +292,7 @@ services:
 
   nibble-caltrain:
     <<: *nibble-base
+    profiles: [ca, california, commuter-rail]
     ports:
       - "8095:8080"
     environment:
@@ -295,6 +310,7 @@ services:
 
   nibble-capitol-corridor:
     <<: *nibble-base
+    profiles: [ca, california, commuter-rail]
     ports:
       - "8096:8080"
     environment:
@@ -312,6 +328,7 @@ services:
 
   nibble-smart:
     <<: *nibble-base
+    profiles: [ca, california, commuter-rail]
     ports:
       - "8097:8080"
     environment:
@@ -329,6 +346,7 @@ services:
 
   nibble-capmetro:
     <<: *nibble-base
+    profiles: [tx, south, commuter-rail]
     ports:
       - "8098:8080"
     environment:
@@ -344,6 +362,7 @@ services:
 
   nibble-dcta:
     <<: *nibble-base
+    profiles: [tx, south, commuter-rail]
     ports:
       - "8099:8080"
     environment:
@@ -362,6 +381,7 @@ services:
 
   nibble-nctd:
     <<: *nibble-base
+    profiles: [ca, california, commuter-rail]
     ports:
       - "8100:8080"
     environment:
@@ -380,6 +400,7 @@ services:
 
   nibble-uta:
     <<: *nibble-base
+    profiles: [ut, mountain, commuter-rail]
     ports:
       - "8101:8080"
     environment:
@@ -395,6 +416,7 @@ services:
 
   nibble-marc:
     <<: *nibble-base
+    profiles: [md, mid-atlantic, commuter-rail]
     ports:
       - "8102:8080"
     environment:
@@ -410,6 +432,7 @@ services:
 
   nibble-metra:
     <<: *nibble-base
+    profiles: [il, midwest, commuter-rail]
     ports:
       - "8104:8080"
     environment:
@@ -428,6 +451,7 @@ services:
 
   nibble-metrolink:
     <<: *nibble-base
+    profiles: [ca, california, commuter-rail]
     ports:
       - "8105:8080"
     environment:
@@ -446,6 +470,7 @@ services:
 
   nibble-rtd:
     <<: *nibble-base
+    profiles: [co, mountain, commuter-rail]
     ports:
       - "8106:8080"
     environment:
@@ -461,6 +486,7 @@ services:
 
   nibble-septa:
     <<: *nibble-base
+    profiles: [pa, mid-atlantic, commuter-rail]
     ports:
       - "8107:8080"
     environment:
@@ -476,6 +502,7 @@ services:
 
   nibble-sounder:
     <<: *nibble-base
+    profiles: [wa, pacific-northwest, commuter-rail]
     ports:
       - "8108:8080"
     environment:
@@ -494,6 +521,7 @@ services:
 
   nibble-trirail:
     <<: *nibble-base
+    profiles: [fl, south, commuter-rail]
     ports:
       - "8109:8080"
     environment:
@@ -509,6 +537,7 @@ services:
 
   nibble-vre:
     <<: *nibble-base
+    profiles: [va, mid-atlantic, commuter-rail]
     ports:
       - "8110:8080"
     environment:
@@ -524,6 +553,7 @@ services:
 
   nibble-wego-star:
     <<: *nibble-base
+    profiles: [tn, south, commuter-rail]
     ports:
       - "8111:8080"
     environment:
@@ -539,6 +569,7 @@ services:
 
   nibble-trimet:
     <<: *nibble-base
+    profiles: [or, pacific-northwest, commuter-rail]
     ports:
       - "8112:8080"
     environment:
@@ -557,6 +588,7 @@ services:
 
   nibble-gptd:
     <<: *nibble-base
+    profiles: [me, new-england, bus]
     ports:
       - "8113:8080"
     environment:
@@ -572,6 +604,7 @@ services:
 
   nibble-king-county-metro:
     <<: *nibble-base
+    profiles: [wa, pacific-northwest, bus]
     ports:
       - "8114:8080"
     environment:
@@ -587,6 +620,7 @@ services:
 
   nibble-seattle-streetcar:
     <<: *nibble-base
+    profiles: [wa, pacific-northwest, bus]
     ports:
       - "8115:8080"
     environment:
@@ -602,6 +636,7 @@ services:
 
   nibble-pierce-transit:
     <<: *nibble-base
+    profiles: [wa, pacific-northwest, bus]
     ports:
       - "8116:8080"
     environment:
@@ -617,6 +652,7 @@ services:
 
   nibble-community-transit:
     <<: *nibble-base
+    profiles: [wa, pacific-northwest, bus]
     ports:
       - "8117:8080"
     environment:
@@ -632,6 +668,7 @@ services:
 
   nibble-intercity-transit:
     <<: *nibble-base
+    profiles: [wa, pacific-northwest, bus]
     ports:
       - "8118:8080"
     environment:
@@ -647,6 +684,7 @@ services:
 
   nibble-wsf:
     <<: *nibble-base
+    profiles: [wa, pacific-northwest, bus]
     ports:
       - "8119:8080"
     environment:
@@ -662,6 +700,7 @@ services:
 
   nibble-amtrak-wa:
     <<: *nibble-base
+    profiles: [wa, pacific-northwest, commuter-rail]
     ports:
       - "8120:8080"
     environment:
@@ -677,6 +716,7 @@ services:
 
   nibble-sound-transit:
     <<: *nibble-base
+    profiles: [wa, pacific-northwest, commuter-rail]
     ports:
       - "8121:8080"
     environment:
@@ -692,6 +732,7 @@ services:
 
   nibble-seattle-monorail:
     <<: *nibble-base
+    profiles: [wa, pacific-northwest, bus]
     ports:
       - "8122:8080"
     environment:
@@ -707,6 +748,7 @@ services:
 
   nibble-everett-transit:
     <<: *nibble-base
+    profiles: [wa, pacific-northwest, bus]
     ports:
       - "8123:8080"
     environment:
@@ -722,6 +764,7 @@ services:
 
   nibble-kitsap-transit:
     <<: *nibble-base
+    profiles: [wa, pacific-northwest, bus]
     ports:
       - "8124:8080"
     environment:
@@ -737,6 +780,7 @@ services:
 
   nibble-gcrta:
     <<: *nibble-base
+    profiles: [oh, midwest, bus]
     ports:
       - "8125:8080"
     environment:
