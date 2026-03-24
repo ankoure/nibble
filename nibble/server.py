@@ -187,7 +187,7 @@ class Broadcaster:
                 for item in event.data:
                     if isinstance(item, dict) and "id" in item:
                         self._current_snapshot[item["id"]] = item
-            elif event.event_type == "update":
+            elif event.event_type in ("add", "update"):
                 if isinstance(event.data, dict) and "id" in event.data:
                     self._current_snapshot[event.data["id"]] = event.data
             elif event.event_type == "remove":
