@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 import pytest
-from google.transit import gtfs_realtime_pb2
+from nibble.protos import gtfs_realtime_pb2
 
 from nibble.normalizer.brta import BrtaNormalizer
 from nibble.normalizer.cttransit import CttransitNormalizer

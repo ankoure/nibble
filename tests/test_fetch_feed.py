@@ -5,7 +5,7 @@ from __future__ import annotations
 import httpx
 import pytest
 import respx
-from google.transit import gtfs_realtime_pb2
+from nibble.protos import gtfs_realtime_pb2
 
 from nibble.gtfs.realtime import fetch_feed
 

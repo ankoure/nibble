@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from google.transit import gtfs_realtime_pb2
+from nibble.protos import gtfs_realtime_pb2
 
 from nibble.config import Settings
 from nibble.gtfs.static import StaticGTFS

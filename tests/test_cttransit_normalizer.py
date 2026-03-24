@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from google.transit import gtfs_realtime_pb2
+from nibble.protos import gtfs_realtime_pb2
 
 from nibble.gtfs.static import StaticGTFS
 from nibble.models import Trip

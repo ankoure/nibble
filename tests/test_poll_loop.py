@@ -14,7 +14,7 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from google.transit import gtfs_realtime_pb2
+from nibble.protos import gtfs_realtime_pb2
 
 from nibble.config import Settings
 from nibble.gtfs.static import StaticGTFS

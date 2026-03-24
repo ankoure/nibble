@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import re
 
-from google.transit import gtfs_realtime_pb2
+from nibble.protos import gtfs_realtime_pb2
 
 from nibble.gtfs.static import StaticGTFS
 from nibble.normalizer.base import BaseNormalizer

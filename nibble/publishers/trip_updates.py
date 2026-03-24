@@ -40,7 +40,7 @@ def _build_feed(
     Returns:
         Serialized protobuf bytes.
     """
-    from google.transit import gtfs_realtime_pb2
+    from nibble.protos import gtfs_realtime_pb2
 
     feed = gtfs_realtime_pb2.FeedMessage()
     feed.header.gtfs_realtime_version = "2.0"

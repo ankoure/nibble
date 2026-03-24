@@ -42,7 +42,7 @@ def _event(
 
 
 def _parse(pb_bytes: bytes):
-    from google.transit import gtfs_realtime_pb2
+    from nibble.protos import gtfs_realtime_pb2
 
     feed = gtfs_realtime_pb2.FeedMessage()
     feed.ParseFromString(pb_bytes)

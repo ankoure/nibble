@@ -12,7 +12,7 @@ import io
 import zipfile
 from datetime import datetime, timezone
 
-from google.transit import gtfs_realtime_pb2
+from nibble.protos import gtfs_realtime_pb2
 
 from nibble.gtfs.static import StaticGTFS, _parse_gtfs_zip
 from nibble.interpolator import interpolate

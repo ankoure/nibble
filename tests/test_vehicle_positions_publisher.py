@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import boto3
 import pytest
-from google.transit import gtfs_realtime_pb2
+from nibble.protos import gtfs_realtime_pb2
 from moto import mock_aws
 
 from nibble.models import Position, VehicleEvent

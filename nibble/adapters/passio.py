@@ -54,7 +54,7 @@ import time
 from pathlib import Path
 
 import httpx
-from google.transit import gtfs_realtime_pb2
+from nibble.protos import gtfs_realtime_pb2
 
 from nibble.adapters.base import BaseAdapter
 

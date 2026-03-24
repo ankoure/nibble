@@ -1,7 +1,18 @@
 -include .env
 export
 
-.PHONY: fix-gtfs lint typecheck openapi
+.PHONY: fix-gtfs lint typecheck openapi generate-protos
+
+generate-protos: ## Compile all .proto files in protos/ into nibble/protos/
+	uv run python -m grpc_tools.protoc \
+		-I protos \
+		--python_out=nibble/protos \
+		gtfs-realtime.proto \
+		nyct/nyct-subway.proto
+	@# Fix import in generated NYCT file: protoc emits a bare module name which
+	@# won't resolve from a subpackage; rewrite to a fully-qualified package path.
+	sed -i 's/^import gtfs_realtime_pb2/from nibble.protos import gtfs_realtime_pb2/' \
+		nibble/protos/nyct/nyct_subway_pb2.py
 
 openapi: ## Regenerate openapi.json from current server routes
 	uv run nibble-openapi > openapi.json

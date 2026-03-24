@@ -13,7 +13,7 @@ import httpx
 import pytest
 import pytest_asyncio
 from fastapi import FastAPI
-from google.transit import gtfs_realtime_pb2
+from nibble.protos import gtfs_realtime_pb2
 from starlette.types import ASGIApp
 
 from nibble.config import Settings

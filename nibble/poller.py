@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from nibble.server import Broadcaster, GtfsHolder
 
 import httpx
-from google.transit import gtfs_realtime_pb2
+from nibble.protos import gtfs_realtime_pb2
 
 from nibble.adapters.base import BaseAdapter
 from nibble.config import Settings
@@ -81,6 +81,10 @@ def _get_normalizer(name: str) -> BaseNormalizer:
         from nibble.normalizer.passio import PassioNormalizer
 
         return PassioNormalizer()
+    if name == "nyct":
+        from nibble.normalizer.nyct import NyctNormalizer
+
+        return NyctNormalizer()
     raise ValueError(f"Unknown normalizer: {name!r}")
 
 
