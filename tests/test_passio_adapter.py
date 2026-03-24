@@ -8,7 +8,7 @@ import httpx
 import pytest
 import respx
 
-from nibble.adapters.passio import _ENDPOINT, PassioAdapter
+from nibble.adapters.passio import _ENDPOINT, _ROUTES_ENDPOINT, PassioAdapter
 
 SYSTEM_ID = "2046"
 
@@ -46,6 +46,7 @@ async def test_passio_adapter_happy_path() -> None:
         "101": _bus("101", "R1", "T123", 42.3601, -71.0589, 270.0, 12.5),
         "202": _bus("202", "R2", None, 42.3501, -71.0489, None, None),
     }
+    respx.post(_ROUTES_ENDPOINT).mock(return_value=httpx.Response(200, json={"all": []}))
     respx.post(_ENDPOINT).mock(return_value=httpx.Response(200, json=_make_response(buses)))
     adapter = PassioAdapter(SYSTEM_ID)
     async with httpx.AsyncClient() as client:
@@ -77,6 +78,7 @@ async def test_passio_adapter_skips_sentinel_vehicle() -> None:
         "-1": _bus("-1"),
         "101": _bus("101"),
     }
+    respx.post(_ROUTES_ENDPOINT).mock(return_value=httpx.Response(200, json={"all": []}))
     respx.post(_ENDPOINT).mock(return_value=httpx.Response(200, json=_make_response(buses)))
     adapter = PassioAdapter(SYSTEM_ID)
     async with httpx.AsyncClient() as client:
@@ -90,6 +92,7 @@ async def test_passio_adapter_skips_sentinel_vehicle() -> None:
 @respx.mock
 async def test_passio_adapter_skips_vehicle_without_bus_id() -> None:
     buses = {"x": [{"routeId": "R1", "latitude": 42.0, "longitude": -71.0}]}
+    respx.post(_ROUTES_ENDPOINT).mock(return_value=httpx.Response(200, json={"all": []}))
     respx.post(_ENDPOINT).mock(return_value=httpx.Response(200, json=_make_response(buses)))
     adapter = PassioAdapter(SYSTEM_ID)
     async with httpx.AsyncClient() as client:
@@ -101,6 +104,7 @@ async def test_passio_adapter_skips_vehicle_without_bus_id() -> None:
 @pytest.mark.asyncio
 @respx.mock
 async def test_passio_adapter_returns_none_on_error() -> None:
+    respx.post(_ROUTES_ENDPOINT).mock(return_value=httpx.Response(200, json={"all": []}))
     respx.post(_ENDPOINT).mock(return_value=httpx.Response(500))
     adapter = PassioAdapter(SYSTEM_ID)
     async with httpx.AsyncClient() as client:
@@ -111,6 +115,7 @@ async def test_passio_adapter_returns_none_on_error() -> None:
 @pytest.mark.asyncio
 @respx.mock
 async def test_passio_adapter_returns_none_on_bad_json() -> None:
+    respx.post(_ROUTES_ENDPOINT).mock(return_value=httpx.Response(200, json={"all": []}))
     respx.post(_ENDPOINT).mock(return_value=httpx.Response(200, content=b"not-json"))
     adapter = PassioAdapter(SYSTEM_ID)
     async with httpx.AsyncClient() as client:
@@ -121,6 +126,7 @@ async def test_passio_adapter_returns_none_on_bad_json() -> None:
 @pytest.mark.asyncio
 @respx.mock
 async def test_passio_adapter_returns_none_when_no_buses_key() -> None:
+    respx.post(_ROUTES_ENDPOINT).mock(return_value=httpx.Response(200, json={"all": []}))
     respx.post(_ENDPOINT).mock(return_value=httpx.Response(200, json={"vehicles": []}))
     adapter = PassioAdapter(SYSTEM_ID)
     async with httpx.AsyncClient() as client:
