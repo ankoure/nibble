@@ -81,7 +81,9 @@ class FeedHeader(_message.Message):
         ValueType = _typing.NewType("ValueType", _builtins.int)
         V: _TypeAlias = ValueType  # noqa: Y015
 
-    class _IncrementalityEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[FeedHeader._Incrementality.ValueType], _builtins.type):
+    class _IncrementalityEnumTypeWrapper(
+        _enum_type_wrapper._EnumTypeWrapper[FeedHeader._Incrementality.ValueType], _builtins.type
+    ):
         DESCRIPTOR: _descriptor.EnumDescriptor
         FULL_DATASET: FeedHeader._Incrementality.ValueType  # 0
         DIFFERENTIAL: FeedHeader._Incrementality.ValueType  # 1
@@ -117,9 +119,23 @@ class FeedHeader(_message.Message):
         incrementality: Global___FeedHeader.Incrementality.ValueType | None = ...,
         timestamp: _builtins.int | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["gtfs_realtime_version", b"gtfs_realtime_version", "incrementality", b"incrementality", "timestamp", b"timestamp"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal[
+        "gtfs_realtime_version",
+        b"gtfs_realtime_version",
+        "incrementality",
+        b"incrementality",
+        "timestamp",
+        b"timestamp",
+    ]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["gtfs_realtime_version", b"gtfs_realtime_version", "incrementality", b"incrementality", "timestamp", b"timestamp"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal[
+        "gtfs_realtime_version",
+        b"gtfs_realtime_version",
+        "incrementality",
+        b"incrementality",
+        "timestamp",
+        b"timestamp",
+    ]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___FeedHeader: _TypeAlias = FeedHeader  # noqa: Y015
@@ -168,9 +184,31 @@ class FeedEntity(_message.Message):
         vehicle: Global___VehiclePosition | None = ...,
         alert: Global___Alert | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["alert", b"alert", "id", b"id", "is_deleted", b"is_deleted", "trip_update", b"trip_update", "vehicle", b"vehicle"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal[
+        "alert",
+        b"alert",
+        "id",
+        b"id",
+        "is_deleted",
+        b"is_deleted",
+        "trip_update",
+        b"trip_update",
+        "vehicle",
+        b"vehicle",
+    ]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["alert", b"alert", "id", b"id", "is_deleted", b"is_deleted", "trip_update", b"trip_update", "vehicle", b"vehicle"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal[
+        "alert",
+        b"alert",
+        "id",
+        b"id",
+        "is_deleted",
+        b"is_deleted",
+        "trip_update",
+        b"trip_update",
+        "vehicle",
+        b"vehicle",
+    ]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___FeedEntity: _TypeAlias = FeedEntity  # noqa: Y015
@@ -257,9 +295,13 @@ class TripUpdate(_message.Message):
             time: _builtins.int | None = ...,
             uncertainty: _builtins.int | None = ...,
         ) -> None: ...
-        _HasFieldArgType: _TypeAlias = _typing.Literal["delay", b"delay", "time", b"time", "uncertainty", b"uncertainty"]  # noqa: Y015
+        _HasFieldArgType: _TypeAlias = _typing.Literal[
+            "delay", b"delay", "time", b"time", "uncertainty", b"uncertainty"
+        ]  # noqa: Y015
         def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-        _ClearFieldArgType: _TypeAlias = _typing.Literal["delay", b"delay", "time", b"time", "uncertainty", b"uncertainty"]  # noqa: Y015
+        _ClearFieldArgType: _TypeAlias = _typing.Literal[
+            "delay", b"delay", "time", b"time", "uncertainty", b"uncertainty"
+        ]  # noqa: Y015
         def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
     @_typing.final
@@ -278,7 +320,12 @@ class TripUpdate(_message.Message):
             ValueType = _typing.NewType("ValueType", _builtins.int)
             V: _TypeAlias = ValueType  # noqa: Y015
 
-        class _ScheduleRelationshipEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[TripUpdate.StopTimeUpdate._ScheduleRelationship.ValueType], _builtins.type):
+        class _ScheduleRelationshipEnumTypeWrapper(
+            _enum_type_wrapper._EnumTypeWrapper[
+                TripUpdate.StopTimeUpdate._ScheduleRelationship.ValueType
+            ],
+            _builtins.type,
+        ):
             DESCRIPTOR: _descriptor.EnumDescriptor
             SCHEDULED: TripUpdate.StopTimeUpdate._ScheduleRelationship.ValueType  # 0
             """The vehicle is proceeding in accordance with its static schedule of
@@ -308,7 +355,9 @@ class TripUpdate(_message.Message):
             formally adopted in the future.
             """
 
-        class ScheduleRelationship(_ScheduleRelationship, metaclass=_ScheduleRelationshipEnumTypeWrapper):
+        class ScheduleRelationship(
+            _ScheduleRelationship, metaclass=_ScheduleRelationshipEnumTypeWrapper
+        ):
             """The relation between this StopTime and the static schedule."""
 
         SCHEDULED: TripUpdate.StopTimeUpdate.ScheduleRelationship.ValueType  # 0
@@ -370,7 +419,9 @@ class TripUpdate(_message.Message):
             ) -> None: ...
             _HasFieldArgType: _TypeAlias = _typing.Literal["assigned_stop_id", b"assigned_stop_id"]  # noqa: Y015
             def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-            _ClearFieldArgType: _TypeAlias = _typing.Literal["assigned_stop_id", b"assigned_stop_id"]  # noqa: Y015
+            _ClearFieldArgType: _TypeAlias = _typing.Literal[
+                "assigned_stop_id", b"assigned_stop_id"
+            ]  # noqa: Y015
             def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
         STOP_SEQUENCE_FIELD_NUMBER: _builtins.int
@@ -401,12 +452,40 @@ class TripUpdate(_message.Message):
             stop_id: _builtins.str | None = ...,
             arrival: Global___TripUpdate.StopTimeEvent | None = ...,
             departure: Global___TripUpdate.StopTimeEvent | None = ...,
-            schedule_relationship: Global___TripUpdate.StopTimeUpdate.ScheduleRelationship.ValueType | None = ...,
-            stop_time_properties: Global___TripUpdate.StopTimeUpdate.StopTimeProperties | None = ...,
+            schedule_relationship: Global___TripUpdate.StopTimeUpdate.ScheduleRelationship.ValueType
+            | None = ...,
+            stop_time_properties: Global___TripUpdate.StopTimeUpdate.StopTimeProperties
+            | None = ...,
         ) -> None: ...
-        _HasFieldArgType: _TypeAlias = _typing.Literal["arrival", b"arrival", "departure", b"departure", "schedule_relationship", b"schedule_relationship", "stop_id", b"stop_id", "stop_sequence", b"stop_sequence", "stop_time_properties", b"stop_time_properties"]  # noqa: Y015
+        _HasFieldArgType: _TypeAlias = _typing.Literal[
+            "arrival",
+            b"arrival",
+            "departure",
+            b"departure",
+            "schedule_relationship",
+            b"schedule_relationship",
+            "stop_id",
+            b"stop_id",
+            "stop_sequence",
+            b"stop_sequence",
+            "stop_time_properties",
+            b"stop_time_properties",
+        ]  # noqa: Y015
         def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-        _ClearFieldArgType: _TypeAlias = _typing.Literal["arrival", b"arrival", "departure", b"departure", "schedule_relationship", b"schedule_relationship", "stop_id", b"stop_id", "stop_sequence", b"stop_sequence", "stop_time_properties", b"stop_time_properties"]  # noqa: Y015
+        _ClearFieldArgType: _TypeAlias = _typing.Literal[
+            "arrival",
+            b"arrival",
+            "departure",
+            b"departure",
+            "schedule_relationship",
+            b"schedule_relationship",
+            "stop_id",
+            b"stop_id",
+            "stop_sequence",
+            b"stop_sequence",
+            "stop_time_properties",
+            b"stop_time_properties",
+        ]  # noqa: Y015
         def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
     @_typing.final
@@ -430,9 +509,13 @@ class TripUpdate(_message.Message):
             start_date: _builtins.str | None = ...,
             start_time: _builtins.str | None = ...,
         ) -> None: ...
-        _HasFieldArgType: _TypeAlias = _typing.Literal["start_date", b"start_date", "start_time", b"start_time", "trip_id", b"trip_id"]  # noqa: Y015
+        _HasFieldArgType: _TypeAlias = _typing.Literal[
+            "start_date", b"start_date", "start_time", b"start_time", "trip_id", b"trip_id"
+        ]  # noqa: Y015
         def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-        _ClearFieldArgType: _TypeAlias = _typing.Literal["start_date", b"start_date", "start_time", b"start_time", "trip_id", b"trip_id"]  # noqa: Y015
+        _ClearFieldArgType: _TypeAlias = _typing.Literal[
+            "start_date", b"start_date", "start_time", b"start_time", "trip_id", b"trip_id"
+        ]  # noqa: Y015
         def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
     TRIP_FIELD_NUMBER: _builtins.int
@@ -460,7 +543,9 @@ class TripUpdate(_message.Message):
         """Additional information on the vehicle that is serving this trip."""
 
     @_builtins.property
-    def stop_time_update(self) -> _containers.RepeatedCompositeFieldContainer[Global___TripUpdate.StopTimeUpdate]:
+    def stop_time_update(
+        self,
+    ) -> _containers.RepeatedCompositeFieldContainer[Global___TripUpdate.StopTimeUpdate]:
         """Updates to StopTimes for the trip (both future, i.e., predictions, and in
         some cases, past ones, i.e., those that already happened).
         The updates must be sorted by stop_sequence, and apply for all the
@@ -479,9 +564,33 @@ class TripUpdate(_message.Message):
         delay: _builtins.int | None = ...,
         trip_properties: Global___TripUpdate.TripProperties | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["delay", b"delay", "timestamp", b"timestamp", "trip", b"trip", "trip_properties", b"trip_properties", "vehicle", b"vehicle"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal[
+        "delay",
+        b"delay",
+        "timestamp",
+        b"timestamp",
+        "trip",
+        b"trip",
+        "trip_properties",
+        b"trip_properties",
+        "vehicle",
+        b"vehicle",
+    ]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["delay", b"delay", "stop_time_update", b"stop_time_update", "timestamp", b"timestamp", "trip", b"trip", "trip_properties", b"trip_properties", "vehicle", b"vehicle"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal[
+        "delay",
+        b"delay",
+        "stop_time_update",
+        b"stop_time_update",
+        "timestamp",
+        b"timestamp",
+        "trip",
+        b"trip",
+        "trip_properties",
+        b"trip_properties",
+        "vehicle",
+        b"vehicle",
+    ]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___TripUpdate: _TypeAlias = TripUpdate  # noqa: Y015
@@ -496,7 +605,10 @@ class VehiclePosition(_message.Message):
         ValueType = _typing.NewType("ValueType", _builtins.int)
         V: _TypeAlias = ValueType  # noqa: Y015
 
-    class _VehicleStopStatusEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[VehiclePosition._VehicleStopStatus.ValueType], _builtins.type):
+    class _VehicleStopStatusEnumTypeWrapper(
+        _enum_type_wrapper._EnumTypeWrapper[VehiclePosition._VehicleStopStatus.ValueType],
+        _builtins.type,
+    ):
         DESCRIPTOR: _descriptor.EnumDescriptor
         INCOMING_AT: VehiclePosition._VehicleStopStatus.ValueType  # 0
         STOPPED_AT: VehiclePosition._VehicleStopStatus.ValueType  # 1
@@ -511,7 +623,10 @@ class VehiclePosition(_message.Message):
         ValueType = _typing.NewType("ValueType", _builtins.int)
         V: _TypeAlias = ValueType  # noqa: Y015
 
-    class _CongestionLevelEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[VehiclePosition._CongestionLevel.ValueType], _builtins.type):
+    class _CongestionLevelEnumTypeWrapper(
+        _enum_type_wrapper._EnumTypeWrapper[VehiclePosition._CongestionLevel.ValueType],
+        _builtins.type,
+    ):
         DESCRIPTOR: _descriptor.EnumDescriptor
         UNKNOWN_CONGESTION_LEVEL: VehiclePosition._CongestionLevel.ValueType  # 0
         RUNNING_SMOOTHLY: VehiclePosition._CongestionLevel.ValueType  # 1
@@ -530,7 +645,10 @@ class VehiclePosition(_message.Message):
         ValueType = _typing.NewType("ValueType", _builtins.int)
         V: _TypeAlias = ValueType  # noqa: Y015
 
-    class _OccupancyStatusEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[VehiclePosition._OccupancyStatus.ValueType], _builtins.type):
+    class _OccupancyStatusEnumTypeWrapper(
+        _enum_type_wrapper._EnumTypeWrapper[VehiclePosition._OccupancyStatus.ValueType],
+        _builtins.type,
+    ):
         DESCRIPTOR: _descriptor.EnumDescriptor
         EMPTY: VehiclePosition._OccupancyStatus.ValueType  # 0
         MANY_SEATS_AVAILABLE: VehiclePosition._OccupancyStatus.ValueType  # 1
@@ -576,9 +694,31 @@ class VehiclePosition(_message.Message):
             occupancy_percentage: _builtins.int | None = ...,
             carriage_sequence: _builtins.int | None = ...,
         ) -> None: ...
-        _HasFieldArgType: _TypeAlias = _typing.Literal["carriage_sequence", b"carriage_sequence", "id", b"id", "label", b"label", "occupancy_percentage", b"occupancy_percentage", "occupancy_status", b"occupancy_status"]  # noqa: Y015
+        _HasFieldArgType: _TypeAlias = _typing.Literal[
+            "carriage_sequence",
+            b"carriage_sequence",
+            "id",
+            b"id",
+            "label",
+            b"label",
+            "occupancy_percentage",
+            b"occupancy_percentage",
+            "occupancy_status",
+            b"occupancy_status",
+        ]  # noqa: Y015
         def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-        _ClearFieldArgType: _TypeAlias = _typing.Literal["carriage_sequence", b"carriage_sequence", "id", b"id", "label", b"label", "occupancy_percentage", b"occupancy_percentage", "occupancy_status", b"occupancy_status"]  # noqa: Y015
+        _ClearFieldArgType: _TypeAlias = _typing.Literal[
+            "carriage_sequence",
+            b"carriage_sequence",
+            "id",
+            b"id",
+            "label",
+            b"label",
+            "occupancy_percentage",
+            b"occupancy_percentage",
+            "occupancy_status",
+            b"occupancy_status",
+        ]  # noqa: Y015
         def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
     TRIP_FIELD_NUMBER: _builtins.int
@@ -606,7 +746,9 @@ class VehiclePosition(_message.Message):
     @_builtins.property
     def position(self) -> Global___Position: ...
     @_builtins.property
-    def multi_carriage_details(self) -> _containers.RepeatedCompositeFieldContainer[Global___VehiclePosition.CarriageDetails]: ...
+    def multi_carriage_details(
+        self,
+    ) -> _containers.RepeatedCompositeFieldContainer[Global___VehiclePosition.CarriageDetails]: ...
     def __init__(
         self,
         *,
@@ -620,11 +762,56 @@ class VehiclePosition(_message.Message):
         congestion_level: Global___VehiclePosition.CongestionLevel.ValueType | None = ...,
         occupancy_status: Global___VehiclePosition.OccupancyStatus.ValueType | None = ...,
         occupancy_percentage: _builtins.int | None = ...,
-        multi_carriage_details: _abc.Iterable[Global___VehiclePosition.CarriageDetails] | None = ...,
+        multi_carriage_details: _abc.Iterable[Global___VehiclePosition.CarriageDetails]
+        | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["congestion_level", b"congestion_level", "current_status", b"current_status", "current_stop_sequence", b"current_stop_sequence", "occupancy_percentage", b"occupancy_percentage", "occupancy_status", b"occupancy_status", "position", b"position", "stop_id", b"stop_id", "timestamp", b"timestamp", "trip", b"trip", "vehicle", b"vehicle"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal[
+        "congestion_level",
+        b"congestion_level",
+        "current_status",
+        b"current_status",
+        "current_stop_sequence",
+        b"current_stop_sequence",
+        "occupancy_percentage",
+        b"occupancy_percentage",
+        "occupancy_status",
+        b"occupancy_status",
+        "position",
+        b"position",
+        "stop_id",
+        b"stop_id",
+        "timestamp",
+        b"timestamp",
+        "trip",
+        b"trip",
+        "vehicle",
+        b"vehicle",
+    ]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["congestion_level", b"congestion_level", "current_status", b"current_status", "current_stop_sequence", b"current_stop_sequence", "multi_carriage_details", b"multi_carriage_details", "occupancy_percentage", b"occupancy_percentage", "occupancy_status", b"occupancy_status", "position", b"position", "stop_id", b"stop_id", "timestamp", b"timestamp", "trip", b"trip", "vehicle", b"vehicle"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal[
+        "congestion_level",
+        b"congestion_level",
+        "current_status",
+        b"current_status",
+        "current_stop_sequence",
+        b"current_stop_sequence",
+        "multi_carriage_details",
+        b"multi_carriage_details",
+        "occupancy_percentage",
+        b"occupancy_percentage",
+        "occupancy_status",
+        b"occupancy_status",
+        "position",
+        b"position",
+        "stop_id",
+        b"stop_id",
+        "timestamp",
+        b"timestamp",
+        "trip",
+        b"trip",
+        "vehicle",
+        b"vehicle",
+    ]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___VehiclePosition: _TypeAlias = VehiclePosition  # noqa: Y015
@@ -639,7 +826,9 @@ class Alert(_message.Message):
         ValueType = _typing.NewType("ValueType", _builtins.int)
         V: _TypeAlias = ValueType  # noqa: Y015
 
-    class _CauseEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Alert._Cause.ValueType], _builtins.type):
+    class _CauseEnumTypeWrapper(
+        _enum_type_wrapper._EnumTypeWrapper[Alert._Cause.ValueType], _builtins.type
+    ):
         DESCRIPTOR: _descriptor.EnumDescriptor
         UNKNOWN_CAUSE: Alert._Cause.ValueType  # 1
         OTHER_CAUSE: Alert._Cause.ValueType  # 2
@@ -672,7 +861,9 @@ class Alert(_message.Message):
         ValueType = _typing.NewType("ValueType", _builtins.int)
         V: _TypeAlias = ValueType  # noqa: Y015
 
-    class _EffectEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Alert._Effect.ValueType], _builtins.type):
+    class _EffectEnumTypeWrapper(
+        _enum_type_wrapper._EnumTypeWrapper[Alert._Effect.ValueType], _builtins.type
+    ):
         DESCRIPTOR: _descriptor.EnumDescriptor
         NO_SERVICE: Alert._Effect.ValueType  # 1
         REDUCED_SERVICE: Alert._Effect.ValueType  # 2
@@ -703,7 +894,9 @@ class Alert(_message.Message):
         ValueType = _typing.NewType("ValueType", _builtins.int)
         V: _TypeAlias = ValueType  # noqa: Y015
 
-    class _SeverityLevelEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[Alert._SeverityLevel.ValueType], _builtins.type):
+    class _SeverityLevelEnumTypeWrapper(
+        _enum_type_wrapper._EnumTypeWrapper[Alert._SeverityLevel.ValueType], _builtins.type
+    ):
         DESCRIPTOR: _descriptor.EnumDescriptor
         UNKNOWN_SEVERITY: Alert._SeverityLevel.ValueType  # 1
         INFO: Alert._SeverityLevel.ValueType  # 2
@@ -732,7 +925,9 @@ class Alert(_message.Message):
     @_builtins.property
     def active_period(self) -> _containers.RepeatedCompositeFieldContainer[Global___TimeRange]: ...
     @_builtins.property
-    def informed_entity(self) -> _containers.RepeatedCompositeFieldContainer[Global___EntitySelector]: ...
+    def informed_entity(
+        self,
+    ) -> _containers.RepeatedCompositeFieldContainer[Global___EntitySelector]: ...
     @_builtins.property
     def url(self) -> Global___TranslatedString: ...
     @_builtins.property
@@ -757,9 +952,47 @@ class Alert(_message.Message):
         tts_description_text: Global___TranslatedString | None = ...,
         severity_level: Global___Alert.SeverityLevel.ValueType | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["cause", b"cause", "description_text", b"description_text", "effect", b"effect", "header_text", b"header_text", "severity_level", b"severity_level", "tts_description_text", b"tts_description_text", "tts_header_text", b"tts_header_text", "url", b"url"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal[
+        "cause",
+        b"cause",
+        "description_text",
+        b"description_text",
+        "effect",
+        b"effect",
+        "header_text",
+        b"header_text",
+        "severity_level",
+        b"severity_level",
+        "tts_description_text",
+        b"tts_description_text",
+        "tts_header_text",
+        b"tts_header_text",
+        "url",
+        b"url",
+    ]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["active_period", b"active_period", "cause", b"cause", "description_text", b"description_text", "effect", b"effect", "header_text", b"header_text", "informed_entity", b"informed_entity", "severity_level", b"severity_level", "tts_description_text", b"tts_description_text", "tts_header_text", b"tts_header_text", "url", b"url"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal[
+        "active_period",
+        b"active_period",
+        "cause",
+        b"cause",
+        "description_text",
+        b"description_text",
+        "effect",
+        b"effect",
+        "header_text",
+        b"header_text",
+        "informed_entity",
+        b"informed_entity",
+        "severity_level",
+        b"severity_level",
+        "tts_description_text",
+        b"tts_description_text",
+        "tts_header_text",
+        b"tts_header_text",
+        "url",
+        b"url",
+    ]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___Alert: _TypeAlias = Alert  # noqa: Y015
@@ -812,9 +1045,31 @@ class Position(_message.Message):
         odometer: _builtins.float | None = ...,
         speed: _builtins.float | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["bearing", b"bearing", "latitude", b"latitude", "longitude", b"longitude", "odometer", b"odometer", "speed", b"speed"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal[
+        "bearing",
+        b"bearing",
+        "latitude",
+        b"latitude",
+        "longitude",
+        b"longitude",
+        "odometer",
+        b"odometer",
+        "speed",
+        b"speed",
+    ]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["bearing", b"bearing", "latitude", b"latitude", "longitude", b"longitude", "odometer", b"odometer", "speed", b"speed"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal[
+        "bearing",
+        b"bearing",
+        "latitude",
+        b"latitude",
+        "longitude",
+        b"longitude",
+        "odometer",
+        b"odometer",
+        "speed",
+        b"speed",
+    ]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___Position: _TypeAlias = Position  # noqa: Y015
@@ -831,18 +1086,25 @@ class TripDescriptor(_message.Message):
         ValueType = _typing.NewType("ValueType", _builtins.int)
         V: _TypeAlias = ValueType  # noqa: Y015
 
-    class _ScheduleRelationshipEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[TripDescriptor._ScheduleRelationship.ValueType], _builtins.type):
+    class _ScheduleRelationshipEnumTypeWrapper(
+        _enum_type_wrapper._EnumTypeWrapper[TripDescriptor._ScheduleRelationship.ValueType],
+        _builtins.type,
+    ):
         DESCRIPTOR: _descriptor.EnumDescriptor
         SCHEDULED: TripDescriptor._ScheduleRelationship.ValueType  # 0
         ADDED: TripDescriptor._ScheduleRelationship.ValueType  # 1
         UNSCHEDULED: TripDescriptor._ScheduleRelationship.ValueType  # 2
         CANCELED: TripDescriptor._ScheduleRelationship.ValueType  # 3
         @_builtins.property
-        @_deprecated("""This enum value has been marked as deprecated using proto enum value options.""")
+        @_deprecated(
+            """This enum value has been marked as deprecated using proto enum value options."""
+        )
         def REPLACEMENT(self) -> TripDescriptor._ScheduleRelationship.ValueType: ...  # 5
         DUPLICATED: TripDescriptor._ScheduleRelationship.ValueType  # 6
 
-    class ScheduleRelationship(_ScheduleRelationship, metaclass=_ScheduleRelationshipEnumTypeWrapper): ...
+    class ScheduleRelationship(
+        _ScheduleRelationship, metaclass=_ScheduleRelationshipEnumTypeWrapper
+    ): ...
     SCHEDULED: TripDescriptor.ScheduleRelationship.ValueType  # 0
     ADDED: TripDescriptor.ScheduleRelationship.ValueType  # 1
     UNSCHEDULED: TripDescriptor.ScheduleRelationship.ValueType  # 2
@@ -872,9 +1134,35 @@ class TripDescriptor(_message.Message):
         start_date: _builtins.str | None = ...,
         schedule_relationship: Global___TripDescriptor.ScheduleRelationship.ValueType | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["direction_id", b"direction_id", "route_id", b"route_id", "schedule_relationship", b"schedule_relationship", "start_date", b"start_date", "start_time", b"start_time", "trip_id", b"trip_id"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal[
+        "direction_id",
+        b"direction_id",
+        "route_id",
+        b"route_id",
+        "schedule_relationship",
+        b"schedule_relationship",
+        "start_date",
+        b"start_date",
+        "start_time",
+        b"start_time",
+        "trip_id",
+        b"trip_id",
+    ]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["direction_id", b"direction_id", "route_id", b"route_id", "schedule_relationship", b"schedule_relationship", "start_date", b"start_date", "start_time", b"start_time", "trip_id", b"trip_id"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal[
+        "direction_id",
+        b"direction_id",
+        "route_id",
+        b"route_id",
+        "schedule_relationship",
+        b"schedule_relationship",
+        "start_date",
+        b"start_date",
+        "start_time",
+        b"start_time",
+        "trip_id",
+        b"trip_id",
+    ]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___TripDescriptor: _TypeAlias = TripDescriptor  # noqa: Y015
@@ -898,9 +1186,13 @@ class VehicleDescriptor(_message.Message):
         label: _builtins.str | None = ...,
         license_plate: _builtins.str | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["id", b"id", "label", b"label", "license_plate", b"license_plate"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal[
+        "id", b"id", "label", b"label", "license_plate", b"license_plate"
+    ]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["id", b"id", "label", b"label", "license_plate", b"license_plate"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal[
+        "id", b"id", "label", b"label", "license_plate", b"license_plate"
+    ]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___VehicleDescriptor: _TypeAlias = VehicleDescriptor  # noqa: Y015
@@ -934,9 +1226,35 @@ class EntitySelector(_message.Message):
         stop_id: _builtins.str | None = ...,
         direction_id: _builtins.int | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["agency_id", b"agency_id", "direction_id", b"direction_id", "route_id", b"route_id", "route_type", b"route_type", "stop_id", b"stop_id", "trip", b"trip"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal[
+        "agency_id",
+        b"agency_id",
+        "direction_id",
+        b"direction_id",
+        "route_id",
+        b"route_id",
+        "route_type",
+        b"route_type",
+        "stop_id",
+        b"stop_id",
+        "trip",
+        b"trip",
+    ]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["agency_id", b"agency_id", "direction_id", b"direction_id", "route_id", b"route_id", "route_type", b"route_type", "stop_id", b"stop_id", "trip", b"trip"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal[
+        "agency_id",
+        b"agency_id",
+        "direction_id",
+        b"direction_id",
+        "route_id",
+        b"route_id",
+        "route_type",
+        b"route_type",
+        "stop_id",
+        b"stop_id",
+        "trip",
+        b"trip",
+    ]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___EntitySelector: _TypeAlias = EntitySelector  # noqa: Y015
@@ -970,7 +1288,9 @@ class TranslatedString(_message.Message):
 
     TRANSLATION_FIELD_NUMBER: _builtins.int
     @_builtins.property
-    def translation(self) -> _containers.RepeatedCompositeFieldContainer[Global___TranslatedString.Translation]: ...
+    def translation(
+        self,
+    ) -> _containers.RepeatedCompositeFieldContainer[Global___TranslatedString.Translation]: ...
     def __init__(
         self,
         *,

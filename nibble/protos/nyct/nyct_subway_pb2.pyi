@@ -46,9 +46,13 @@ class TripReplacementPeriod(_message.Message):
         route_id: _builtins.str | None = ...,
         replacement_period: _gtfs_realtime_pb2.TimeRange | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["replacement_period", b"replacement_period", "route_id", b"route_id"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal[
+        "replacement_period", b"replacement_period", "route_id", b"route_id"
+    ]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["replacement_period", b"replacement_period", "route_id", b"route_id"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal[
+        "replacement_period", b"replacement_period", "route_id", b"route_id"
+    ]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___TripReplacementPeriod: _TypeAlias = TripReplacementPeriod  # noqa: Y015
@@ -66,7 +70,9 @@ class NyctFeedHeader(_message.Message):
     The current version is 1.0
     """
     @_builtins.property
-    def trip_replacement_period(self) -> _containers.RepeatedCompositeFieldContainer[Global___TripReplacementPeriod]:
+    def trip_replacement_period(
+        self,
+    ) -> _containers.RepeatedCompositeFieldContainer[Global___TripReplacementPeriod]:
         """For the NYCT Subway, the GTFS-realtime feed replaces any scheduled
         trip within the trip_replacement_period.
         This feed is a full dataset, it contains all trips starting
@@ -82,7 +88,12 @@ class NyctFeedHeader(_message.Message):
     ) -> None: ...
     _HasFieldArgType: _TypeAlias = _typing.Literal["nyct_subway_version", b"nyct_subway_version"]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["nyct_subway_version", b"nyct_subway_version", "trip_replacement_period", b"trip_replacement_period"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal[
+        "nyct_subway_version",
+        b"nyct_subway_version",
+        "trip_replacement_period",
+        b"trip_replacement_period",
+    ]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___NyctFeedHeader: _TypeAlias = NyctFeedHeader  # noqa: Y015
@@ -97,7 +108,9 @@ class NyctTripDescriptor(_message.Message):
         ValueType = _typing.NewType("ValueType", _builtins.int)
         V: _TypeAlias = ValueType  # noqa: Y015
 
-    class _DirectionEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[NyctTripDescriptor._Direction.ValueType], _builtins.type):
+    class _DirectionEnumTypeWrapper(
+        _enum_type_wrapper._EnumTypeWrapper[NyctTripDescriptor._Direction.ValueType], _builtins.type
+    ):
         DESCRIPTOR: _descriptor.EnumDescriptor
         NORTH: NyctTripDescriptor._Direction.ValueType  # 1
         EAST: NyctTripDescriptor._Direction.ValueType  # 2
@@ -168,9 +181,13 @@ class NyctTripDescriptor(_message.Message):
         is_assigned: _builtins.bool | None = ...,
         direction: Global___NyctTripDescriptor.Direction.ValueType | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["direction", b"direction", "is_assigned", b"is_assigned", "train_id", b"train_id"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal[
+        "direction", b"direction", "is_assigned", b"is_assigned", "train_id", b"train_id"
+    ]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["direction", b"direction", "is_assigned", b"is_assigned", "train_id", b"train_id"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal[
+        "direction", b"direction", "is_assigned", b"is_assigned", "train_id", b"train_id"
+    ]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___NyctTripDescriptor: _TypeAlias = NyctTripDescriptor  # noqa: Y015
@@ -218,9 +235,13 @@ class NyctStopTimeUpdate(_message.Message):
         scheduled_track: _builtins.str | None = ...,
         actual_track: _builtins.str | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["actual_track", b"actual_track", "scheduled_track", b"scheduled_track"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal[
+        "actual_track", b"actual_track", "scheduled_track", b"scheduled_track"
+    ]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["actual_track", b"actual_track", "scheduled_track", b"scheduled_track"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal[
+        "actual_track", b"actual_track", "scheduled_track", b"scheduled_track"
+    ]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___NyctStopTimeUpdate: _TypeAlias = NyctStopTimeUpdate  # noqa: Y015
@@ -228,6 +249,12 @@ Global___NyctStopTimeUpdate: _TypeAlias = NyctStopTimeUpdate  # noqa: Y015
 NYCT_FEED_HEADER_FIELD_NUMBER: _builtins.int
 NYCT_TRIP_DESCRIPTOR_FIELD_NUMBER: _builtins.int
 NYCT_STOP_TIME_UPDATE_FIELD_NUMBER: _builtins.int
-nyct_feed_header: _extension_dict._ExtensionFieldDescriptor[_gtfs_realtime_pb2.FeedHeader, Global___NyctFeedHeader]
-nyct_trip_descriptor: _extension_dict._ExtensionFieldDescriptor[_gtfs_realtime_pb2.TripDescriptor, Global___NyctTripDescriptor]
-nyct_stop_time_update: _extension_dict._ExtensionFieldDescriptor[_gtfs_realtime_pb2.TripUpdate.StopTimeUpdate, Global___NyctStopTimeUpdate]
+nyct_feed_header: _extension_dict._ExtensionFieldDescriptor[
+    _gtfs_realtime_pb2.FeedHeader, Global___NyctFeedHeader
+]
+nyct_trip_descriptor: _extension_dict._ExtensionFieldDescriptor[
+    _gtfs_realtime_pb2.TripDescriptor, Global___NyctTripDescriptor
+]
+nyct_stop_time_update: _extension_dict._ExtensionFieldDescriptor[
+    _gtfs_realtime_pb2.TripUpdate.StopTimeUpdate, Global___NyctStopTimeUpdate
+]
