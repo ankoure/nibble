@@ -95,7 +95,6 @@ async def test_zero_coordinates_rejected() -> None:
     assert entity.vehicle.position.longitude == 0.0
 
 
-
 @pytest.mark.asyncio
 @respx.mock
 async def test_valid_coordinates_accepted() -> None:

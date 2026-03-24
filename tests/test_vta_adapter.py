@@ -112,7 +112,6 @@ async def test_implausible_speed_skipped() -> None:
     assert feed.entity[0].vehicle.position.speed == 0.0
 
 
-
 # --- Missing / malformed responses ---
 
 

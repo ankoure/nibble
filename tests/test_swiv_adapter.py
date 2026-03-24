@@ -84,7 +84,6 @@ async def test_implausible_speed_skipped() -> None:
     assert feed.entity[0].vehicle.position.speed == 0.0
 
 
-
 @pytest.mark.asyncio
 @respx.mock
 async def test_non_numeric_coordinates_skipped() -> None:

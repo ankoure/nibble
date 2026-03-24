@@ -138,8 +138,6 @@ async def test_null_heading_ignored() -> None:
     assert feed.entity[0].vehicle.position.bearing == 0.0
 
 
-
-
 # --- Missing / malformed responses ---
 
 
