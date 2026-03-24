@@ -40,10 +40,6 @@ from nibble.adapters.base import BaseAdapter
 
 logger = logging.getLogger(__name__)
 
-# Bounding box covering Massachusetts (with generous margins)
-_LAT_MIN, _LAT_MAX = 41.0, 43.5
-_LON_MIN, _LON_MAX = -73.5, -69.9
-
 # Sanity cap on speed before unit conversion (mph)
 _MAX_SPEED_MPH = 100.0
 _MPH_TO_MS = 0.44704
@@ -65,8 +61,8 @@ class RouteMatchAdapter(BaseAdapter):
         """GET the RouteMatch vehicle data and convert it to a GTFS-RT FeedMessage.
 
         Deadheading vehicles are skipped. Speed values (``speed``) are converted
-        from mph to m/s; implausible values (> 100 mph) are dropped. Out-of-bounds
-        positions are skipped. Falls back to the feed header timestamp when
+        from mph to m/s; implausible values (> 100 mph) are dropped. Falls back
+        to the feed header timestamp when
         ``lastUpdate`` is absent or unparseable.
 
         Returns:
@@ -135,16 +131,8 @@ class RouteMatchAdapter(BaseAdapter):
                         vehicle_id,
                     )
                 else:
-                    if _LAT_MIN <= flat <= _LAT_MAX and _LON_MIN <= flon <= _LON_MAX:
-                        vp.position.latitude = flat
-                        vp.position.longitude = flon
-                    else:
-                        logger.warning(
-                            "RouteMatch: out-of-bounds position lat=%s lon=%s for id %s - skipping",
-                            flat,
-                            flon,
-                            vehicle_id,
-                        )
+                    vp.position.latitude = flat
+                    vp.position.longitude = flon
 
             heading = vehicle.get("heading")
             if heading is not None:

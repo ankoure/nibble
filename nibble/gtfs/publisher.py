@@ -29,10 +29,11 @@ def publish_gtfs_to_s3(
     prefix: str,
     archived_feeds_key: str,
     region: str = "us-east-1",
+    archive_url_base: str | None = None,
 ) -> str:
     """Upload the fixed GTFS ZIP and update archived_feeds.txt on S3.
 
-    Returns the public archive_url of the uploaded ZIP.
+    Returns the archive_url written into archived_feeds.txt.
 
     Args:
         zip_bytes: Fixed GTFS ZIP content to upload.
@@ -42,9 +43,12 @@ def publish_gtfs_to_s3(
         prefix: Key prefix for the ZIP (e.g. ``"gtfs"``).
         archived_feeds_key: Full S3 key for the ``archived_feeds.txt`` index.
         region: AWS region used for the S3 client and to construct the archive URL.
+        archive_url_base: When set, the archive_url stored in the index is
+            ``{archive_url_base}/{feed_start_date}.zip`` (e.g. ``"/gtfs"``).
+            When ``None``, the public S3 HTTPS URL is used instead.
 
     Returns:
-        The public HTTPS URL of the uploaded ZIP.
+        The archive_url written into archived_feeds.txt.
 
     Raises:
         ImportError: If ``boto3`` is not installed (install ``nibble[s3]``).
@@ -57,7 +61,10 @@ def publish_gtfs_to_s3(
     s3 = boto3.client("s3", region_name=region)
 
     zip_key = f"{prefix}/{feed_info.feed_start_date}.zip"
-    archive_url = f"https://{bucket}.s3.{region}.amazonaws.com/{zip_key}"
+    if archive_url_base is not None:
+        archive_url = f"{archive_url_base}/{feed_info.feed_start_date}.zip"
+    else:
+        archive_url = f"https://{bucket}.s3.{region}.amazonaws.com/{zip_key}"
 
     logger.info("Uploading fixed GTFS ZIP to s3://%s/%s", bucket, zip_key)
     s3.put_object(Bucket=bucket, Key=zip_key, Body=zip_bytes, ContentType="application/zip")

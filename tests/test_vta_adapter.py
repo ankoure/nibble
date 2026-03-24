@@ -112,22 +112,6 @@ async def test_implausible_speed_skipped() -> None:
     assert feed.entity[0].vehicle.position.speed == 0.0
 
 
-# --- Coordinate validation ---
-
-
-@pytest.mark.asyncio
-@respx.mock
-async def test_out_of_bounds_coordinates_rejected() -> None:
-    respx.get(URL).mock(
-        return_value=httpx.Response(200, json=[_vehicle(lat=51.5, lng=-0.1)])  # London
-    )
-    adapter = VtaAdapter(url=URL, agency_timezone="America/New_York")
-    async with httpx.AsyncClient() as client:
-        feed = await adapter.fetch(client)
-    assert feed is not None
-    assert feed.entity[0].vehicle.position.latitude == 0.0
-
-
 # --- Missing / malformed responses ---
 
 

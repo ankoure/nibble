@@ -103,9 +103,14 @@ class TrilliumAdapter(BaseAdapter):
             if name:
                 vp.vehicle.label = name
 
+            route_short_name = str(vehicle.get("route_short_name", "")).strip()
             route_id = str(vehicle.get("route_id", "")).strip()
-            if route_id:
-                vp.trip.route_id = route_id
+            # Prefer route_short_name over route_id: Trillium's route_id is an
+            # internal platform ID that won't match GTFS, while route_short_name
+            # (e.g. "16") corresponds to the GTFS route_short_name / route_id.
+            effective_route_id = route_short_name or route_id
+            if effective_route_id:
+                vp.trip.route_id = effective_route_id
 
             lat = vehicle.get("lat")
             lon = vehicle.get("lon")

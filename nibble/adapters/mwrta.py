@@ -38,10 +38,6 @@ from nibble.adapters.base import BaseAdapter
 
 logger = logging.getLogger(__name__)
 
-# Bounding box for MWRTA's service area (MetroWest Massachusetts, with generous margins)
-_LAT_MIN, _LAT_MAX = 41.5, 42.9
-_LON_MIN, _LON_MAX = -72.0, -70.5
-
 
 class MwrtaAdapter(BaseAdapter):
     """Fetches MWRTA JSON vehicle data and converts it to a FeedMessage."""
@@ -61,9 +57,8 @@ class MwrtaAdapter(BaseAdapter):
     async def fetch(self, client: httpx.AsyncClient) -> gtfs_realtime_pb2.FeedMessage | None:
         """GET the MWRTA vehicle list and convert it to a GTFS-RT FeedMessage.
 
-        Inactive vehicles (``Active == false``) and vehicles with out-of-bounds
-        positions are skipped. ``DateTime`` values are parsed as local time using
-        the configured agency timezone.
+        Inactive vehicles (``Active == false``) are skipped. ``DateTime`` values
+        are parsed as local time using the configured agency timezone.
 
         Returns:
             A FeedMessage containing one entity per active vehicle, or None on error.
@@ -110,7 +105,11 @@ class MwrtaAdapter(BaseAdapter):
             if plate:
                 vp.vehicle.label = plate
 
-            route_id = str(vehicle.get("Route", "")).strip()
+            route_num = str(vehicle.get("Route", "")).strip()
+            route_name = str(vehicle.get("RouteName", "")).strip()
+            # When Route is purely numeric the feed uses internal IDs that won't
+            # match the static GTFS; prefer RouteName for better normalization.
+            route_id = route_name if route_name and route_num.isdigit() else route_num
             destination = vehicle.get("Destination")
             if route_id:
                 vp.trip.route_id = route_id
@@ -130,16 +129,8 @@ class MwrtaAdapter(BaseAdapter):
                         vehicle_id,
                     )
                 else:
-                    if _LAT_MIN <= flat <= _LAT_MAX and _LON_MIN <= flon <= _LON_MAX:
-                        vp.position.latitude = flat
-                        vp.position.longitude = flon
-                    else:
-                        logger.warning(
-                            "MWRTA: out-of-bounds position lat=%s lon=%s for ID %s - skipping",
-                            flat,
-                            flon,
-                            vehicle_id,
-                        )
+                    vp.position.latitude = flat
+                    vp.position.longitude = flon
 
             heading = vehicle.get("Heading")
             if heading is not None:

@@ -84,22 +84,6 @@ async def test_implausible_speed_skipped() -> None:
     assert feed.entity[0].vehicle.position.speed == 0.0
 
 
-# --- Coordinate validation ---
-
-
-@pytest.mark.asyncio
-@respx.mock
-async def test_out_of_bounds_coordinates_rejected() -> None:
-    v = _vehicle()
-    v["localisation"] = {"lat": 51.5, "lng": -0.1, "cap": 0}  # London
-    respx.get(URL).mock(return_value=httpx.Response(200, json=_response(v)))
-    adapter = SwivAdapter(url=URL)
-    async with httpx.AsyncClient() as client:
-        feed = await adapter.fetch(client)
-    assert feed is not None
-    assert feed.entity[0].vehicle.position.latitude == 0.0
-
-
 @pytest.mark.asyncio
 @respx.mock
 async def test_non_numeric_coordinates_skipped() -> None:

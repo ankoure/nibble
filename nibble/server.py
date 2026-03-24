@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import csv
 import hashlib
 import io
 import json
@@ -20,7 +21,7 @@ from fastapi import FastAPI, Query
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from nibble.adapters import get_adapter
@@ -186,7 +187,7 @@ class Broadcaster:
                 for item in event.data:
                     if isinstance(item, dict) and "id" in item:
                         self._current_snapshot[item["id"]] = item
-            elif event.event_type == "update":
+            elif event.event_type in ("add", "update"):
                 if isinstance(event.data, dict) and "id" in event.data:
                     self._current_snapshot[event.data["id"]] = event.data
             elif event.event_type == "remove":
@@ -457,6 +458,111 @@ def create_app(
 
         unknown_routes.clear()
 
+    @app.get(
+        "/archived_feeds",
+        response_model=None,
+        responses={
+            200: {"content": {"text/csv": {}}, "description": "archived_feeds.txt CSV"},
+            404: {"model": ErrorResponse},
+            503: {"model": ErrorResponse},
+        },
+    )
+    async def get_archived_feeds(request: Request) -> Response | JSONResponse:
+        if not config.s3_bucket:
+            return JSONResponse(
+                {"error": "S3 is not configured (NIBBLE_S3_BUCKET is unset)"},
+                status_code=503,
+            )
+
+        try:
+            import boto3
+        except ImportError:
+            return JSONResponse(
+                {"error": "boto3 is not installed; install nibble[s3]"},
+                status_code=503,
+            )
+
+        slug = config.s3_agency_slug
+        key = f"{slug}/{config.s3_archived_feeds_key}" if slug else config.s3_archived_feeds_key
+
+        def _fetch() -> bytes:
+            s3 = boto3.client("s3", region_name=config.s3_region)
+            return s3.get_object(Bucket=config.s3_bucket, Key=key)["Body"].read()
+
+        try:
+            content = await asyncio.to_thread(_fetch)
+        except Exception as exc:
+            if "NoSuchKey" in str(exc) or "404" in str(exc):
+                return JSONResponse(
+                    {"error": "archived_feeds.txt not found in S3"}, status_code=404
+                )
+            logger.exception("Failed to read archived_feeds from S3")
+            return JSONResponse({"error": "failed to read archived feeds from S3"}, status_code=503)
+
+        base_url = str(request.base_url).rstrip("/")
+        reader = csv.DictReader(io.StringIO(content.decode()))
+        buf = io.StringIO()
+        writer = csv.DictWriter(buf, fieldnames=reader.fieldnames or [], lineterminator="\n")
+        writer.writeheader()
+        for row in reader:
+            url = row.get("archive_url", "")
+            if url.startswith("/"):
+                row["archive_url"] = f"{base_url}{url}"
+            writer.writerow(row)
+
+        return Response(content=buf.getvalue(), media_type="text/csv")
+
+    @app.get(
+        "/gtfs/{filename}",
+        response_model=None,
+        responses={
+            200: {"content": {"application/zip": {}}, "description": "GTFS ZIP archive"},
+            400: {"model": ErrorResponse},
+            404: {"model": ErrorResponse},
+            503: {"model": ErrorResponse},
+        },
+    )
+    async def get_gtfs_file(filename: str) -> Response | JSONResponse:
+        import re
+
+        if not re.fullmatch(r"[0-9A-Za-z_-]+\.zip", filename):
+            return JSONResponse({"error": "invalid filename"}, status_code=400)
+
+        if not config.s3_bucket:
+            return JSONResponse(
+                {"error": "S3 is not configured (NIBBLE_S3_BUCKET is unset)"},
+                status_code=503,
+            )
+
+        try:
+            import boto3
+        except ImportError:
+            return JSONResponse(
+                {"error": "boto3 is not installed; install nibble[s3]"},
+                status_code=503,
+            )
+
+        slug = config.s3_agency_slug
+        key = f"{slug}/{config.s3_prefix}/{filename}" if slug else f"{config.s3_prefix}/{filename}"
+
+        def _fetch() -> bytes:
+            s3 = boto3.client("s3", region_name=config.s3_region)
+            return s3.get_object(Bucket=config.s3_bucket, Key=key)["Body"].read()
+
+        try:
+            content = await asyncio.to_thread(_fetch)
+        except Exception as exc:
+            if "NoSuchKey" in str(exc) or "404" in str(exc):
+                return JSONResponse({"error": f"{filename} not found"}, status_code=404)
+            logger.exception("Failed to fetch %s from S3", filename)
+            return JSONResponse({"error": "failed to fetch file from S3"}, status_code=503)
+
+        return Response(
+            content=content,
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
     return app
 
 
@@ -521,6 +627,7 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
             if slug
             else config.s3_archived_feeds_key,
             region=config.s3_region,
+            archive_url_base="/gtfs",
         )
 
         return load_static_gtfs_from_bytes(fixed_zip)
@@ -608,6 +715,7 @@ async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
                         if slug
                         else config.s3_archived_feeds_key,
                         region=config.s3_region,
+                        archive_url_base="/gtfs",
                     )
 
                 holder.gtfs = load_static_gtfs_from_bytes(candidate_zip)
@@ -629,8 +737,22 @@ def print_openapi() -> None:
     """
     from unittest.mock import MagicMock
 
+    from pydantic_settings import PydanticBaseSettingsSource
+
+    class _SchemaSettings(Settings):
+        """Settings subclass that ignores env vars and .env so any environment works."""
+
+        @classmethod
+        def settings_customise_sources(
+            _cls,
+            _settings_cls: type[Settings],
+            init_settings: PydanticBaseSettingsSource,
+            **_kwargs: object,
+        ) -> tuple[PydanticBaseSettingsSource, ...]:
+            return (init_settings,)
+
     app = create_app(
-        Settings(gtfs_rt_url="http://x", gtfs_static_url="http://x"),
+        _SchemaSettings(gtfs_rt_url="http://x", gtfs_static_url="http://x"),
         Broadcaster(),
         MagicMock(spec=OverrideStore),
         MagicMock(spec=GtfsHolder),
@@ -659,7 +781,10 @@ def main() -> None:
 
     holder = GtfsHolder(_load_gtfs(config))
     adapter = get_adapter(
-        config.adapter, config.gtfs_rt_url, config.agency_id, config.agency_timezone
+        config.adapter,
+        config.gtfs_rt_url,
+        config.agency_id,
+        config.agency_timezone,
     )
 
     overrides = OverrideStore(config.overrides_path)

@@ -1,7 +1,10 @@
 -include .env
 export
 
-.PHONY: fix-gtfs lint typecheck
+.PHONY: fix-gtfs lint typecheck openapi
+
+openapi: ## Regenerate openapi.json from current server routes
+	uv run nibble-openapi > openapi.json
 
 lint: ## Run ruff and vulture
 	uv run ruff check nibble/ tests/
