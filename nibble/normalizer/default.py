@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from nibble.protos import gtfs_realtime_pb2
-
 from nibble.gtfs.static import StaticGTFS
 from nibble.normalizer.base import BaseNormalizer
+from nibble.protos import gtfs_realtime_pb2
 
 
 class DefaultNormalizer(BaseNormalizer):

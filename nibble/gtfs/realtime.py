@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 import httpx
+
 from nibble.protos import gtfs_realtime_pb2
 
 logger = logging.getLogger(__name__)

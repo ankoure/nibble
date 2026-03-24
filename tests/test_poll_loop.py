@@ -14,11 +14,11 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from nibble.protos import gtfs_realtime_pb2
 
 from nibble.config import Settings
 from nibble.gtfs.static import StaticGTFS
 from nibble.poller import poll_loop
+from nibble.protos import gtfs_realtime_pb2
 
 
 def _settings(**kwargs: Any) -> Settings:

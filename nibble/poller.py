@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from nibble.server import Broadcaster, GtfsHolder
 
 import httpx
-from nibble.protos import gtfs_realtime_pb2
 
 from nibble.adapters.base import BaseAdapter
 from nibble.config import Settings
@@ -21,6 +20,7 @@ from nibble.gtfs.static import StaticGTFS
 from nibble.models import Position, VehicleEvent
 from nibble.normalizer.base import BaseNormalizer
 from nibble.overrides import OverrideStore
+from nibble.protos import gtfs_realtime_pb2
 from nibble.reconciler import reconcile
 from nibble.state import StateStore
 

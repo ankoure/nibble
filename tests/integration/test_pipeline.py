@@ -9,13 +9,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from nibble.protos import gtfs_realtime_pb2
-
 from nibble.config import Settings
 from nibble.gtfs.static import StaticGTFS
 from nibble.models import Position, VehicleEvent
 from nibble.normalizer.ripta import RiptaNormalizer
 from nibble.poller import _parse_feed
+from nibble.protos import gtfs_realtime_pb2
 from nibble.reconciler import reconcile
 from nibble.state import StateStore
 

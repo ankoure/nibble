@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from nibble.protos import gtfs_realtime_pb2
-
 from nibble import unknown_routes
 from nibble.gtfs.static import StaticGTFS
 from nibble.normalizer.mwrta import MwrtaNormalizer
+from nibble.protos import gtfs_realtime_pb2
 
 
 def _gtfs(route_trips: dict[str, object], route_short_names: dict[str, str]) -> StaticGTFS:

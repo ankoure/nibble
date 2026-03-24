@@ -128,9 +128,7 @@ class NyctNormalizer(BaseNormalizer):
                     if trip_id and trip_id not in gtfs.trips:
                         full_id = self._suffix_index.get(trip_id)
                         if full_id:
-                            logger.debug(
-                                "NYCT: rewrote trip_id %r -> %r", trip_id, full_id
-                            )
+                            logger.debug("NYCT: rewrote trip_id %r -> %r", trip_id, full_id)
                             vehicle.trip.trip_id = full_id
 
             keep.append(entity)

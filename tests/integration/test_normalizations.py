@@ -12,13 +12,12 @@ import io
 import zipfile
 from datetime import datetime, timezone
 
-from nibble.protos import gtfs_realtime_pb2
-
 from nibble.gtfs.static import StaticGTFS, _parse_gtfs_zip
 from nibble.interpolator import interpolate
 from nibble.models import Position, VehicleEvent
 from nibble.normalizer.ripta import RiptaNormalizer
 from nibble.poller import _parse_feed
+from nibble.protos import gtfs_realtime_pb2
 from nibble.state import StateStore, VehicleState
 
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 import httpx
+
 from nibble.protos import gtfs_realtime_pb2
 
 

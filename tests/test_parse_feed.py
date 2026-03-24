@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 import pytest
-from nibble.protos import gtfs_realtime_pb2
 
 from nibble.normalizer.brta import BrtaNormalizer
 from nibble.normalizer.cttransit import CttransitNormalizer
@@ -12,6 +11,7 @@ from nibble.normalizer.mwrta import MwrtaNormalizer
 from nibble.normalizer.ripta import RiptaNormalizer
 from nibble.normalizer.vta import VtaNormalizer
 from nibble.poller import _get_normalizer, _parse_feed
+from nibble.protos import gtfs_realtime_pb2
 
 FEED_TS = 1704067200  # 2024-01-01 00:00:00 UTC
 VEHICLE_TS = 1704067260  # 2024-01-01 00:01:00 UTC

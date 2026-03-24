@@ -6,10 +6,10 @@ from datetime import datetime, timezone
 
 import boto3
 import pytest
-from nibble.protos import gtfs_realtime_pb2
 from moto import mock_aws
 
 from nibble.models import Position, VehicleEvent
+from nibble.protos import gtfs_realtime_pb2
 from nibble.publishers.vehicle_positions import _build_feed, publish_vehicle_positions
 
 BUCKET = "test-vp-bucket"

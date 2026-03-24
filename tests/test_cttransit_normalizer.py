@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from nibble.protos import gtfs_realtime_pb2
-
 from nibble.gtfs.static import StaticGTFS
 from nibble.models import Trip
 from nibble.normalizer.cttransit import CttransitNormalizer
+from nibble.protos import gtfs_realtime_pb2
 
 
 def _gtfs(*trip_ids: str) -> StaticGTFS:

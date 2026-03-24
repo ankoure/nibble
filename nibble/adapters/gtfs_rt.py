@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import httpx
-from nibble.protos import gtfs_realtime_pb2
 
 from nibble.adapters.base import BaseAdapter
 from nibble.gtfs.realtime import fetch_feed
+from nibble.protos import gtfs_realtime_pb2
 
 
 class GtfsRtAdapter(BaseAdapter):
