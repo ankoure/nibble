@@ -503,7 +503,15 @@ def _fill_shape_dist_traveled(gtfs: StaticGTFS) -> None:
     times for that trip.  Trips whose every stop time already has a value, or
     whose shape or stop coordinates are unavailable, are left unchanged.
     """
-    for trip_id, times in gtfs.stop_times.items():
+    needs_fill = [
+        trip_id
+        for trip_id, times in gtfs.stop_times.items()
+        if not all(st.shape_dist_traveled is not None for st in times)
+    ]
+    if needs_fill:
+        logger.info("Back-filling shape_dist_traveled for %d trips", len(needs_fill))
+    for trip_id in needs_fill:
+        times = gtfs.stop_times[trip_id]
         if all(st.shape_dist_traveled is not None for st in times):
             continue
 
@@ -552,6 +560,7 @@ def _parse_gtfs_zip(content: bytes) -> StaticGTFS:
         names = zf.namelist()
 
         if "stops.txt" in names:
+            logger.info("Parsing stops.txt")
             with zf.open("stops.txt") as f:
                 reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
                 for row in reader:
@@ -566,6 +575,7 @@ def _parse_gtfs_zip(content: bytes) -> StaticGTFS:
                     gtfs.stops[stop_id] = (lat, lon)
 
         if "routes.txt" in names:
+            logger.info("Parsing routes.txt")
             with zf.open("routes.txt") as f:
                 reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
                 for row in reader:
@@ -580,6 +590,7 @@ def _parse_gtfs_zip(content: bytes) -> StaticGTFS:
                             gtfs.route_short_names[name] = route_id
 
         if "shapes.txt" in names:
+            logger.info("Parsing shapes.txt")
             raw_shapes: dict[str, list[tuple[int, float, float]]] = defaultdict(list)
             with zf.open("shapes.txt") as f:
                 reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
@@ -599,6 +610,7 @@ def _parse_gtfs_zip(content: bytes) -> StaticGTFS:
                 gtfs.shapes[shape_id] = [(lat, lon) for _, lat, lon in pts]
 
         if "trips.txt" in names:
+            logger.info("Parsing trips.txt")
             with zf.open("trips.txt") as f:
                 reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
                 for row in reader:
@@ -621,6 +633,7 @@ def _parse_gtfs_zip(content: bytes) -> StaticGTFS:
             gtfs.route_trips = dict(rt)
 
         if "stop_times.txt" in names:
+            logger.info("Parsing stop_times.txt")
             raw: dict[str, list[StopTime]] = defaultdict(list)
             with zf.open("stop_times.txt") as f:
                 reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
@@ -648,6 +661,7 @@ def _parse_gtfs_zip(content: bytes) -> StaticGTFS:
             for trip_id, times in raw.items():
                 gtfs.stop_times[trip_id] = sorted(times, key=lambda st: st.stop_sequence)
 
+    logger.info("Computing shape_dist_traveled for trips missing it")
     _fill_shape_dist_traveled(gtfs)
 
     logger.info(

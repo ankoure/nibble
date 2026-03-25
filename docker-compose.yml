@@ -27,6 +27,7 @@ x-s3-common: &s3-common
 
 x-nibble-env-defaults: &nibble-env-defaults
   NIBBLE_GTFS_RELOAD_INTERVAL_HOURS: "24"
+  PYTHONUNBUFFERED: "1"
 
 x-oba-puget-sound-auth: &oba-puget-sound-auth
   NIBBLE_AUTH_TYPE: query_param
@@ -793,3 +794,133 @@ services:
       NIBBLE_POLL_INTERVAL_SECONDS: 15
       NIBBLE_GTFS_STATIC_FIX: "true"
       NIBBLE_S3_AGENCY_SLUG: gcrta
+
+  # NYC MTA Subway
+
+  nibble-nyct-ace:
+    <<: *nibble-base
+    profiles: [nyc, new-york]
+    ports:
+      - "8126:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: nyct
+      NIBBLE_GTFS_RT_URL: ${NYCT_ACE_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: nyct-ace
+
+  nibble-nyct-bdfm:
+    <<: *nibble-base
+    profiles: [nyc, new-york]
+    ports:
+      - "8127:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: nyct
+      NIBBLE_GTFS_RT_URL: ${NYCT_BDFM_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: nyct-bdfm
+
+  nibble-nyct-g:
+    <<: *nibble-base
+    profiles: [nyc, new-york]
+    ports:
+      - "8128:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: nyct
+      NIBBLE_GTFS_RT_URL: ${NYCT_G_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: nyct-g
+
+  nibble-nyct-jz:
+    <<: *nibble-base
+    profiles: [nyc, new-york]
+    ports:
+      - "8129:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: nyct
+      NIBBLE_GTFS_RT_URL: ${NYCT_JZ_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: nyct-jz
+
+  nibble-nyct-nqrw:
+    <<: *nibble-base
+    profiles: [nyc, new-york]
+    ports:
+      - "8130:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: nyct
+      NIBBLE_GTFS_RT_URL: ${NYCT_NQRW_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: nyct-nqrw
+
+  nibble-nyct-l:
+    <<: *nibble-base
+    profiles: [nyc, new-york]
+    ports:
+      - "8131:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: nyct
+      NIBBLE_GTFS_RT_URL: ${NYCT_L_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: nyct-l
+
+  nibble-nyct-1234567s:
+    <<: *nibble-base
+    profiles: [nyc, new-york]
+    ports:
+      - "8132:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: nyct
+      NIBBLE_GTFS_RT_URL: ${NYCT_1234567S_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: nyct-1234567s
+
+  nibble-nyct-sir:
+    <<: *nibble-base
+    profiles: [nyc, new-york]
+    ports:
+      - "8133:8080"
+    environment:
+      <<: [*aws, *s3-common, *nibble-env-defaults]
+      NIBBLE_ADAPTER: gtfs_rt
+      NIBBLE_NORMALIZER: nyct
+      NIBBLE_GTFS_RT_URL: ${NYCT_SIR_GTFS_RT_URL}
+      NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
+      NIBBLE_AGENCY_TIMEZONE: America/New_York
+      NIBBLE_POLL_INTERVAL_SECONDS: 15
+      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_S3_AGENCY_SLUG: nyct-sir

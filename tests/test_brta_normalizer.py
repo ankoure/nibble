@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import pytest
-from google.transit import gtfs_realtime_pb2
 
 from nibble.normalizer.brta import BrtaNormalizer, _candidate_short_name
+from nibble.protos import gtfs_realtime_pb2
 
 # --- _candidate_short_name unit tests ---
 

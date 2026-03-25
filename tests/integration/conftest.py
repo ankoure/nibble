@@ -13,12 +13,12 @@ import httpx
 import pytest
 import pytest_asyncio
 from fastapi import FastAPI
-from google.transit import gtfs_realtime_pb2
 from starlette.types import ASGIApp
 
 from nibble.config import Settings
 from nibble.gtfs.static import StaticGTFS, _parse_gtfs_zip
 from nibble.overrides import OverrideStore
+from nibble.protos import gtfs_realtime_pb2
 from nibble.server import Broadcaster, GtfsHolder, create_app
 
 # ---------------------------------------------------------------------------

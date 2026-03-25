@@ -32,9 +32,9 @@ import zoneinfo
 from datetime import datetime, timezone
 
 import httpx
-from google.transit import gtfs_realtime_pb2
 
 from nibble.adapters.base import BaseAdapter
+from nibble.protos import gtfs_realtime_pb2
 
 logger = logging.getLogger(__name__)
 

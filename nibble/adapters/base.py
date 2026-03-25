@@ -5,7 +5,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 import httpx
-from google.transit import gtfs_realtime_pb2
+
+from nibble.protos import gtfs_realtime_pb2
 
 
 class BaseAdapter(ABC):
