@@ -26,8 +26,8 @@ jobs:
           context: .
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: |
-            ghcr.io/transitmatters/nibble:sha-${{ github.sha }}
-            ghcr.io/transitmatters/nibble:latest
+            ghcr.io/ankoure/nibble:sha-${{ github.sha }}
+            ghcr.io/ankoure/nibble:latest
 
   update-image:
     name: Update Image
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Update nibble image tag in chart values
         run: |
-          sed -i "s|nibbleImage:.*|nibbleImage: ghcr.io/transitmatters/nibble:sha-${{ github.sha }}|" chart/values.yaml
+          sed -i "s|nibbleImage:.*|nibbleImage: ghcr.io/ankoure/nibble:sha-${{ github.sha }}|" chart/values.yaml
       - name: Commit and push updated image tag
         run: |
           git config user.name "github-actions[bot]"
