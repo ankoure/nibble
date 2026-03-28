@@ -1,0 +1,172 @@
+{{- range .Values.agencies }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agency-{{ .slug }}
+  labels:
+    {{- include "transit-agencies.labels" $ | nindent 4 }}
+    agency: {{ .slug }}
+    region: {{ .region }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      agency: {{ .slug }}
+  template:
+    metadata:
+      labels:
+        agency: {{ .slug }}
+        region: {{ .region }}
+    spec:
+      containers:
+
+        # ── nibble ────────────────────────────────────────────────────────────
+        - name: nibble
+          image: {{ $.Values.global.nibbleImage }}
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml $.Values.global.resources.nibble | nindent 12 }}
+          env:
+            - name: NIBBLE_ADAPTER
+              value: {{ .nibble.adapter | quote }}
+            - name: NIBBLE_NORMALIZER
+              value: {{ .nibble.normalizer | quote }}
+            - name: NIBBLE_GTFS_RT_URL
+              value: {{ .nibble.gtfsRtUrl | quote }}
+            - name: NIBBLE_GTFS_STATIC_URL
+              value: {{ .nibble.gtfsStaticUrl | quote }}
+            - name: NIBBLE_AGENCY_TIMEZONE
+              value: {{ .nibble.timezone | quote }}
+            - name: NIBBLE_POLL_INTERVAL_SECONDS
+              value: {{ $.Values.global.nibble.pollIntervalSeconds | quote }}
+            - name: NIBBLE_GTFS_RELOAD_INTERVAL_HOURS
+              value: {{ $.Values.global.nibble.gtfsReloadIntervalHours | quote }}
+            - name: NIBBLE_GTFS_STATIC_FIX
+              value: {{ .nibble.gtfsStaticFix | quote }}
+            - name: NIBBLE_S3_AGENCY_SLUG
+              value: {{ .slug | quote }}
+            - name: NIBBLE_S3_BUCKET
+              value: {{ .nibble.s3Bucket | default $.Values.global.nibble.s3Bucket | quote }}
+            - name: NIBBLE_S3_REGION
+              value: {{ $.Values.global.aws.region | quote }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+            {{- if .nibble.ignoreUnknownTripIds }}
+            - name: NIBBLE_IGNORE_UNKNOWN_TRIP_IDS
+              value: "true"
+            {{- end }}
+            {{- if .nibble.passioStaticRoutesFile }}
+            - name: NIBBLE_PASSIO_STATIC_ROUTES_FILE
+              value: {{ .nibble.passioStaticRoutesFile | quote }}
+            {{- end }}
+            {{- if .nibble.auth }}
+            - name: NIBBLE_AUTH_TYPE
+              value: {{ .nibble.auth.type | quote }}
+            {{- if .nibble.auth.paramName }}
+            - name: NIBBLE_AUTH_PARAM_NAME
+              value: {{ .nibble.auth.paramName | quote }}
+            {{- end }}
+            {{- if .nibble.auth.headerName }}
+            - name: NIBBLE_AUTH_HEADER_NAME
+              value: {{ .nibble.auth.headerName | quote }}
+            {{- end }}
+            - name: NIBBLE_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nibble-{{ .slug }}-secrets
+                  key: AUTH_SECRET
+            {{- end }}
+
+        {{- if .gobble }}
+        # ── gobble ────────────────────────────────────────────────────────────
+        # Reads nibble's SSE stream at localhost:8080 — same Pod network namespace
+        - name: gobble
+          image: {{ $.Values.global.gobbleImage }}
+          resources:
+            {{- toYaml $.Values.global.resources.gobble | nindent 12 }}
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_DEFAULT_REGION
+              value: {{ $.Values.global.aws.region | quote }}
+          volumeMounts:
+            - name: gobble-config
+              mountPath: /app/config/local.json
+              subPath: local.json
+            - name: data
+              mountPath: /app/data
+
+        # ── s3-upload ─────────────────────────────────────────────────────────
+        # Shares the data volume with gobble; uploads CSVs once per hour
+        - name: s3-upload
+          image: {{ $.Values.global.gobbleImage }}
+          resources:
+            {{- toYaml $.Values.global.resources.s3Upload | nindent 12 }}
+          command:
+            - sh
+            - -c
+            - |
+              while true; do
+                sleep $(( 3600 - $(date +%s) % 3600 ))
+                uv run python3 src/s3_upload.py
+              done
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_DEFAULT_REGION
+              value: {{ $.Values.global.aws.region | quote }}
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+        {{- end }}
+
+      volumes:
+        {{- if .gobble }}
+        - name: gobble-config
+          configMap:
+            name: gobble-config-{{ .slug }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+{{- end }}

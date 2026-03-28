@@ -1,0 +1,951 @@
+# Only agencies with both a nibble and gobble configuration belong here.
+# The chart guarantees a 1:1 pairing — every entry produces nibble + gobble + s3-upload containers.
+#
+# Prerequisites (created outside this chart):
+#   Secret/aws-credentials          — keys: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+#   Secret/nibble-<slug>-secrets    — key: AUTH_SECRET  (only for agencies with auth configured)
+
+global:
+  nibbleImage: ghcr.io/ankoure/nibble:latest
+  gobbleImage: ghcr.io/ankoure/gobble:latest
+  aws:
+    region: us-east-1
+  nibble:
+    gtfsReloadIntervalHours: "24"
+    pollIntervalSeconds: "15"
+    # Default S3 bucket for agencies without an explicit nibble.s3Bucket.
+    # Corresponds to NIBBLE_S3_BUCKET in docker-compose .env.
+    s3Bucket: ""
+  gobble:
+    gtfsRefreshIntervalDays: 7
+  resources:
+    nibble:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    gobble:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    s3Upload:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+agencies:
+  # ── Massachusetts ──────────────────────────────────────────────────────────
+
+  - slug: mwrta
+    region: ma
+    nibble:
+      adapter: mwrta
+      normalizer: mwrta
+      gtfsRtUrl: "https://vc.mwrta.com/api/FR/0"
+      gtfsStaticUrl: "http://vc.mwrta.com/gtfs/google_transit.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: mwrta-performance-data
+    gobble:
+      agency: mwrta
+      s3Bucket: mwrta-performance-data
+      modes: ["bus"]
+
+  - slug: brta
+    region: ma
+    nibble:
+      adapter: routematch
+      normalizer: brta
+      gtfsRtUrl: "https://brta.routematch.io/feed/vehicle/byRoutes/Wk%20Rt%2001%2CWk%20Rt%2002%2CWk%20Rt%2003%2CWk%20Rt%2004%2CRoute%205%20Loop%2CWk%20Rt%2011%2CWk%20Rt%2012%2CWk%20Rt%2014%2CWk%20Rt%2015%2CWk%20Rt%2021%2CRte%2034%2CRte%2021%20Express?templates%5B%5D=title&templates%5B%5D=body&title=%7B%40internalVehicleId%7D&body=Heading+%7B%40tripDirection%7D+on+%7B%40masterRouteLongName%7D&timeHorizon=30&timeSensitive=true&_=1773845791564"
+      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/berkshire-ma-us/berkshire-ma-us.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: brta-performance-data
+    gobble:
+      agency: brta
+      s3Bucket: brta-performance-data
+      modes: ["bus"]
+
+  - slug: ccrta
+    region: ma
+    nibble:
+      adapter: mwrta
+      normalizer: ccrta
+      gtfsRtUrl: "https://tracker.capecodrta.org/api/CCRTAFR_AVL"
+      gtfsStaticUrl: "https://data.trilliumtransit.com/gtfs/capecod-ma-us/capecod-ma-us.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: ccrta-performance-data
+    gobble:
+      agency: ccrta
+      s3Bucket: ccrta-performance-data
+      modes: ["bus"]
+
+  - slug: frta
+    region: ma
+    nibble:
+      adapter: passio
+      normalizer: default
+      gtfsRtUrl: "2771"   # passio agency ID, not a URL
+      gtfsStaticUrl: "https://data.trilliumtransit.com/gtfs/frta-ma-us/frta-ma-us.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: frta-performance-data
+      ignoreUnknownTripIds: true
+    gobble:
+      agency: frta
+      s3Bucket: frta-performance-data
+      modes: ["bus"]
+
+  - slug: gatra
+    region: ma
+    nibble:
+      adapter: swiv
+      normalizer: swiv
+      gtfsRtUrl: "https://swiv.gatra.cadavl.com/SWIV/GATRA/proxy/restWS/topo/vehicules"
+      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/gatra-ma-us/gatra-ma-us.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: gatra-performance-data
+    gobble:
+      agency: gatra
+      s3Bucket: gatra-performance-data
+      modes: ["bus"]
+
+  - slug: lrta
+    region: ma
+    nibble:
+      adapter: swiv
+      normalizer: swiv
+      gtfsRtUrl: "https://swiv.lrta.cadavl.com/SWIV/LRTA/proxy/restWS/topo/vehicules"
+      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/lowell-ma-us/lowell-ma-us.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: lrta-performance-data
+    gobble:
+      agency: lrta
+      s3Bucket: lrta-performance-data
+      modes: ["bus"]
+
+  - slug: mart
+    region: ma
+    nibble:
+      adapter: passio
+      normalizer: passio
+      gtfsRtUrl: "2173"   # passio agency ID, not a URL
+      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/montachusett-ma-us/montachusett-ma-us.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: mart-performance-data
+      ignoreUnknownTripIds: true
+      passioStaticRoutesFile: /app/nibble/adapters/data/mart_routes.json
+    gobble:
+      agency: mart
+      s3Bucket: mart-performance-data
+      modes: ["bus"]
+
+  - slug: meva
+    region: ma
+    nibble:
+      adapter: trillium
+      normalizer: mwrta
+      gtfsRtUrl: "https://maps.trilliumtransit.com/gtfsmap-realtime/feed/merrimackvalley-ma-us/vehicles"
+      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/merrimackvalley-ma-us/merrimackvalley-ma-us.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: meva-performance-data
+      ignoreUnknownTripIds: true
+    gobble:
+      agency: meva
+      s3Bucket: meva-performance-data
+      modes: ["bus"]
+
+  - slug: pvta
+    region: ma
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.goswift.ly/real-time/pioneer-valley-pvta/gtfs-rt-vehicle-positions"
+      gtfsStaticUrl: "https://www.pvta.com/g_trans/google_transit.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: pvta-performance-data
+      auth:
+        type: header
+        headerName: Authorization
+        # Requires Secret/nibble-pvta-secrets with key AUTH_SECRET
+    gobble:
+      agency: pvta
+      s3Bucket: pvta-performance-data
+      modes: ["bus"]
+
+  - slug: vta
+    region: ma
+    nibble:
+      adapter: vta
+      normalizer: vta
+      gtfsRtUrl: "https://vta.mytransitride.com/api/VehicleStatuses?patternIds=1394,1395,1396,1398,1399,1400,1420,1424,1401,1405,1432,1435,1408,1410,1412,1413,1416,1417,1438,1440,1442,1443,1445,1446,1459,1460,1456,1457,1447,1453,"
+      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/marthasvineyard-ma-us/marthasvineyard-ma-us.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: vta-performance-data
+    gobble:
+      agency: vta
+      s3Bucket: vta-performance-data
+      modes: ["bus"]
+
+  - slug: wrta
+    region: ma
+    nibble:
+      adapter: swiv
+      normalizer: wrta
+      gtfsRtUrl: "https://swiv.wrta.cadavl.com/SWIV/WRTA/proxy/restWS/topo/vehicules"
+      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/wrta-ma-us/wrta-ma-us.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: wrta-performance-data
+    gobble:
+      agency: wrta
+      s3Bucket: wrta-performance-data
+      modes: ["bus"]
+
+  # ── Maine ──────────────────────────────────────────────────────────────────
+
+  - slug: gptd
+    region: me
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://gtfsrt.gptd.cadavl.com/ProfilGtfsRt2_0RSProducer-GPTD/VehiclePosition.pb"
+      gtfsStaticUrl: "https://gtfs.gptd.cadavl.com/GPTD/GTFS/GTFS_GPTD.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: gptd-performance-data
+    gobble:
+      agency: gptd
+      s3Bucket: gptd-performance-data
+      modes: ["bus"]
+
+  # ── Ohio ───────────────────────────────────────────────────────────────────
+
+  - slug: gcrta
+    region: oh
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "http://gtfs.gcrta.org/TMGTFSRealTimeWebService/Vehicle/VehiclePositions.pb"
+      gtfsStaticUrl: "http://www.riderta.com/sites/default/files/gtfs/latest/google_transit.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: gcrta-performance-data
+    gobble:
+      agency: gcrta
+      s3Bucket: gcrta-performance-data
+      modes: ["bus"]
+
+  # ── NYC Subway ─────────────────────────────────────────────────────────────
+  # All nyct-* variants share the nyc_subway gobble module but have distinct s3 buckets.
+  # No API key required for MTA feeds. All feeds share one static GTFS zip.
+
+  - slug: nyct-ace
+    region: nyc
+    nibble:
+      adapter: gtfs_rt
+      normalizer: nyct
+      gtfsRtUrl: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-ace"
+      gtfsStaticUrl: "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: nyct-ace-performance-data
+    gobble:
+      agency: nyc_subway
+      s3Bucket: nyct-ace-performance-data
+      modes: ["rapid"]
+
+  - slug: nyct-bdfm
+    region: nyc
+    nibble:
+      adapter: gtfs_rt
+      normalizer: nyct
+      gtfsRtUrl: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-bdfm"
+      gtfsStaticUrl: "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: nyct-bdfm-performance-data
+    gobble:
+      agency: nyc_subway
+      s3Bucket: nyct-bdfm-performance-data
+      modes: ["rapid"]
+
+  - slug: nyct-g
+    region: nyc
+    nibble:
+      adapter: gtfs_rt
+      normalizer: nyct
+      gtfsRtUrl: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-g"
+      gtfsStaticUrl: "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: nyct-g-performance-data
+    gobble:
+      agency: nyc_subway
+      s3Bucket: nyct-g-performance-data
+      modes: ["rapid"]
+
+  - slug: nyct-jz
+    region: nyc
+    nibble:
+      adapter: gtfs_rt
+      normalizer: nyct
+      gtfsRtUrl: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-jz"
+      gtfsStaticUrl: "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: nyct-jz-performance-data
+    gobble:
+      agency: nyc_subway
+      s3Bucket: nyct-jz-performance-data
+      modes: ["rapid"]
+
+  - slug: nyct-nqrw
+    region: nyc
+    nibble:
+      adapter: gtfs_rt
+      normalizer: nyct
+      gtfsRtUrl: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-nqrw"
+      gtfsStaticUrl: "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: nyct-nqrw-performance-data
+    gobble:
+      agency: nyc_subway
+      s3Bucket: nyct-nqrw-performance-data
+      modes: ["rapid"]
+
+  - slug: nyct-l
+    region: nyc
+    nibble:
+      adapter: gtfs_rt
+      normalizer: nyct
+      gtfsRtUrl: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-l"
+      gtfsStaticUrl: "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: nyct-l-performance-data
+    gobble:
+      agency: nyc_subway
+      s3Bucket: nyct-l-performance-data
+      modes: ["rapid"]
+
+  - slug: nyct-1234567s
+    region: nyc
+    nibble:
+      adapter: gtfs_rt
+      normalizer: nyct
+      gtfsRtUrl: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs"
+      gtfsStaticUrl: "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: nyct-1234567s-performance-data
+    gobble:
+      agency: nyc_subway
+      s3Bucket: nyct-1234567s-performance-data
+      modes: ["rapid"]
+
+  - slug: nyct-sir
+    region: nyc
+    nibble:
+      adapter: gtfs_rt
+      normalizer: nyct
+      gtfsRtUrl: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-si"
+      gtfsStaticUrl: "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: nyct-sir-performance-data
+    gobble:
+      agency: nyc_subway
+      s3Bucket: nyct-sir-performance-data
+      modes: ["rapid"]
+
+  # ── Massachusetts ─────────────────────────────────────────────────────────
+  # BAT gtfsRtUrl is a credentialed Passio URL — set BAT_GTFS_RT_URL in .env.
+
+  - slug: bat
+    region: ma
+    nibble:
+      adapter: passio
+      normalizer: default
+      gtfsRtUrl: ""
+      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/brockton-ma-us/brockton-ma-us.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "false"
+      s3Bucket: bat-performance-data
+    gobble:
+      agency: bat
+      s3Bucket: bat-performance-data
+      modes: ["bus"]
+
+  - slug: cata
+    region: ma
+    nibble:
+      adapter: trillium
+      normalizer: default
+      gtfsRtUrl: ""
+      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/capeann-ma-us/capeann-ma-us.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: cata-performance-data
+    gobble:
+      agency: cata
+      s3Bucket: cata-performance-data
+      modes: ["bus"]
+
+  # ── Connecticut ────────────────────────────────────────────────────────────
+
+  - slug: cttransit
+    region: ct
+    nibble:
+      adapter: gtfs_rt
+      normalizer: cttransit
+      gtfsRtUrl: "https://cttprdtmgtfs.ctttrpcloud.com/TMGTFSRealTimeWebService/Vehicle/VehiclePositions.pb"
+      gtfsStaticUrl: "https://ctrides.com/hlgtfs.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "false"
+      s3Bucket: cttransit-performance-data
+    gobble:
+      agency: ctdot
+      s3Bucket: cttransit-performance-data
+      modes: ["bus"]
+
+  # ── California ─────────────────────────────────────────────────────────────
+  # ACE / Caltrain / Capitol Corridor / SMART share the 511 SF Bay API key.
+
+  - slug: ace
+    region: ca
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.511.org/Transit/VehiclePositions?agency=CE"
+      gtfsStaticUrl: "http://api.511.org/transit/datafeeds?operator_id=CE"
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: ace-performance-data
+      auth:
+        type: query_param
+        paramName: api_key
+    gobble:
+      agency: ace
+      s3Bucket: ace-performance-data
+      modes: ["cr"]
+
+  - slug: caltrain
+    region: ca
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.511.org/Transit/VehiclePositions?agency=CT"
+      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/caltrain-ca-us/caltrain-ca-us.zip"
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: caltrain-performance-data
+      auth:
+        type: query_param
+        paramName: api_key
+    gobble:
+      agency: caltrain
+      s3Bucket: caltrain-performance-data
+      modes: ["cr"]
+
+  - slug: capitol-corridor
+    region: ca
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.511.org/Transit/VehiclePositions?agency=AM"
+      gtfsStaticUrl: "https://www.capitolcorridor.org/googletransit/GTFS.zip"
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: capitol-corridor-performance-data
+      auth:
+        type: query_param
+        paramName: api_key
+    gobble:
+      agency: capitol_corridor
+      s3Bucket: capitol-corridor-performance-data
+      modes: ["cr"]
+
+  - slug: smart
+    region: ca
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.511.org/Transit/VehiclePositions?agency=SA"
+      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/smart-ca-us/smart-ca-us.zip"
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: smart-performance-data
+      auth:
+        type: query_param
+        paramName: api_key
+    gobble:
+      agency: smart
+      s3Bucket: smart-performance-data
+      modes: ["cr"]
+
+  - slug: nctd
+    region: ca
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.goswift.ly/real-time/nctd/gtfs-rt-vehicle-positions"
+      gtfsStaticUrl: ""
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: nctd-performance-data
+      auth:
+        type: header
+        headerName: Authorization
+    gobble:
+      agency: nctd
+      s3Bucket: nctd-performance-data
+      modes: ["cr"]
+
+  - slug: metrolink
+    region: ca
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://metrolink-gtfsrt.gbsdigital.us/feed/gtfsrt-vehicles"
+      gtfsStaticUrl: ""
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: metrolink-performance-data
+      auth:
+        type: header
+        headerName: X-Api-Key
+    gobble:
+      agency: metrolink
+      s3Bucket: metrolink-performance-data
+      modes: ["cr"]
+
+  # ── Texas ──────────────────────────────────────────────────────────────────
+
+  - slug: capmetro
+    region: tx
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://data.texas.gov/download/eiei-9rpf/application/octet-stream"
+      gtfsStaticUrl: "https://data.texas.gov/download/r4v4-vz24/application/zip"
+      timezone: America/Chicago
+      gtfsStaticFix: "false"
+      s3Bucket: capmetro-performance-data
+    gobble:
+      agency: capmetro
+      s3Bucket: capmetro-performance-data
+      modes: ["cr"]
+
+  - slug: dcta
+    region: tx
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.goswift.ly/real-time/dcta/gtfs-rt-vehicle-positions"
+      gtfsStaticUrl: "http://trilliumtransit.com/transit_feeds/dentoncounty-tx-us/dentoncounty-tx-us.zip"
+      timezone: America/Chicago
+      gtfsStaticFix: "false"
+      s3Bucket: dcta-performance-data
+      auth:
+        type: header
+        headerName: Authorization
+    gobble:
+      agency: dcta
+      s3Bucket: dcta-performance-data
+      modes: ["cr"]
+
+  # ── Utah ───────────────────────────────────────────────────────────────────
+
+  - slug: uta
+    region: ut
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://apps.rideuta.com/tms/gtfs/Vehicle"
+      gtfsStaticUrl: "https://gtfsfeed.rideuta.com/GTFS.zip"
+      timezone: America/Denver
+      gtfsStaticFix: "false"
+      s3Bucket: uta-performance-data
+    gobble:
+      agency: uta
+      s3Bucket: uta-performance-data
+      modes: ["cr"]
+
+  # ── Colorado ───────────────────────────────────────────────────────────────
+
+  - slug: rtd
+    region: co
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://open-data.rtd-denver.com/files/gtfs-rt/rtd/VehiclePosition.pb"
+      gtfsStaticUrl: "https://www.rtd-denver.com/files/gtfs/google_transit.zip"
+      timezone: America/Denver
+      gtfsStaticFix: "false"
+      s3Bucket: rtd-performance-data
+    gobble:
+      agency: denver_rtd
+      s3Bucket: rtd-performance-data
+      modes: ["cr"]
+
+  # ── Illinois ───────────────────────────────────────────────────────────────
+  # metra_routes.py exists in gobble but needs registering in AGENCY_MODULES.
+
+  - slug: metra
+    region: il
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://gtfspublic.metrarr.com/gtfs/public/positions"
+      gtfsStaticUrl: "https://schedules.metrarail.com/gtfs/schedule.zip"
+      timezone: America/Chicago
+      gtfsStaticFix: "false"
+      s3Bucket: metra-performance-data
+      auth:
+        type: query_param
+        paramName: api_token
+    gobble:
+      agency: metra
+      s3Bucket: metra-performance-data
+      modes: ["cr"]
+
+  # ── Maryland ───────────────────────────────────────────────────────────────
+
+  - slug: marc
+    region: md
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://mdotmta-gtfs-rt.s3.amazonaws.com/MARC+RT/marc-vp.pb"
+      gtfsStaticUrl: ""
+      timezone: America/New_York
+      gtfsStaticFix: "false"
+      s3Bucket: marc-performance-data
+    gobble:
+      agency: marc
+      s3Bucket: marc-performance-data
+      modes: ["cr"]
+
+  # ── Pennsylvania ───────────────────────────────────────────────────────────
+
+  - slug: septa
+    region: pa
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://www3.septa.org/gtfsrt/septa-pa-us/Vehicle/rtVehiclePosition.pb"
+      gtfsStaticUrl: ""
+      timezone: America/New_York
+      gtfsStaticFix: "false"
+      s3Bucket: septa-performance-data
+    gobble:
+      agency: septa_regionalrail
+      s3Bucket: septa-performance-data
+      modes: ["cr"]
+
+  # ── Virginia ───────────────────────────────────────────────────────────────
+
+  - slug: vre
+    region: va
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://gtfs.vre.org/containercdngtfsupload/VehiclePositionFeed"
+      gtfsStaticUrl: "https://gtfs.vre.org/containercdngtfsupload/google_transit.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "false"
+      s3Bucket: vre-performance-data
+    gobble:
+      agency: vre
+      s3Bucket: vre-performance-data
+      modes: ["cr"]
+
+  # ── Florida ────────────────────────────────────────────────────────────────
+
+  - slug: trirail
+    region: fl
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "http://gtfsr.tri-rail.com/download.aspx?file=position_updates.pb"
+      gtfsStaticUrl: "http://www.tri-rail.com/GTDF/Current/google_transit.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "false"
+      s3Bucket: trirail-performance-data
+    gobble:
+      agency: trirail
+      s3Bucket: trirail-performance-data
+      modes: ["cr"]
+
+  # ── Tennessee ──────────────────────────────────────────────────────────────
+
+  - slug: wego-star
+    region: tn
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "http://transitdata.nashvillemta.org/TMGTFSRealTimeWebService/vehicle/vehiclepositions.pb"
+      gtfsStaticUrl: "https://www.wegotransit.com/googleexport/google_transit.zip"
+      timezone: America/Chicago
+      gtfsStaticFix: "false"
+      s3Bucket: wego-star-performance-data
+    gobble:
+      agency: wegostar
+      s3Bucket: wego-star-performance-data
+      modes: ["cr"]
+
+  # ── Oregon ─────────────────────────────────────────────────────────────────
+
+  - slug: trimet
+    region: or
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://developer.trimet.org/ws/V1/VehiclePositions"
+      gtfsStaticUrl: "http://developer.trimet.org/schedule/gtfs.zip"
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: trimet-performance-data
+      auth:
+        type: query_param
+        paramName: appID
+    gobble:
+      agency: trimet
+      s3Bucket: trimet-performance-data
+      modes: ["cr"]
+
+  # ── Washington ─────────────────────────────────────────────────────────────
+  # All OBA Puget Sound agencies share OBA_PUGET_SOUND_API_KEY (query_param key=).
+
+  - slug: king-county-metro
+    region: wa
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/1.pb"
+      gtfsStaticUrl: "https://www.soundtransit.org/GTFS-KCM/google_transit.zip"
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: king-county-metro-performance-data
+      auth:
+        type: query_param
+        paramName: key
+    gobble:
+      agency: kingcountymetro
+      s3Bucket: king-county-metro-performance-data
+      modes: ["bus"]
+
+  - slug: seattle-streetcar
+    region: wa
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/23.pb"
+      gtfsStaticUrl: ""
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: seattle-streetcar-performance-data
+      auth:
+        type: query_param
+        paramName: key
+    gobble:
+      agency: seattle_streetcar
+      s3Bucket: seattle-streetcar-performance-data
+      modes: ["rapid"]
+
+  - slug: pierce-transit
+    region: wa
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/3.pb"
+      gtfsStaticUrl: "https://www.soundtransit.org/GTFS-PT/gtfs.zip"
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: pierce-transit-performance-data
+      auth:
+        type: query_param
+        paramName: key
+    gobble:
+      agency: pierce_transit
+      s3Bucket: pierce-transit-performance-data
+      modes: ["bus"]
+
+  - slug: community-transit
+    region: wa
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/29.pb"
+      gtfsStaticUrl: "https://www.soundtransit.org/GTFS-CT/current.zip"
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: community-transit-performance-data
+      auth:
+        type: query_param
+        paramName: key
+    gobble:
+      agency: community_transit
+      s3Bucket: community-transit-performance-data
+      modes: ["bus"]
+
+  - slug: intercity-transit
+    region: wa
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/19.pb"
+      gtfsStaticUrl: "https://gtfs.sound.obaweb.org/prod/19_gtfs.zip"
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: intercity-transit-performance-data
+      auth:
+        type: query_param
+        paramName: key
+    gobble:
+      agency: intercity_transit
+      s3Bucket: intercity-transit-performance-data
+      modes: ["bus"]
+
+  - slug: wsf
+    region: wa
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/95.pb"
+      gtfsStaticUrl: "https://gtfs.sound.obaweb.org/prod/95_gtfs.zip"
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: wsf-performance-data
+      auth:
+        type: query_param
+        paramName: key
+    gobble:
+      agency: wsf
+      s3Bucket: wsf-performance-data
+      modes: ["bus"]
+
+  - slug: amtrak-wa
+    region: wa
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/51.pb"
+      gtfsStaticUrl: ""
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: amtrak-wa-performance-data
+      auth:
+        type: query_param
+        paramName: key
+    gobble:
+      agency: amtrak_wa
+      s3Bucket: amtrak-wa-performance-data
+      modes: ["cr"]
+
+  - slug: sound-transit
+    region: wa
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/40.pb"
+      gtfsStaticUrl: "https://www.soundtransit.org/GTFS-rail/40_gtfs.zip"
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: sound-transit-performance-data
+      auth:
+        type: query_param
+        paramName: key
+    gobble:
+      agency: soundtransit
+      s3Bucket: sound-transit-performance-data
+      modes: ["rapid", "cr"]
+
+  - slug: seattle-monorail
+    region: wa
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/96.pb"
+      gtfsStaticUrl: "https://gtfs.sound.obaweb.org/prod/96_gtfs.zip"
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: seattle-monorail-performance-data
+      auth:
+        type: query_param
+        paramName: key
+    gobble:
+      agency: seattle_monorail
+      s3Bucket: seattle-monorail-performance-data
+      modes: ["rapid"]
+
+  - slug: everett-transit
+    region: wa
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/97.pb"
+      gtfsStaticUrl: "https://gtfs.sound.obaweb.org/prod/97_gtfs.zip"
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: everett-transit-performance-data
+      auth:
+        type: query_param
+        paramName: key
+    gobble:
+      agency: everett_transit
+      s3Bucket: everett-transit-performance-data
+      modes: ["bus"]
+
+  - slug: kitsap-transit
+    region: wa
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/20.pb"
+      gtfsStaticUrl: "https://gtfs.sound.obaweb.org/prod/20_gtfs.zip"
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: kitsap-transit-performance-data
+      auth:
+        type: query_param
+        paramName: key
+    gobble:
+      agency: kitsap_transit
+      s3Bucket: kitsap-transit-performance-data
+      modes: ["bus"]
+
+  - slug: sounder
+    region: wa
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "http://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/40.pb"
+      gtfsStaticUrl: ""
+      timezone: America/Los_Angeles
+      gtfsStaticFix: "false"
+      s3Bucket: sounder-performance-data
+      auth:
+        type: query_param
+        paramName: key
+    gobble:
+      agency: sounder
+      s3Bucket: sounder-performance-data
+      modes: ["cr"]
