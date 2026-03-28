@@ -178,14 +178,16 @@ services:
       - "8088:8080"
     environment:
       <<: [*aws, *s3-common, *nibble-env-defaults]
-      NIBBLE_ADAPTER: gtfs_rt
-      NIBBLE_NORMALIZER: default
+      NIBBLE_ADAPTER: trillium
+      NIBBLE_NORMALIZER: mwrta
       NIBBLE_GTFS_RT_URL: ${MEVA_GTFS_RT_URL}
       NIBBLE_GTFS_STATIC_URL: ${MEVA_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
       NIBBLE_S3_AGENCY_SLUG: meva
+      NIBBLE_IGNORE_UNKNOWN_TRIP_IDS: "true"
+
 
   nibble-mwrta:
     <<: *nibble-base
@@ -810,7 +812,7 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
       NIBBLE_S3_AGENCY_SLUG: nyct-ace
 
   nibble-nyct-bdfm:
@@ -826,7 +828,7 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
       NIBBLE_S3_AGENCY_SLUG: nyct-bdfm
 
   nibble-nyct-g:
@@ -842,7 +844,7 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
       NIBBLE_S3_AGENCY_SLUG: nyct-g
 
   nibble-nyct-jz:
@@ -858,7 +860,7 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
       NIBBLE_S3_AGENCY_SLUG: nyct-jz
 
   nibble-nyct-nqrw:
@@ -874,7 +876,7 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
       NIBBLE_S3_AGENCY_SLUG: nyct-nqrw
 
   nibble-nyct-l:
@@ -890,7 +892,7 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
       NIBBLE_S3_AGENCY_SLUG: nyct-l
 
   nibble-nyct-1234567s:
@@ -906,7 +908,7 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
       NIBBLE_S3_AGENCY_SLUG: nyct-1234567s
 
   nibble-nyct-sir:
@@ -922,5 +924,5 @@ services:
       NIBBLE_GTFS_STATIC_URL: ${NYCT_GTFS_STATIC_URL}
       NIBBLE_AGENCY_TIMEZONE: America/New_York
       NIBBLE_POLL_INTERVAL_SECONDS: 15
-      NIBBLE_GTFS_STATIC_FIX: "false"
+      NIBBLE_GTFS_STATIC_FIX: "true"
       NIBBLE_S3_AGENCY_SLUG: nyct-sir

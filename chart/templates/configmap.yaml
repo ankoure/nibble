@@ -1,0 +1,39 @@
+{{- range .Values.agencies }}
+{{- if .gobble }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gobble-config-{{ .slug }}
+  labels:
+    {{- include "transit-agencies.labels" $ | nindent 4 }}
+    agency: {{ .slug }}
+data:
+  local.json: |
+    {
+      "agency": {{ .gobble.agency | quote }},
+      "GTFS_ARCHIVES_PREFIX": "http://localhost:8080",
+      "GTFS_ARCHIVES_FILENAME": "archived_feeds",
+      "sse": {
+        "base_url": "http://localhost:8080/vehicles",
+        "api_key": null
+      },
+      "mbta": { "v3_api_key": "" },
+      "gtfs": {
+        "dir": null,
+        "refresh_interval_days": {{ $.Values.global.gobble.gtfsRefreshIntervalDays }}
+      },
+      "use_gtfs_rt": false,
+      "gtfs_rt": {
+        "feed_url": null,
+        "api_key": null,
+        "api_key_method": "header",
+        "api_key_param_name": "X-API-KEY",
+        "polling_interval": 10
+      },
+      "s3_bucket": {{ .gobble.s3Bucket | quote }},
+      "DATADOG_TRACE_ENABLED": false,
+      "modes": {{ .gobble.modes | toJson }}
+    }
+{{- end }}
+{{- end }}

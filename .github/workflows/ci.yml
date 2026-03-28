@@ -7,6 +7,49 @@ on:
     branches: [main]
 
 jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, format, test, helm]
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: |
+            ghcr.io/transitmatters/nibble:sha-${{ github.sha }}
+            ghcr.io/transitmatters/nibble:latest
+
+  update-image:
+    name: Update Image
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update nibble image tag in chart values
+        run: |
+          sed -i "s|nibbleImage:.*|nibbleImage: ghcr.io/transitmatters/nibble:sha-${{ github.sha }}|" chart/values.yaml
+      - name: Commit and push updated image tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add chart/values.yaml
+          git diff --staged --quiet || git commit -m "chore: update nibble image to sha-${{ github.sha }} [skip ci]"
+          git push
+
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -33,6 +76,15 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --dev
       - run: uv run pytest --tb=short
+
+  helm:
+    name: Helm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - run: helm lint chart/
+      - run: helm template transit-agencies chart/ > /dev/null
 
   docs:
     name: Docs

@@ -1,0 +1,29 @@
+# Prerequisites — run before first ArgoCD sync:
+#
+#   ./scripts/create-secrets.sh
+#
+# This creates two types of Kubernetes Secrets in the transit-agencies namespace:
+#   - Secret/aws-credentials         (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+#   - Secret/nibble-<slug>-secrets   (AUTH_SECRET, for agencies with auth configured)
+#
+# Without these secrets, pods will fail to start.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: transit-agencies
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ankoure/nibble
+    targetRevision: main
+    path: chart/
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: transit-agencies
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
