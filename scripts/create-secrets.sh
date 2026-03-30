@@ -81,14 +81,11 @@ create_auth_secret smart            "${SMART_AUTH_SECRET:-}"
 # Illinois
 create_auth_secret metra            "${METRA_AUTH_SECRET:-}"
 
-# Washington — Sounder (separate key from OBA Puget Sound)
-create_auth_secret sounder          "${SOUNDER_AUTH_SECRET:-}"
-
 # Washington — OBA Puget Sound (all agencies share OBA_PUGET_SOUND_API_KEY)
 OBA_KEY="${OBA_PUGET_SOUND_API_KEY:-}"
 for slug in king-county-metro seattle-streetcar pierce-transit community-transit \
             intercity-transit wsf amtrak-wa sound-transit seattle-monorail \
-            everett-transit kitsap-transit; do
+            everett-transit kitsap-transit sounder; do
   create_auth_secret "$slug" "$OBA_KEY"
 done
 

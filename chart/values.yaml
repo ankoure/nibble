@@ -416,7 +416,7 @@ agencies:
       adapter: gtfs_rt
       normalizer: cttransit
       gtfsRtUrl: "https://cttprdtmgtfs.ctttrpcloud.com/TMGTFSRealTimeWebService/Vehicle/VehiclePositions.pb"
-      gtfsStaticUrl: "https://ctrides.com/hlgtfs.zip"
+      gtfsStaticUrl: "https://www.cttransit.com/sites/default/files/gtfs/googlect_transit.zip"
       timezone: America/New_York
       gtfsStaticFix: "false"
       s3Bucket: cttransit-performance-data
@@ -587,7 +587,7 @@ agencies:
       adapter: gtfs_rt
       normalizer: default
       gtfsRtUrl: "https://www3.septa.org/gtfsrt/septa-pa-us/Vehicle/rtVehiclePosition.pb"
-      gtfsStaticUrl: ""
+      gtfsStaticUrl: "https://www3.septa.org/developer/google_rail.zip"
       timezone: America/New_York
       gtfsStaticFix: "false"
       s3Bucket: septa-performance-data
@@ -679,7 +679,7 @@ agencies:
       adapter: gtfs_rt
       normalizer: default
       gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/23.pb"
-      gtfsStaticUrl: ""
+      gtfsStaticUrl: "https://www.soundtransit.org/GTFS-KCM/google_transit.zip"
       timezone: America/Los_Angeles
       gtfsStaticFix: "false"
       s3Bucket: seattle-streetcar-performance-data
@@ -769,7 +769,7 @@ agencies:
       adapter: gtfs_rt
       normalizer: default
       gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/51.pb"
-      gtfsStaticUrl: ""
+      gtfsStaticUrl: "https://content.amtrak.com/content/gtfs/GTFS.zip"
       timezone: America/Los_Angeles
       gtfsStaticFix: "false"
       s3Bucket: amtrak-wa-performance-data
@@ -858,8 +858,8 @@ agencies:
     nibble:
       adapter: gtfs_rt
       normalizer: default
-      gtfsRtUrl: "http://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/40.pb"
-      gtfsStaticUrl: ""
+      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/40.pb"
+      gtfsStaticUrl: "https://www.soundtransit.org/GTFS-rail/40_gtfs.zip"
       timezone: America/Los_Angeles
       gtfsStaticFix: "false"
       s3Bucket: sounder-performance-data
