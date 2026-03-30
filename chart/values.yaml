@@ -675,6 +675,14 @@ agencies:
 
   - slug: seattle-streetcar
     region: wa
+    resources:
+      nibble:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
     nibble:
       adapter: gtfs_rt
       normalizer: default
@@ -765,6 +773,14 @@ agencies:
 
   - slug: amtrak-wa
     region: wa
+    resources:
+      nibble:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
     nibble:
       adapter: gtfs_rt
       normalizer: default
@@ -855,6 +871,14 @@ agencies:
 
   - slug: sounder
     region: wa
+    resources:
+      nibble:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
     nibble:
       adapter: gtfs_rt
       normalizer: default
