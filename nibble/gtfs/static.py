@@ -66,11 +66,12 @@ def last_stop_sequence(gtfs: StaticGTFS, trip_id: str) -> int | None:
     return times[-1].stop_sequence  # stop_times lists are sorted by stop_sequence at load time
 
 
-def load_static_gtfs(url: str) -> StaticGTFS:
+def load_static_gtfs(url: str, auth: httpx.Auth | None = None) -> StaticGTFS:
     """Download and parse a static GTFS ZIP from a URL. Synchronous; runs at startup.
 
     Args:
         url: URL of the static GTFS ZIP archive.
+        auth: Optional httpx auth strategy (e.g. query-param or header key).
 
     Returns:
         A ``StaticGTFS`` object with populated trip and stop-time indexes.
@@ -79,7 +80,7 @@ def load_static_gtfs(url: str) -> StaticGTFS:
         httpx.HTTPStatusError: If the download returns a non-2xx response.
     """
     logger.info("Downloading static GTFS from %s", url)
-    response = httpx.get(url, follow_redirects=True, timeout=60)
+    response = httpx.get(url, auth=auth, follow_redirects=True, timeout=60)
     response.raise_for_status()
     return _parse_gtfs_zip(response.content)
 

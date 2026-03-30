@@ -26,6 +26,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from nibble.adapters import get_adapter
 from nibble.adapters.base import BaseAdapter
+from nibble.auth import build_httpx_auth
 from nibble.config import Settings
 from nibble.gtfs.feed_info import FeedInfo, dates_from_calendar, parse_feed_info
 from nibble.gtfs.fixer import fix_gtfs_zip
@@ -595,7 +596,12 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
         from nibble.gtfs.publisher import publish_gtfs_to_s3
 
         logger.info("Downloading raw static GTFS from %s for fixing", config.gtfs_static_url)
-        response = httpx.get(config.gtfs_static_url, follow_redirects=True, timeout=60)
+        response = httpx.get(
+            config.gtfs_static_url,
+            auth=build_httpx_auth(config),
+            follow_redirects=True,
+            timeout=60,
+        )
         response.raise_for_status()
         raw_zip = response.content
 
@@ -632,7 +638,7 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
 
         return load_static_gtfs_from_bytes(fixed_zip)
 
-    return load_static_gtfs(config.gtfs_static_url)
+    return load_static_gtfs(config.gtfs_static_url, auth=build_httpx_auth(config))
 
 
 async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
@@ -659,8 +665,14 @@ async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
             logger.info("Checking for updated static GTFS bundle")
             import httpx as _httpx
 
+            _auth = build_httpx_auth(config)
             response = await asyncio.to_thread(
-                lambda: _httpx.get(config.gtfs_static_url, follow_redirects=True, timeout=60)
+                lambda: _httpx.get(
+                    config.gtfs_static_url,
+                    auth=_auth,
+                    follow_redirects=True,
+                    timeout=60,
+                )
             )
             response.raise_for_status()
             raw_zip = response.content
