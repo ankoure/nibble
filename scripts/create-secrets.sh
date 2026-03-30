@@ -9,12 +9,21 @@
 
 set -euo pipefail
 
+# ── kubectl shim (microk8s compat) ─────────────────────────────────────────
+if ! command -v kubectl &>/dev/null && command -v microk8s &>/dev/null; then
+  kubectl() { microk8s kubectl "$@"; }
+  export -f kubectl
+fi
+
 # ── Load .env ──────────────────────────────────────────────────────────────
 if [ -f .env ]; then
-  set -a
-  # shellcheck disable=SC1091
-  source .env
-  set +a
+  # Parse key=value lines only — avoids sourcing URLs with special shell chars
+  while IFS='=' read -r key value; do
+    [[ "$key" =~ ^[[:space:]]*# ]] && continue  # skip comments
+    [[ -z "$key" ]] && continue                  # skip blank lines
+    key="${key// /}"                              # trim spaces
+    export "$key"="$value"
+  done < <(grep -v '^\s*#' .env | grep '=')
 fi
 
 NAMESPACE=${NAMESPACE:-transit-agencies}
@@ -51,11 +60,11 @@ echo "✓ aws-credentials"
 create_auth_secret() {
   local slug="$1"
   local value="$2"
+  apply_secret "nibble-${slug}-secrets" --from-literal=AUTH_SECRET="$value"
   if [ -n "$value" ]; then
-    apply_secret "nibble-${slug}-secrets" --from-literal=AUTH_SECRET="$value"
     echo "✓ nibble-${slug}-secrets"
   else
-    echo "⚠ secret for ${slug} not set — skipping nibble-${slug}-secrets"
+    echo "✓ nibble-${slug}-secrets (empty — set the env var to populate)"
   fi
 }
 
@@ -68,12 +77,6 @@ create_auth_secret caltrain         "${CALTRAIN_AUTH_SECRET:-}"
 create_auth_secret capitol-corridor "${CAPITOL_CORRIDOR_AUTH_SECRET:-}"
 create_auth_secret smart            "${SMART_AUTH_SECRET:-}"
 
-# California — Swiftly (shared key: DCTA, NCTD)
-create_auth_secret nctd             "${NCTD_AUTH_SECRET:-}"
-create_auth_secret metrolink        "${METROLINK_AUTH_SECRET:-}"
-
-# Texas — Swiftly
-create_auth_secret dcta             "${DCTA_AUTH_SECRET:-}"
 
 # Illinois
 create_auth_secret metra            "${METRA_AUTH_SECRET:-}"

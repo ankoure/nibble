@@ -464,24 +464,6 @@ agencies:
       s3Bucket: caltrain-performance-data
       modes: ["cr"]
 
-  - slug: capitol-corridor
-    region: ca
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api.511.org/Transit/VehiclePositions?agency=AM"
-      gtfsStaticUrl: "https://www.capitolcorridor.org/googletransit/GTFS.zip"
-      timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
-      s3Bucket: capitol-corridor-performance-data
-      auth:
-        type: query_param
-        paramName: api_key
-    gobble:
-      agency: capitol_corridor
-      s3Bucket: capitol-corridor-performance-data
-      modes: ["cr"]
-
   - slug: smart
     region: ca
     nibble:
@@ -500,42 +482,6 @@ agencies:
       s3Bucket: smart-performance-data
       modes: ["cr"]
 
-  - slug: nctd
-    region: ca
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api.goswift.ly/real-time/nctd/gtfs-rt-vehicle-positions"
-      gtfsStaticUrl: ""
-      timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
-      s3Bucket: nctd-performance-data
-      auth:
-        type: header
-        headerName: Authorization
-    gobble:
-      agency: nctd
-      s3Bucket: nctd-performance-data
-      modes: ["cr"]
-
-  - slug: metrolink
-    region: ca
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://metrolink-gtfsrt.gbsdigital.us/feed/gtfsrt-vehicles"
-      gtfsStaticUrl: ""
-      timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
-      s3Bucket: metrolink-performance-data
-      auth:
-        type: header
-        headerName: X-Api-Key
-    gobble:
-      agency: metrolink
-      s3Bucket: metrolink-performance-data
-      modes: ["cr"]
-
   # ── Texas ──────────────────────────────────────────────────────────────────
 
   - slug: capmetro
@@ -551,24 +497,6 @@ agencies:
     gobble:
       agency: capmetro
       s3Bucket: capmetro-performance-data
-      modes: ["cr"]
-
-  - slug: dcta
-    region: tx
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api.goswift.ly/real-time/dcta/gtfs-rt-vehicle-positions"
-      gtfsStaticUrl: "http://trilliumtransit.com/transit_feeds/dentoncounty-tx-us/dentoncounty-tx-us.zip"
-      timezone: America/Chicago
-      gtfsStaticFix: "false"
-      s3Bucket: dcta-performance-data
-      auth:
-        type: header
-        headerName: Authorization
-    gobble:
-      agency: dcta
-      s3Bucket: dcta-performance-data
       modes: ["cr"]
 
   # ── Utah ───────────────────────────────────────────────────────────────────
@@ -634,7 +562,7 @@ agencies:
       adapter: gtfs_rt
       normalizer: default
       gtfsRtUrl: "https://mdotmta-gtfs-rt.s3.amazonaws.com/MARC+RT/marc-vp.pb"
-      gtfsStaticUrl: ""
+      gtfsStaticUrl: "https://mdotmta-gtfs.s3.amazonaws.com/mdotmta_gtfs_marc.zip"
       timezone: America/New_York
       gtfsStaticFix: "false"
       s3Bucket: marc-performance-data
@@ -678,21 +606,6 @@ agencies:
       modes: ["cr"]
 
   # ── Florida ────────────────────────────────────────────────────────────────
-
-  - slug: trirail
-    region: fl
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "http://gtfsr.tri-rail.com/download.aspx?file=position_updates.pb"
-      gtfsStaticUrl: "http://www.tri-rail.com/GTDF/Current/google_transit.zip"
-      timezone: America/New_York
-      gtfsStaticFix: "false"
-      s3Bucket: trirail-performance-data
-    gobble:
-      agency: trirail
-      s3Bucket: trirail-performance-data
-      modes: ["cr"]
 
   # ── Tennessee ──────────────────────────────────────────────────────────────
 
