@@ -42,7 +42,7 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 5
           resources:
-            {{- toYaml $.Values.global.resources.nibble | nindent 12 }}
+            {{- toYaml (dig "resources" "nibble" $.Values.global.resources.nibble .) | nindent 12 }}
           env:
             - name: NIBBLE_ADAPTER
               value: {{ .nibble.adapter | quote }}
