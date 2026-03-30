@@ -6,7 +6,7 @@
 #   Secret/nibble-<slug>-secrets    — key: AUTH_SECRET  (only for agencies with auth configured)
 
 global:
-  nibbleImage: ghcr.io/ankoure/nibble:sha-2192dc27340a0413b58582b3d277fcff9ef00b61
+  nibbleImage: ghcr.io/ankoure/nibble:sha-ea66caa328c59a4be078db71aefd3f1945ec0205
   gobbleImage: ghcr.io/ankoure/gobble:latest
   aws:
     region: us-east-1
