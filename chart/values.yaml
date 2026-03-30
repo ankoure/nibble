@@ -856,6 +856,6 @@ agencies:
         type: query_param
         paramName: key
     gobble:
-      agency: sounder
+      agency: soundtransit
       s3Bucket: sounder-performance-data
       modes: ["cr"]
