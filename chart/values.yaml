@@ -655,49 +655,6 @@ agencies:
   # ── Washington ─────────────────────────────────────────────────────────────
   # All OBA Puget Sound agencies share OBA_PUGET_SOUND_API_KEY (query_param key=).
 
-  - slug: king-county-metro
-    region: wa
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/1.pb"
-      gtfsStaticUrl: "https://www.soundtransit.org/GTFS-KCM/google_transit.zip"
-      timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
-      s3Bucket: king-county-metro-performance-data
-      auth:
-        type: query_param
-        paramName: key
-    gobble:
-      agency: kingcountymetro
-      s3Bucket: king-county-metro-performance-data
-      modes: ["bus"]
-
-  - slug: seattle-streetcar
-    region: wa
-    resources:
-      nibble:
-        requests:
-          cpu: 100m
-          memory: 256Mi
-        limits:
-          cpu: 500m
-          memory: 1Gi
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/23.pb"
-      gtfsStaticUrl: "https://www.soundtransit.org/GTFS-KCM/google_transit.zip"
-      timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
-      s3Bucket: seattle-streetcar-performance-data
-      auth:
-        type: query_param
-        paramName: key
-    gobble:
-      agency: seattle_streetcar
-      s3Bucket: seattle-streetcar-performance-data
-      modes: ["rapid"]
 
   - slug: pierce-transit
     region: wa
