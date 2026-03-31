@@ -699,8 +699,6 @@ async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
     interval_seconds = (config.gtfs_reload_interval_hours or 24) * 3600
     current_fingerprint: str | None = None
 
-    await asyncio.sleep(interval_seconds)
-
     while True:
         try:
             logger.info("Checking for updated static GTFS bundle")

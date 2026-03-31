@@ -205,6 +205,9 @@ spec:
             - name: AWS_DEFAULT_REGION
               value: {{ $.Values.global.aws.region | quote }}
           volumeMounts:
+            - name: gobble-config
+              mountPath: /app/config/local.json
+              subPath: local.json
             - name: data
               mountPath: /app/data
         {{- end }}
