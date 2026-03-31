@@ -736,31 +736,6 @@ agencies:
       s3Bucket: wsf-performance-data
       modes: ["bus"]
 
-  - slug: amtrak-wa
-    region: wa
-    resources:
-      nibble:
-        requests:
-          cpu: 100m
-          memory: 256Mi
-        limits:
-          cpu: 500m
-          memory: 1Gi
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/51.pb"
-      gtfsStaticUrl: "https://content.amtrak.com/content/gtfs/GTFS.zip"
-      timezone: America/Los_Angeles
-      gtfsStaticFix: "true"
-      s3Bucket: amtrak-wa-performance-data
-      auth:
-        type: query_param
-        paramName: key
-    gobble:
-      agency: amtrak_wa
-      s3Bucket: amtrak-wa-performance-data
-      modes: ["cr"]
 
   - slug: sound-transit
     region: wa
