@@ -9,7 +9,7 @@ metadata:
     agency: {{ .slug }}
     region: {{ .region }}
 spec:
-  replicas: 1
+  replicas: {{ .replicas | default $.Values.global.replicas | default 1 }}
   selector:
     matchLabels:
       agency: {{ .slug }}
@@ -19,6 +19,9 @@ spec:
         agency: {{ .slug }}
         region: {{ .region }}
     spec:
+      {{- if $.Values.global.aws.irsaRoleArn }}
+      serviceAccountName: transit-agencies
+      {{- end }}
       containers:
 
         # ── nibble ────────────────────────────────────────────────────────────
@@ -46,6 +49,13 @@ spec:
               port: 8080
             periodSeconds: 30
             timeoutSeconds: 5
+          lifecycle:
+            preStop:
+              exec:
+                # Give the load balancer time to drain in-flight SSE connections
+                # before Uvicorn receives SIGTERM.  Without this, rolling updates
+                # hard-disconnect every connected SSE client immediately.
+                command: ["/bin/sh", "-c", "sleep 10"]
           resources:
             {{- toYaml (dig "resources" "nibble" $.Values.global.resources.nibble .) | nindent 12 }}
           env:
@@ -71,6 +81,7 @@ spec:
               value: {{ .nibble.s3Bucket | default $.Values.global.nibble.s3Bucket | quote }}
             - name: NIBBLE_S3_REGION
               value: {{ $.Values.global.aws.region | quote }}
+            {{- if not $.Values.global.aws.irsaRoleArn }}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -81,6 +92,7 @@ spec:
                 secretKeyRef:
                   name: aws-credentials
                   key: AWS_SECRET_ACCESS_KEY
+            {{- end }}
             {{- if .nibble.ignoreUnknownTripIds }}
             - name: NIBBLE_IGNORE_UNKNOWN_TRIP_IDS
               value: "true"
@@ -106,6 +118,15 @@ spec:
                   name: nibble-{{ .slug }}-secrets
                   key: AUTH_SECRET
             {{- end }}
+            {{- if $.Values.global.nibble.overridesPvc.enabled }}
+            - name: NIBBLE_OVERRIDES_PATH
+              value: /data/overrides/overrides.json
+            {{- end }}
+          {{- if $.Values.global.nibble.overridesPvc.enabled }}
+          volumeMounts:
+            - name: overrides
+              mountPath: /data/overrides
+          {{- end }}
 
         {{- if .gobble }}
         # ── gobble ────────────────────────────────────────────────────────────
@@ -115,6 +136,7 @@ spec:
           resources:
             {{- toYaml $.Values.global.resources.gobble | nindent 12 }}
           env:
+            {{- if not $.Values.global.aws.irsaRoleArn }}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -125,6 +147,7 @@ spec:
                 secretKeyRef:
                   name: aws-credentials
                   key: AWS_SECRET_ACCESS_KEY
+            {{- end }}
             - name: AWS_DEFAULT_REGION
               value: {{ $.Values.global.aws.region | quote }}
           volumeMounts:
@@ -135,7 +158,9 @@ spec:
               mountPath: /app/data
 
         # ── s3-upload ─────────────────────────────────────────────────────────
-        # Shares the data volume with gobble; uploads CSVs once per hour
+        # Shares the data volume with gobble; uploads CSVs once per hour.
+        # Writes /tmp/last_upload_ok after each successful run so the liveness
+        # probe can detect a silently-failing upload loop.
         - name: s3-upload
           image: {{ $.Values.global.gobbleImage }}
           resources:
@@ -144,11 +169,28 @@ spec:
             - sh
             - -c
             - |
+              # Seed the sentinel so the liveness probe passes before the first upload.
+              date -u +%s > /tmp/last_upload_ok
               while true; do
                 sleep $(( 3600 - $(date +%s) % 3600 ))
-                uv run python3 src/s3_upload.py
+                if uv run python3 src/s3_upload.py; then
+                  date -u +%s > /tmp/last_upload_ok
+                else
+                  echo "s3_upload.py exited non-zero; will retry next hour" >&2
+                fi
               done
+          livenessProbe:
+            exec:
+              # Fail if no successful upload in the last 2.5 hours (1h interval + 90m grace).
+              command:
+                - sh
+                - -c
+                - "test $(( $(date +%s) - $(cat /tmp/last_upload_ok) )) -lt 9000"
+            initialDelaySeconds: 60
+            periodSeconds: 300
+            failureThreshold: 1
           env:
+            {{- if not $.Values.global.aws.irsaRoleArn }}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -159,6 +201,7 @@ spec:
                 secretKeyRef:
                   name: aws-credentials
                   key: AWS_SECRET_ACCESS_KEY
+            {{- end }}
             - name: AWS_DEFAULT_REGION
               value: {{ $.Values.global.aws.region | quote }}
           volumeMounts:
@@ -173,5 +216,10 @@ spec:
             name: gobble-config-{{ .slug }}
         - name: data
           emptyDir: {}
+        {{- end }}
+        {{- if $.Values.global.nibble.overridesPvc.enabled }}
+        - name: overrides
+          persistentVolumeClaim:
+            claimName: nibble-overrides-{{ .slug }}
         {{- end }}
 {{- end }}

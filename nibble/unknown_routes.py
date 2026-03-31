@@ -21,7 +21,15 @@ class UnknownRouteEntry:
 
 
 # Module-level registry.  Safe without locks because nibble runs in a single
-# asyncio event loop - there are no concurrent writes.
+# asyncio event loop — there are no concurrent writes.
+#
+# Single-process assumption: this registry is not shared across OS processes or
+# pods.  Two consequences:
+#   1. Running Uvicorn with multiple workers (--workers N) gives each worker its
+#      own registry; GET /unknown_routes will return an incomplete view.
+#   2. In a multi-replica Kubernetes Deployment each pod maintains its own
+#      registry; counts reset on pod restart and differ between replicas.
+# If either of those scenarios applies, move this to a shared store (Redis, etc.)
 _registry: dict[str, UnknownRouteEntry] = {}
 
 

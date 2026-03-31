@@ -378,14 +378,28 @@ def create_app(
         return EventSourceResponse(stream())
 
     @app.get("/health", response_model=HealthResponse)
-    async def health() -> HealthResponse:
-        return HealthResponse(
-            status="ok",
-            last_poll_time=broadcaster.last_poll_time.isoformat()
-            if broadcaster.last_poll_time
-            else None,
-            connected_clients=broadcaster.client_count,
-        )
+    async def health() -> HealthResponse | JSONResponse:
+        last_poll = broadcaster.last_poll_time
+        stale_threshold = config.poll_interval_seconds * 2
+
+        if last_poll is None:
+            http_status = 503
+            status = "starting"
+        elif (datetime.now(timezone.utc) - last_poll).total_seconds() > stale_threshold:
+            http_status = 503
+            status = "stale"
+        else:
+            http_status = 200
+            status = "ok"
+
+        body = {
+            "status": status,
+            "last_poll_time": last_poll.isoformat() if last_poll else None,
+            "connected_clients": broadcaster.client_count,
+        }
+        if http_status != 200:
+            return JSONResponse(status_code=http_status, content=body)
+        return HealthResponse(**body)
 
     @app.post(
         "/trip_assignments",

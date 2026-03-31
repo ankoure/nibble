@@ -1,0 +1,21 @@
+{{- range .Values.agencies }}
+{{- $replicas := .replicas | default $.Values.global.replicas | default 1 | int }}
+{{- if gt $replicas 1 }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: agency-{{ .slug }}
+  labels:
+    {{- include "transit-agencies.labels" $ | nindent 4 }}
+    agency: {{ .slug }}
+spec:
+  # Guarantee at least one pod remains available during voluntary disruptions
+  # (node drains, rolling updates) so SSE clients experience at most one
+  # reconnect rather than a full outage.
+  minAvailable: 1
+  selector:
+    matchLabels:
+      agency: {{ .slug }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,28 @@
+{{- range .Values.agencies }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agency-{{ .slug }}
+  labels:
+    {{- include "transit-agencies.labels" $ | nindent 4 }}
+    agency: {{ .slug }}
+    region: {{ .region }}
+spec:
+  selector:
+    agency: {{ .slug }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  # SSE clients maintain long-lived connections. ClientIP affinity ensures a
+  # given client is consistently routed to the same pod so its in-memory SSE
+  # queue and vehicle snapshot remain coherent across requests.
+  # This is a best-effort hint — it does not prevent reconnection on pod
+  # replacement during a rolling update.
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800  # 3 hours — longer than a typical SSE session
+{{- end }}

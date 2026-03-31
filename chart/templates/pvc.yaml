@@ -1,0 +1,21 @@
+{{- if $.Values.global.nibble.overridesPvc.enabled }}
+{{- range .Values.agencies }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nibble-overrides-{{ .slug }}
+  labels:
+    {{- include "transit-agencies.labels" $ | nindent 4 }}
+    agency: {{ .slug }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if $.Values.global.nibble.overridesPvc.storageClassName }}
+  storageClassName: {{ $.Values.global.nibble.overridesPvc.storageClassName }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ $.Values.global.nibble.overridesPvc.size }}
+{{- end }}
+{{- end }}

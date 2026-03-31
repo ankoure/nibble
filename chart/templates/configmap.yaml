@@ -12,10 +12,10 @@ data:
   local.json: |
     {
       "agency": {{ .gobble.agency | quote }},
-      "GTFS_ARCHIVES_PREFIX": "http://localhost:8080",
+      "GTFS_ARCHIVES_PREFIX": {{ $.Values.global.gobble.nibbleBaseUrl | quote }},
       "GTFS_ARCHIVES_FILENAME": "archived_feeds",
       "sse": {
-        "base_url": "http://localhost:8080/vehicles",
+        "base_url": {{ printf "%s/vehicles" $.Values.global.gobble.nibbleBaseUrl | quote }},
         "api_key": null
       },
       "mbta": { "v3_api_key": "" },

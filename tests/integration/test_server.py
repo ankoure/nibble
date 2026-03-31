@@ -73,14 +73,26 @@ def _make_vehicle(vehicle_id: str, route_id: str) -> dict:
 
 
 class TestHealthEndpoint:
-    async def test_health_returns_200(self, async_client: httpx.AsyncClient) -> None:
+    async def test_health_returns_503_before_first_poll(
+        self, async_client: httpx.AsyncClient
+    ) -> None:
+        response = await async_client.get("/health")
+        assert response.status_code == 503
+
+    async def test_health_returns_200_after_poll(
+        self, async_client: httpx.AsyncClient, broadcaster: Broadcaster
+    ) -> None:
+        from datetime import datetime, timezone
+
+        broadcaster.last_poll_time = datetime.now(timezone.utc)
         response = await async_client.get("/health")
         assert response.status_code == 200
+        assert response.json()["status"] == "ok"
 
-    async def test_health_response_shape(self, async_client: httpx.AsyncClient) -> None:
+    async def test_health_response_shape_before_poll(self, async_client: httpx.AsyncClient) -> None:
         response = await async_client.get("/health")
         body = response.json()
-        assert body["status"] == "ok"
+        assert body["status"] == "starting"
         assert "last_poll_time" in body
         assert "connected_clients" in body
 

@@ -8,16 +8,38 @@
 global:
   nibbleImage: ghcr.io/ankoure/nibble:sha-8713dfb18109273259782fee59cc0343f574279b
   gobbleImage: ghcr.io/ankoure/gobble@sha256:3aaee0892eb6e4f2902902dbebf8b483e8a2f911169aba79d42471321664cb38
+  # Number of nibble pod replicas per agency.  Keep at 1 (the default) unless
+  # you have addressed the in-memory state and SSE affinity constraints
+  # described in the architecture docs — with replicas > 1 you also need a
+  # PodDisruptionBudget (created automatically below when replicas > 1) and
+  # sessionAffinity on the Service (already configured in service.yaml).
+  replicas: 1
   aws:
     region: us-east-1
+    # Set to an IAM role ARN to use IRSA (IAM Roles for Service Accounts) on
+    # EKS instead of injecting static AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
+    # credentials.  When set, the aws-credentials Secret is not required.
+    #   irsaRoleArn: "arn:aws:iam::123456789012:role/transit-agencies"
+    irsaRoleArn: ""
   nibble:
     gtfsReloadIntervalHours: "24"
     pollIntervalSeconds: "15"
     # Default S3 bucket for agencies without an explicit nibble.s3Bucket.
     # Corresponds to NIBBLE_S3_BUCKET in docker-compose .env.
     s3Bucket: ""
+    # Persist operator-issued trip-assignment overrides across pod restarts.
+    # When enabled, a 1Mi PVC is created per agency and mounted at
+    # /data/overrides so they survive rolling updates and node evictions.
+    overridesPvc:
+      enabled: false
+      storageClassName: ""  # "" → cluster default
+      size: 1Mi
   gobble:
     gtfsRefreshIntervalDays: 7
+    # URL at which gobble reaches nibble. Defaults to localhost because gobble
+    # runs as a sidecar in the same Pod. Override here if you ever extract
+    # gobble to its own Deployment and route via a Service DNS name.
+    nibbleBaseUrl: "http://localhost:8080"
   resources:
     nibble:
       requests:
@@ -234,23 +256,6 @@ agencies:
       s3Bucket: gptd-performance-data
       modes: ["bus"]
 
-  # ── Ohio ───────────────────────────────────────────────────────────────────
-
-  - slug: gcrta
-    region: oh
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "http://gtfs.gcrta.org/TMGTFSRealTimeWebService/Vehicle/VehiclePositions.pb"
-      gtfsStaticUrl: "http://www.riderta.com/sites/default/files/gtfs/latest/google_transit.zip"
-      timezone: America/New_York
-      gtfsStaticFix: "true"
-      s3Bucket: gcrta-performance-data
-    gobble:
-      agency: gcrta
-      s3Bucket: gcrta-performance-data
-      modes: ["bus"]
-
   # ── NYC Subway ─────────────────────────────────────────────────────────────
   # All nyct-* variants share the nyc_subway gobble module but have distinct s3 buckets.
   # No API key required for MTA feeds. All feeds share one static GTFS zip.
@@ -425,80 +430,6 @@ agencies:
       s3Bucket: cttransit-performance-data
       modes: ["bus"]
 
-  # ── California ─────────────────────────────────────────────────────────────
-  # ACE / Caltrain / Capitol Corridor / SMART share the 511 SF Bay API key.
-
-  - slug: ace
-    region: ca
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api.511.org/Transit/VehiclePositions?agency=CE"
-      gtfsStaticUrl: "http://api.511.org/transit/datafeeds?operator_id=CE"
-      timezone: America/Los_Angeles
-      gtfsStaticFix: "true"
-      s3Bucket: ace-performance-data
-      auth:
-        type: query_param
-        paramName: api_key
-    gobble:
-      agency: ace
-      s3Bucket: ace-performance-data
-      modes: ["cr"]
-
-  - slug: caltrain
-    region: ca
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api.511.org/Transit/VehiclePositions?agency=CT"
-      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/caltrain-ca-us/caltrain-ca-us.zip"
-      timezone: America/Los_Angeles
-      gtfsStaticFix: "true"
-      s3Bucket: caltrain-performance-data
-      auth:
-        type: query_param
-        paramName: api_key
-    gobble:
-      agency: caltrain
-      s3Bucket: caltrain-performance-data
-      modes: ["cr"]
-
-  - slug: smart
-    region: ca
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api.511.org/Transit/VehiclePositions?agency=SA"
-      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/smart-ca-us/smart-ca-us.zip"
-      timezone: America/Los_Angeles
-      gtfsStaticFix: "true"
-      s3Bucket: smart-performance-data
-      auth:
-        type: query_param
-        paramName: api_key
-    gobble:
-      agency: smart
-      s3Bucket: smart-performance-data
-      modes: ["cr"]
-
-  # ── Texas ──────────────────────────────────────────────────────────────────
-
-  - slug: capmetro
-    region: tx
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://data.texas.gov/download/eiei-9rpf/application/octet-stream"
-      gtfsStaticUrl: "https://data.texas.gov/download/r4v4-vz24/application/zip"
-      timezone: America/Chicago
-      gtfsStaticFix: "true"
-      s3Bucket: capmetro-performance-data
-    gobble:
-      agency: capmetro
-      s3Bucket: capmetro-performance-data
-      modes: ["cr"]
-
   # ── Utah ───────────────────────────────────────────────────────────────────
 
   - slug: uta
@@ -640,10 +571,10 @@ agencies:
       nibble:
         requests:
           cpu: 100m
-          memory: 256Mi
+          memory: 512Mi
         limits:
           cpu: 500m
-          memory: 1Gi
+          memory: 2Gi
     nibble:
       adapter: gtfs_rt
       normalizer: default
@@ -663,25 +594,6 @@ agencies:
   # ── Washington ─────────────────────────────────────────────────────────────
   # All OBA Puget Sound agencies share OBA_PUGET_SOUND_API_KEY (query_param key=).
 
-
-  - slug: pierce-transit
-    region: wa
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/3.pb"
-      gtfsStaticUrl: "https://www.soundtransit.org/GTFS-PT/gtfs.zip"
-      timezone: America/Los_Angeles
-      gtfsStaticFix: "true"
-      s3Bucket: pierce-transit-performance-data
-      auth:
-        type: query_param
-        paramName: key
-    gobble:
-      agency: pierce_transit
-      s3Bucket: pierce-transit-performance-data
-      modes: ["bus"]
-
   - slug: community-transit
     region: wa
     nibble:
@@ -700,43 +612,6 @@ agencies:
       s3Bucket: community-transit-performance-data
       modes: ["bus"]
 
-  - slug: intercity-transit
-    region: wa
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/19.pb"
-      gtfsStaticUrl: "https://gtfs.sound.obaweb.org/prod/19_gtfs.zip"
-      timezone: America/Los_Angeles
-      gtfsStaticFix: "true"
-      s3Bucket: intercity-transit-performance-data
-      auth:
-        type: query_param
-        paramName: key
-    gobble:
-      agency: intercity_transit
-      s3Bucket: intercity-transit-performance-data
-      modes: ["bus"]
-
-  - slug: wsf
-    region: wa
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/95.pb"
-      gtfsStaticUrl: "https://gtfs.sound.obaweb.org/prod/95_gtfs.zip"
-      timezone: America/Los_Angeles
-      gtfsStaticFix: "true"
-      s3Bucket: wsf-performance-data
-      auth:
-        type: query_param
-        paramName: key
-    gobble:
-      agency: wsf
-      s3Bucket: wsf-performance-data
-      modes: ["bus"]
-
-
   - slug: sound-transit
     region: wa
     nibble:
@@ -754,24 +629,6 @@ agencies:
       agency: soundtransit
       s3Bucket: sound-transit-performance-data
       modes: ["rapid", "cr"]
-
-  - slug: seattle-monorail
-    region: wa
-    nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/96.pb"
-      gtfsStaticUrl: "https://gtfs.sound.obaweb.org/prod/96_gtfs.zip"
-      timezone: America/Los_Angeles
-      gtfsStaticFix: "true"
-      s3Bucket: seattle-monorail-performance-data
-      auth:
-        type: query_param
-        paramName: key
-    gobble:
-      agency: seattle_monorail
-      s3Bucket: seattle-monorail-performance-data
-      modes: ["rapid"]
 
   - slug: everett-transit
     region: wa
