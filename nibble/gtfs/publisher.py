@@ -108,3 +108,39 @@ def publish_gtfs_to_s3(
     )
 
     return archive_url
+
+
+def fetch_fixed_bundle_from_s3(
+    feed_start_date: str,
+    bucket: str,
+    prefix: str,
+    region: str = "us-east-1",
+) -> bytes | None:
+    """Download a previously-fixed GTFS ZIP from S3, or return None if absent.
+
+    Args:
+        feed_start_date: Feed start date in ``YYYYMMDD`` format, used as the ZIP key
+            (``{prefix}/{feed_start_date}.zip``).
+        bucket: S3 bucket name.
+        prefix: Key prefix for the ZIP (e.g. ``"gtfs"``).
+        region: AWS region used for the S3 client.
+
+    Returns:
+        ZIP bytes if the object exists, or ``None`` if it is not found.
+
+    Raises:
+        ImportError: If ``boto3`` is not installed (install ``nibble[s3]``).
+    """
+    try:
+        import boto3
+    except ImportError as exc:
+        raise ImportError("boto3 is required for S3 access. Install nibble[s3].") from exc
+
+    s3 = boto3.client("s3", region_name=region)
+    zip_key = f"{prefix}/{feed_start_date}.zip"
+    try:
+        resp = s3.get_object(Bucket=bucket, Key=zip_key)
+        logger.info("Found cached fixed GTFS bundle at s3://%s/%s", bucket, zip_key)
+        return resp["Body"].read()
+    except s3.exceptions.NoSuchKey:
+        return None

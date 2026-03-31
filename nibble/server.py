@@ -593,7 +593,7 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
 
         import httpx
 
-        from nibble.gtfs.publisher import publish_gtfs_to_s3
+        from nibble.gtfs.publisher import fetch_fixed_bundle_from_s3, publish_gtfs_to_s3
 
         logger.info("Downloading raw static GTFS from %s for fixing", config.gtfs_static_url)
         response = httpx.get(
@@ -604,6 +604,35 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
         )
         response.raise_for_status()
         raw_zip = response.content
+
+        # Check if a fixed bundle for this feed version is already on S3 to avoid
+        # re-running the fixer on every restart for large, unchanged feeds.
+        slug = config.s3_agency_slug
+        s3_prefix = f"{slug}/{config.s3_prefix}" if slug else config.s3_prefix
+        s3_archived_feeds_key = (
+            f"{slug}/{config.s3_archived_feeds_key}" if slug else config.s3_archived_feeds_key
+        )
+
+        raw_feed_info = parse_feed_info(raw_zip)
+        if raw_feed_info is not None:
+            candidate_start_date: str | None = raw_feed_info.feed_start_date
+        else:
+            with zipfile.ZipFile(io.BytesIO(raw_zip)) as zf:
+                candidate_start_date, _ = dates_from_calendar(zf)
+
+        if candidate_start_date:
+            cached = fetch_fixed_bundle_from_s3(
+                feed_start_date=candidate_start_date,
+                bucket=config.s3_bucket,
+                prefix=s3_prefix,
+                region=config.s3_region,
+            )
+            if cached is not None:
+                logger.info(
+                    "Loaded fixed GTFS bundle from S3 cache (%s); skipping fix and publish",
+                    candidate_start_date,
+                )
+                return load_static_gtfs_from_bytes(cached)
 
         logger.info("Applying GTFS fixes")
         fixed_zip = fix_gtfs_zip(raw_zip)
@@ -623,15 +652,12 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
                 feed_version="unknown",
             )
 
-        slug = config.s3_agency_slug
         publish_gtfs_to_s3(
             zip_bytes=fixed_zip,
             feed_info=feed_info,
             bucket=config.s3_bucket,
-            prefix=f"{slug}/{config.s3_prefix}" if slug else config.s3_prefix,
-            archived_feeds_key=f"{slug}/{config.s3_archived_feeds_key}"
-            if slug
-            else config.s3_archived_feeds_key,
+            prefix=s3_prefix,
+            archived_feeds_key=s3_archived_feeds_key,
             region=config.s3_region,
             archive_url_base="/gtfs",
         )

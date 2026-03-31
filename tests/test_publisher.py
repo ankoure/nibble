@@ -9,7 +9,7 @@ import boto3
 from moto import mock_aws
 
 from nibble.gtfs.feed_info import FeedInfo
-from nibble.gtfs.publisher import publish_gtfs_to_s3
+from nibble.gtfs.publisher import fetch_fixed_bundle_from_s3, publish_gtfs_to_s3
 
 BUCKET = "test-gtfs-bucket"
 PREFIX = "gtfs"
@@ -85,3 +85,37 @@ def test_publish_prepends_to_existing_archived_feeds() -> None:
     # Newest first
     assert rows[0]["feed_start_date"] == "20260101"
     assert rows[1]["feed_start_date"] == "20251101"
+
+
+@mock_aws
+def test_fetch_fixed_bundle_returns_bytes_when_present() -> None:
+    s3 = boto3.client("s3", region_name=REGION)
+    s3.create_bucket(Bucket=BUCKET)
+
+    zip_bytes = b"CACHED_ZIP_CONTENT"
+    zip_key = f"{PREFIX}/20260101.zip"
+    s3.put_object(Bucket=BUCKET, Key=zip_key, Body=zip_bytes, ContentType="application/zip")
+
+    result = fetch_fixed_bundle_from_s3(
+        feed_start_date="20260101",
+        bucket=BUCKET,
+        prefix=PREFIX,
+        region=REGION,
+    )
+
+    assert result == zip_bytes
+
+
+@mock_aws
+def test_fetch_fixed_bundle_returns_none_when_absent() -> None:
+    s3 = boto3.client("s3", region_name=REGION)
+    s3.create_bucket(Bucket=BUCKET)
+
+    result = fetch_fixed_bundle_from_s3(
+        feed_start_date="20260101",
+        bucket=BUCKET,
+        prefix=PREFIX,
+        region=REGION,
+    )
+
+    assert result is None
