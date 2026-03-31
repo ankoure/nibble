@@ -106,7 +106,7 @@ class NyctNormalizer(BaseNormalizer):
                         logger.debug("NYCT: dropping unassigned trip entity %s", entity.id)
                         continue
 
-                    # Back-fill vehicle.id from train_id when the feed omits it.
+                    # Back-fill vehicle.id and label from train_id when the feed omits them.
                     if ext.HasField("train_id") and ext.train_id:
                         if not (vehicle.HasField("vehicle") and vehicle.vehicle.id):
                             vehicle.vehicle.id = ext.train_id
@@ -115,12 +115,30 @@ class NyctNormalizer(BaseNormalizer):
                                 ext.train_id,
                                 entity.id,
                             )
+                        if not vehicle.vehicle.label:
+                            vehicle.vehicle.label = ext.train_id
 
                     # Back-fill direction_id from cardinal direction when absent.
                     if ext.HasField("direction") and not vehicle.trip.HasField("direction_id"):
                         gtfs_dir = _NYCT_DIRECTION_TO_GTFS.get(ext.direction)
                         if gtfs_dir is not None:
                             vehicle.trip.direction_id = gtfs_dir
+
+                # Synthesize a vehicle ID when the feed omits one — entity.id is a
+                # meaningless per-feed counter so we prefer the trip_id (one train
+                # per trip on subway) and fall back to a prefixed entity.id.
+                if not (vehicle.HasField("vehicle") and vehicle.vehicle.id):
+                    synthetic_id = (
+                        vehicle.trip.trip_id
+                        if vehicle.HasField("trip") and vehicle.trip.trip_id
+                        else f"nyct:{entity.id}"
+                    )
+                    vehicle.vehicle.id = synthetic_id
+                    logger.debug(
+                        "NYCT: synthesized vehicle.id=%r for entity %s",
+                        synthetic_id,
+                        entity.id,
+                    )
 
                 # Trip ID suffix rewrite.
                 if vehicle.HasField("trip"):
