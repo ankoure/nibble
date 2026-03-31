@@ -614,7 +614,7 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
         )
 
         raw_feed_info = parse_feed_info(raw_zip)
-        if raw_feed_info is not None:
+        if raw_feed_info is not None and raw_feed_info.feed_start_date:
             candidate_start_date: str | None = raw_feed_info.feed_start_date
         else:
             with zipfile.ZipFile(io.BytesIO(raw_zip)) as zf:
@@ -638,18 +638,19 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
         fixed_zip = fix_gtfs_zip(raw_zip)
 
         feed_info = parse_feed_info(fixed_zip)
-        if feed_info is None:
+        if feed_info is None or not feed_info.feed_start_date:
             logger.warning(
-                "feed_info.txt not found in GTFS ZIP; deriving dates from calendar files"
+                "feed_info.txt not found or has no start date in GTFS ZIP; deriving dates from calendar files"
             )
 
             today = date.today().strftime("%Y%m%d")
             with zipfile.ZipFile(io.BytesIO(fixed_zip)) as zf:
                 start_date, end_date = dates_from_calendar(zf)
+            version = feed_info.feed_version if feed_info is not None else "unknown"
             feed_info = FeedInfo(
                 feed_start_date=start_date or today,
                 feed_end_date=end_date,
-                feed_version="unknown",
+                feed_version=version,
             )
 
         publish_gtfs_to_s3(
