@@ -38,9 +38,14 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+      - uses: imjasonh/setup-crane@v0.4
       - name: Update nibble image tag in chart values
         run: |
           sed -i "s|nibbleImage:.*|nibbleImage: ghcr.io/ankoure/nibble:sha-${{ github.sha }}|" chart/values.yaml
+      - name: Pin gobble image to latest digest
+        run: |
+          GOBBLE_DIGEST=$(crane digest ghcr.io/ankoure/gobble:latest)
+          sed -i "s|gobbleImage:.*|gobbleImage: ghcr.io/ankoure/gobble@${GOBBLE_DIGEST}|" chart/values.yaml
       - name: Commit and push updated image tag
         run: |
           git config user.name "github-actions[bot]"

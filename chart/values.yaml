@@ -7,7 +7,7 @@
 
 global:
   nibbleImage: ghcr.io/ankoure/nibble:sha-93f56e6aad555454ab1d38faa811012c5cc2d1de
-  gobbleImage: ghcr.io/ankoure/gobble:latest
+  gobbleImage: ghcr.io/ankoure/gobble@sha256:d2c92b443b802e804f0d253e41f3ba82a32f9704c3ba1b6064172d871b77f513
   aws:
     region: us-east-1
   nibble:
@@ -386,7 +386,7 @@ agencies:
       gtfsRtUrl: ""
       gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/brockton-ma-us/brockton-ma-us.zip"
       timezone: America/New_York
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: bat-performance-data
     gobble:
       agency: bat
@@ -418,7 +418,7 @@ agencies:
       gtfsRtUrl: "https://cttprdtmgtfs.ctttrpcloud.com/TMGTFSRealTimeWebService/Vehicle/VehiclePositions.pb"
       gtfsStaticUrl: "https://www.cttransit.com/sites/default/files/gtfs/googlect_transit.zip"
       timezone: America/New_York
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: cttransit-performance-data
     gobble:
       agency: ctdot
@@ -436,7 +436,7 @@ agencies:
       gtfsRtUrl: "https://api.511.org/Transit/VehiclePositions?agency=CE"
       gtfsStaticUrl: "http://api.511.org/transit/datafeeds?operator_id=CE"
       timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: ace-performance-data
       auth:
         type: query_param
@@ -454,7 +454,7 @@ agencies:
       gtfsRtUrl: "https://api.511.org/Transit/VehiclePositions?agency=CT"
       gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/caltrain-ca-us/caltrain-ca-us.zip"
       timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: caltrain-performance-data
       auth:
         type: query_param
@@ -472,7 +472,7 @@ agencies:
       gtfsRtUrl: "https://api.511.org/Transit/VehiclePositions?agency=SA"
       gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/smart-ca-us/smart-ca-us.zip"
       timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: smart-performance-data
       auth:
         type: query_param
@@ -492,7 +492,7 @@ agencies:
       gtfsRtUrl: "https://data.texas.gov/download/eiei-9rpf/application/octet-stream"
       gtfsStaticUrl: "https://data.texas.gov/download/r4v4-vz24/application/zip"
       timezone: America/Chicago
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: capmetro-performance-data
     gobble:
       agency: capmetro
@@ -509,7 +509,7 @@ agencies:
       gtfsRtUrl: "https://apps.rideuta.com/tms/gtfs/Vehicle"
       gtfsStaticUrl: "https://gtfsfeed.rideuta.com/GTFS.zip"
       timezone: America/Denver
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: uta-performance-data
     gobble:
       agency: uta
@@ -534,7 +534,7 @@ agencies:
       gtfsRtUrl: "https://open-data.rtd-denver.com/files/gtfs-rt/rtd/VehiclePosition.pb"
       gtfsStaticUrl: "https://www.rtd-denver.com/files/gtfs/google_transit.zip"
       timezone: America/Denver
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: rtd-performance-data
     gobble:
       agency: denver_rtd
@@ -552,7 +552,7 @@ agencies:
       gtfsRtUrl: "https://gtfspublic.metrarr.com/gtfs/public/positions"
       gtfsStaticUrl: "https://schedules.metrarail.com/gtfs/schedule.zip"
       timezone: America/Chicago
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: metra-performance-data
       auth:
         type: query_param
@@ -572,7 +572,7 @@ agencies:
       gtfsRtUrl: "https://mdotmta-gtfs-rt.s3.amazonaws.com/MARC+RT/marc-vp.pb"
       gtfsStaticUrl: "https://mdotmta-gtfs.s3.amazonaws.com/mdotmta_gtfs_marc.zip"
       timezone: America/New_York
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: marc-performance-data
     gobble:
       agency: marc
@@ -589,7 +589,7 @@ agencies:
       gtfsRtUrl: "https://www3.septa.org/gtfsrt/septa-pa-us/Vehicle/rtVehiclePosition.pb"
       gtfsStaticUrl: "https://www3.septa.org/developer/google_rail.zip"
       timezone: America/New_York
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: septa-performance-data
     gobble:
       agency: septa_regionalrail
@@ -606,7 +606,7 @@ agencies:
       gtfsRtUrl: "https://gtfs.vre.org/containercdngtfsupload/VehiclePositionFeed"
       gtfsStaticUrl: "https://gtfs.vre.org/containercdngtfsupload/google_transit.zip"
       timezone: America/New_York
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: vre-performance-data
     gobble:
       agency: vre
@@ -625,7 +625,7 @@ agencies:
       gtfsRtUrl: "http://transitdata.nashvillemta.org/TMGTFSRealTimeWebService/vehicle/vehiclepositions.pb"
       gtfsStaticUrl: "https://www.wegotransit.com/googleexport/google_transit.zip"
       timezone: America/Chicago
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: wego-star-performance-data
     gobble:
       agency: wegostar
@@ -650,7 +650,7 @@ agencies:
       gtfsRtUrl: "https://developer.trimet.org/ws/V1/VehiclePositions"
       gtfsStaticUrl: "http://developer.trimet.org/schedule/gtfs.zip"
       timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: trimet-performance-data
       auth:
         type: query_param
@@ -672,7 +672,7 @@ agencies:
       gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/3.pb"
       gtfsStaticUrl: "https://www.soundtransit.org/GTFS-PT/gtfs.zip"
       timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: pierce-transit-performance-data
       auth:
         type: query_param
@@ -690,7 +690,7 @@ agencies:
       gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/29.pb"
       gtfsStaticUrl: "https://www.soundtransit.org/GTFS-CT/current.zip"
       timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: community-transit-performance-data
       auth:
         type: query_param
@@ -708,7 +708,7 @@ agencies:
       gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/19.pb"
       gtfsStaticUrl: "https://gtfs.sound.obaweb.org/prod/19_gtfs.zip"
       timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: intercity-transit-performance-data
       auth:
         type: query_param
@@ -726,7 +726,7 @@ agencies:
       gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/95.pb"
       gtfsStaticUrl: "https://gtfs.sound.obaweb.org/prod/95_gtfs.zip"
       timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: wsf-performance-data
       auth:
         type: query_param
@@ -752,7 +752,7 @@ agencies:
       gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/51.pb"
       gtfsStaticUrl: "https://content.amtrak.com/content/gtfs/GTFS.zip"
       timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: amtrak-wa-performance-data
       auth:
         type: query_param
@@ -770,7 +770,7 @@ agencies:
       gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/40.pb"
       gtfsStaticUrl: "https://www.soundtransit.org/GTFS-rail/40_gtfs.zip"
       timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: sound-transit-performance-data
       auth:
         type: query_param
@@ -788,7 +788,7 @@ agencies:
       gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/96.pb"
       gtfsStaticUrl: "https://gtfs.sound.obaweb.org/prod/96_gtfs.zip"
       timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: seattle-monorail-performance-data
       auth:
         type: query_param
@@ -806,7 +806,7 @@ agencies:
       gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/97.pb"
       gtfsStaticUrl: "https://gtfs.sound.obaweb.org/prod/97_gtfs.zip"
       timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: everett-transit-performance-data
       auth:
         type: query_param
@@ -824,7 +824,7 @@ agencies:
       gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/20.pb"
       gtfsStaticUrl: "https://gtfs.sound.obaweb.org/prod/20_gtfs.zip"
       timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: kitsap-transit-performance-data
       auth:
         type: query_param
@@ -850,7 +850,7 @@ agencies:
       gtfsRtUrl: "https://api.pugetsound.onebusaway.org/api/gtfs_realtime/vehicle-positions-for-agency/40.pb"
       gtfsStaticUrl: "https://www.soundtransit.org/GTFS-rail/40_gtfs.zip"
       timezone: America/Los_Angeles
-      gtfsStaticFix: "false"
+      gtfsStaticFix: "true"
       s3Bucket: sounder-performance-data
       auth:
         type: query_param
