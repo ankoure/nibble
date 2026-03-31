@@ -509,8 +509,17 @@ def _fill_shape_dist_traveled(gtfs: StaticGTFS) -> None:
         for trip_id, times in gtfs.stop_times.items()
         if not all(st.shape_dist_traveled is not None for st in times)
     ]
-    if needs_fill:
-        logger.info("Back-filling shape_dist_traveled for %d trips", len(needs_fill))
+    if not needs_fill:
+        return
+    logger.info("Back-filling shape_dist_traveled for %d trips", len(needs_fill))
+
+    # Cache cumulative vertex distances per shape_id so trips sharing a shape
+    # don't recompute O(S) haversine calls each.
+    cum_cache: dict[str, list[float]] = {}
+    # Cache stop projections per (stop_id, shape_id) — many trips share both
+    # the same shape and the same stops (e.g. all ACE trips hit the same stations).
+    projection_cache: dict[tuple[str, str], float | None] = {}
+
     for trip_id in needs_fill:
         times = gtfs.stop_times[trip_id]
         if all(st.shape_dist_traveled is not None for st in times):
@@ -520,27 +529,38 @@ def _fill_shape_dist_traveled(gtfs: StaticGTFS) -> None:
         if trip is None or trip.shape_id is None:
             continue
 
-        shape_pts = gtfs.shapes.get(trip.shape_id)
+        shape_id = trip.shape_id
+        shape_pts = gtfs.shapes.get(shape_id)
         if not shape_pts:
             continue
 
-        # Precompute cumulative vertex distances once for the whole trip
-        cum: list[float] = [0.0]
-        for i in range(1, len(shape_pts)):
-            cum.append(cum[-1] + _haversine_m(*shape_pts[i - 1], *shape_pts[i]))
+        if shape_id not in cum_cache:
+            cum: list[float] = [0.0]
+            for i in range(1, len(shape_pts)):
+                cum.append(cum[-1] + _haversine_m(*shape_pts[i - 1], *shape_pts[i]))
+            cum_cache[shape_id] = cum
+        cum = cum_cache[shape_id]
 
         # Partial feed coverage: discard existing values and recompute the whole trip
         for st in times:
-            coords = gtfs.stops.get(st.stop_id)
-            if coords is None:
-                logger.warning(
-                    "Stop %r on trip %r has no coordinates in stops.txt; "
-                    "shape_dist_traveled will be None and stop inference may be impaired",
-                    st.stop_id,
-                    trip_id,
-                )
-                continue
-            st.shape_dist_traveled = _project_onto_polyline(coords[0], coords[1], shape_pts, cum)
+            cache_key = (st.stop_id, shape_id)
+            if cache_key not in projection_cache:
+                coords = gtfs.stops.get(st.stop_id)
+                if coords is None:
+                    logger.warning(
+                        "Stop %r on trip %r has no coordinates in stops.txt; "
+                        "shape_dist_traveled will be None and stop inference may be impaired",
+                        st.stop_id,
+                        trip_id,
+                    )
+                    projection_cache[cache_key] = None
+                else:
+                    projection_cache[cache_key] = _project_onto_polyline(
+                        coords[0], coords[1], shape_pts, cum
+                    )
+            dist = projection_cache[cache_key]
+            if dist is not None:
+                st.shape_dist_traveled = dist
 
 
 def _parse_gtfs_zip(content: bytes) -> StaticGTFS:

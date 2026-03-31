@@ -144,3 +144,11 @@ def fetch_fixed_bundle_from_s3(
         return resp["Body"].read()
     except s3.exceptions.NoSuchKey:
         return None
+    except Exception:
+        logger.warning(
+            "Failed to fetch cached GTFS bundle from s3://%s/%s; will re-run fixer",
+            bucket,
+            zip_key,
+            exc_info=True,
+        )
+        return None
