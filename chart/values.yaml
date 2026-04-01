@@ -388,23 +388,6 @@ agencies:
       s3Bucket: nyct-sir-performance-data
       modes: ["rapid"]
 
-  # ── Massachusetts ─────────────────────────────────────────────────────────
-  # BAT gtfsRtUrl is a credentialed Passio URL — set BAT_GTFS_RT_URL in .env.
-
-  - slug: bat
-    region: ma
-    nibble:
-      adapter: passio
-      normalizer: default
-      gtfsRtUrl: ""
-      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/brockton-ma-us/brockton-ma-us.zip"
-      timezone: America/New_York
-      gtfsStaticFix: "true"
-      s3Bucket: bat-performance-data
-    gobble:
-      agency: bat
-      s3Bucket: bat-performance-data
-      modes: ["bus"]
 
   # ── Connecticut ────────────────────────────────────────────────────────────
 
