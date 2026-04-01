@@ -406,21 +406,6 @@ agencies:
       s3Bucket: bat-performance-data
       modes: ["bus"]
 
-  - slug: cata
-    region: ma
-    nibble:
-      adapter: trillium
-      normalizer: default
-      gtfsRtUrl: ""
-      gtfsStaticUrl: "http://data.trilliumtransit.com/gtfs/capeann-ma-us/capeann-ma-us.zip"
-      timezone: America/New_York
-      gtfsStaticFix: "true"
-      s3Bucket: cata-performance-data
-    gobble:
-      agency: cata
-      s3Bucket: cata-performance-data
-      modes: ["bus"]
-
   # ── Connecticut ────────────────────────────────────────────────────────────
 
   - slug: cttransit
