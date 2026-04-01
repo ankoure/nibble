@@ -66,12 +66,19 @@ def last_stop_sequence(gtfs: StaticGTFS, trip_id: str) -> int | None:
     return times[-1].stop_sequence  # stop_times lists are sorted by stop_sequence at load time
 
 
-def load_static_gtfs(url: str, auth: httpx.Auth | None = None) -> StaticGTFS:
+def load_static_gtfs(
+    url: str,
+    auth: httpx.Auth | None = None,
+    fill_shape_dist_traveled: bool = True,
+) -> StaticGTFS:
     """Download and parse a static GTFS ZIP from a URL. Synchronous; runs at startup.
 
     Args:
         url: URL of the static GTFS ZIP archive.
         auth: Optional httpx auth strategy (e.g. query-param or header key).
+        fill_shape_dist_traveled: When ``True`` (the default), back-fill
+            ``shape_dist_traveled`` for stop times that lack it.  Pass
+            ``False`` for feeds that already include complete values.
 
     Returns:
         A ``StaticGTFS`` object with populated trip and stop-time indexes.
@@ -82,10 +89,13 @@ def load_static_gtfs(url: str, auth: httpx.Auth | None = None) -> StaticGTFS:
     logger.info("Downloading static GTFS from %s", url)
     response = httpx.get(url, auth=auth, follow_redirects=True, timeout=60)
     response.raise_for_status()
-    return _parse_gtfs_zip(response.content)
+    return _parse_gtfs_zip(response.content, fill_shape_dist_traveled=fill_shape_dist_traveled)
 
 
-def load_static_gtfs_from_bytes(content: bytes) -> StaticGTFS:
+def load_static_gtfs_from_bytes(
+    content: bytes,
+    fill_shape_dist_traveled: bool = True,
+) -> StaticGTFS:
     """Parse a static GTFS ZIP from already-downloaded bytes.
 
     Use this when the ZIP was already fetched (e.g. by the fixer/publisher)
@@ -93,11 +103,14 @@ def load_static_gtfs_from_bytes(content: bytes) -> StaticGTFS:
 
     Args:
         content: Raw bytes of a GTFS ZIP archive.
+        fill_shape_dist_traveled: When ``True`` (the default), back-fill
+            ``shape_dist_traveled`` for stop times that lack it.  Pass
+            ``False`` for feeds that already include complete values.
 
     Returns:
         A ``StaticGTFS`` object with populated trip and stop-time indexes.
     """
-    return _parse_gtfs_zip(content)
+    return _parse_gtfs_zip(content, fill_shape_dist_traveled=fill_shape_dist_traveled)
 
 
 _STOPPED_THRESHOLD_M = 30.0
@@ -563,18 +576,22 @@ def _fill_shape_dist_traveled(gtfs: StaticGTFS) -> None:
                 st.shape_dist_traveled = dist
 
 
-def _parse_gtfs_zip(content: bytes) -> StaticGTFS:
+def _parse_gtfs_zip(content: bytes, fill_shape_dist_traveled: bool = True) -> StaticGTFS:
     """Parse a raw GTFS ZIP archive and return populated StaticGTFS indexes.
 
     Args:
         content: Raw bytes of a GTFS ZIP archive.
+        fill_shape_dist_traveled: When ``True`` (the default), back-fill
+            ``shape_dist_traveled`` for stop times that lack it.  Pass
+            ``False`` for feeds that already include complete values to skip
+            the projection step and reduce startup memory usage.
 
     Returns:
         A ``StaticGTFS`` with trips, stop_times, stops, and shapes populated
         from the corresponding ``.txt`` files. Missing files are silently
-        skipped. If ``shape_dist_traveled`` is absent from ``stop_times.txt``,
-        it is computed by projecting each stop onto its trip's shape polyline
-        (in metres).
+        skipped. If ``shape_dist_traveled`` is absent from ``stop_times.txt``
+        and ``fill_shape_dist_traveled`` is ``True``, it is computed by
+        projecting each stop onto its trip's shape polyline (in metres).
     """
     gtfs = StaticGTFS()
     with zipfile.ZipFile(io.BytesIO(content)) as zf:
@@ -682,8 +699,9 @@ def _parse_gtfs_zip(content: bytes) -> StaticGTFS:
             for trip_id, times in raw.items():
                 gtfs.stop_times[trip_id] = sorted(times, key=lambda st: st.stop_sequence)
 
-    logger.info("Computing shape_dist_traveled for trips missing it")
-    _fill_shape_dist_traveled(gtfs)
+    if fill_shape_dist_traveled:
+        logger.info("Computing shape_dist_traveled for trips missing it")
+        _fill_shape_dist_traveled(gtfs)
 
     logger.info(
         "Loaded static GTFS: %d trips, %d trips with stop times, %d stops, %d shapes, "

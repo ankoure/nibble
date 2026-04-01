@@ -116,6 +116,13 @@ class Settings(BaseSettings):
     real-time source (e.g. PassioGO) uses an internal trip ID namespace that
     does not match the static feed, so position inference runs instead."""
 
+    fill_shape_dist_traveled: bool = True
+    """When ``True`` (the default), back-fill ``shape_dist_traveled`` for any
+    stop times that lack it by projecting each stop onto its trip's shape
+    polyline.  Set to ``False`` for feeds (e.g. NYCT subway) that already
+    include complete ``shape_dist_traveled`` values, to skip the projection
+    step and reduce startup memory usage."""
+
     passio_static_routes_file: str | None = None
     """Path to a static JSON routes file (``{"all": [...]}`` format) used by
     the Passio adapter as a fallback when the live routes endpoint is

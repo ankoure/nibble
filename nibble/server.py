@@ -646,7 +646,9 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
                     "Loaded fixed GTFS bundle from S3 cache (%s); skipping fix and publish",
                     candidate_start_date,
                 )
-                return load_static_gtfs_from_bytes(cached)
+                return load_static_gtfs_from_bytes(
+                    cached, fill_shape_dist_traveled=config.fill_shape_dist_traveled
+                )
 
         logger.info("Applying GTFS fixes")
         fixed_zip = fix_gtfs_zip(raw_zip)
@@ -677,9 +679,15 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
             archive_url_base="/gtfs",
         )
 
-        return load_static_gtfs_from_bytes(fixed_zip)
+        return load_static_gtfs_from_bytes(
+            fixed_zip, fill_shape_dist_traveled=config.fill_shape_dist_traveled
+        )
 
-    return load_static_gtfs(config.gtfs_static_url, auth=build_httpx_auth(config))
+    return load_static_gtfs(
+        config.gtfs_static_url,
+        auth=build_httpx_auth(config),
+        fill_shape_dist_traveled=config.fill_shape_dist_traveled,
+    )
 
 
 async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
@@ -769,7 +777,9 @@ async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
                         archive_url_base="/gtfs",
                     )
 
-                holder.gtfs = load_static_gtfs_from_bytes(candidate_zip)
+                holder.gtfs = load_static_gtfs_from_bytes(
+                    candidate_zip, fill_shape_dist_traveled=config.fill_shape_dist_traveled
+                )
 
                 current_fingerprint = new_fingerprint
                 logger.info("Static GTFS reloaded successfully")

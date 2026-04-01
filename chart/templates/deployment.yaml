@@ -97,6 +97,10 @@ spec:
             - name: NIBBLE_IGNORE_UNKNOWN_TRIP_IDS
               value: "true"
             {{- end }}
+            {{- if eq (toString .nibble.fillShapeDistTraveled) "false" }}
+            - name: NIBBLE_FILL_SHAPE_DIST_TRAVELED
+              value: "false"
+            {{- end }}
             {{- if .nibble.passioStaticRoutesFile }}
             - name: NIBBLE_PASSIO_STATIC_ROUTES_FILE
               value: {{ .nibble.passioStaticRoutesFile | quote }}
