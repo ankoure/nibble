@@ -265,6 +265,7 @@ def create_app(
     gtfs_holder: GtfsHolder,
     adapter: BaseAdapter | None = None,
     on_snapshot: Callable[[dict[str, VehicleEvent]], Awaitable[None]] | None = None,
+    initial_gtfs_fingerprint: str | None = None,
 ) -> FastAPI:
     """Build and return the FastAPI ASGI application.
 
@@ -306,7 +307,9 @@ def create_app(
                 )
             )
         if config.gtfs_reload_interval_hours is not None:
-            tasks.append(asyncio.create_task(gtfs_reload_loop(config, gtfs_holder)))
+            tasks.append(
+                asyncio.create_task(gtfs_reload_loop(config, gtfs_holder, initial_gtfs_fingerprint))
+            )
         try:
             yield
         finally:
@@ -581,7 +584,7 @@ def create_app(
     return app
 
 
-def _load_gtfs(config: Settings) -> StaticGTFS:
+def _load_gtfs(config: Settings) -> tuple[StaticGTFS, str | None]:
     """Download static GTFS, optionally fixing and publishing to S3 first.
 
     When ``config.gtfs_static_fix`` is ``True``, the raw ZIP is downloaded,
@@ -594,7 +597,9 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
             ``gtfs_static_fix`` flag.
 
     Returns:
-        A ``StaticGTFS`` object with parsed trip and stop-time indexes.
+        A tuple of ``(StaticGTFS, fingerprint)`` where ``fingerprint`` is the
+        ``feed_start_date`` string used by the reload loop to detect changes
+        (``None`` when not determinable, e.g. for non-fix feeds).
 
     Raises:
         ValueError: If ``gtfs_static_fix`` is ``True`` but ``s3_bucket`` is unset.
@@ -648,7 +653,7 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
                 )
                 return load_static_gtfs_from_bytes(
                     cached, fill_shape_dist_traveled=config.fill_shape_dist_traveled
-                )
+                ), candidate_start_date
 
         logger.info("Applying GTFS fixes")
         fixed_zip = fix_gtfs_zip(raw_zip)
@@ -681,16 +686,20 @@ def _load_gtfs(config: Settings) -> StaticGTFS:
 
         return load_static_gtfs_from_bytes(
             fixed_zip, fill_shape_dist_traveled=config.fill_shape_dist_traveled
-        )
+        ), feed_info.feed_start_date
 
     return load_static_gtfs(
         config.gtfs_static_url,
         auth=build_httpx_auth(config),
         fill_shape_dist_traveled=config.fill_shape_dist_traveled,
-    )
+    ), None
 
 
-async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
+async def gtfs_reload_loop(
+    config: Settings,
+    holder: GtfsHolder,
+    initial_fingerprint: str | None = None,
+) -> None:
     """Periodically re-download the static GTFS and reload if the feed has changed.
 
     Uses ``feed_start_date`` from ``feed_info.txt`` as the change fingerprint
@@ -703,11 +712,15 @@ async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
         config: Application settings. ``gtfs_reload_interval_hours`` controls
             the sleep interval between checks.
         holder: Shared container whose ``gtfs`` attribute is replaced on reload.
+        initial_fingerprint: Fingerprint of the GTFS loaded at startup.  When
+            provided, the first reload cycle will not trigger an unnecessary
+            re-parse of an unchanged feed.
     """
     interval_seconds = (config.gtfs_reload_interval_hours or 24) * 3600
-    current_fingerprint: str | None = None
+    current_fingerprint: str | None = initial_fingerprint
 
     while True:
+        await asyncio.sleep(interval_seconds)
         try:
             logger.info("Checking for updated static GTFS bundle")
             import httpx as _httpx
@@ -787,8 +800,6 @@ async def gtfs_reload_loop(config: Settings, holder: GtfsHolder) -> None:
         except Exception:
             logger.exception("Error during GTFS reload check")
 
-        await asyncio.sleep(interval_seconds)
-
 
 def print_openapi() -> None:
     """Print the OpenAPI schema to stdout as JSON.
@@ -840,7 +851,8 @@ def main() -> None:
     if config.publish_trip_updates and not config.s3_bucket:
         raise ValueError("NIBBLE_S3_BUCKET must be set when NIBBLE_PUBLISH_TRIP_UPDATES=true")
 
-    holder = GtfsHolder(_load_gtfs(config))
+    _gtfs, _fingerprint = _load_gtfs(config)
+    holder = GtfsHolder(_gtfs)
     adapter = get_adapter(
         config.adapter,
         config.gtfs_rt_url,
@@ -890,7 +902,7 @@ def main() -> None:
         on_snapshot = _on_snapshot
 
     if config.enable_sse:
-        app = create_app(config, broadcaster, overrides, holder, adapter, on_snapshot)
+        app = create_app(config, broadcaster, overrides, holder, adapter, on_snapshot, _fingerprint)
         uvicorn.run(app, host=config.host, port=config.port)
     else:
 
@@ -901,7 +913,7 @@ def main() -> None:
                 )
             ]
             if config.gtfs_reload_interval_hours is not None:
-                tasks.append(asyncio.create_task(gtfs_reload_loop(config, holder)))
+                tasks.append(asyncio.create_task(gtfs_reload_loop(config, holder, _fingerprint)))
             try:
                 await asyncio.gather(*tasks)
             finally:
