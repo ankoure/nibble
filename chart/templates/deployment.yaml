@@ -138,7 +138,7 @@ spec:
         - name: gobble
           image: {{ $.Values.global.gobbleImage }}
           resources:
-            {{- toYaml $.Values.global.resources.gobble | nindent 12 }}
+            {{- toYaml (dig "resources" "gobble" $.Values.global.resources.gobble .) | nindent 12 }}
           env:
             {{- if not $.Values.global.aws.irsaRoleArn }}
             - name: AWS_ACCESS_KEY_ID

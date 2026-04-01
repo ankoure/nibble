@@ -583,6 +583,13 @@ agencies:
         limits:
           cpu: 500m
           memory: 2Gi
+      gobble:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
     nibble:
       adapter: gtfs_rt
       normalizer: default
