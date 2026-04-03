@@ -21,7 +21,13 @@ Expected response shape (per train):
         "canceled": false,
         ...
       },
-      ...
+      "details": {
+        "stops": [
+          {"code": "0NY", "stop_status": "DEPARTED", ...},
+          {"code": "0HL", "stop_status": "SCHEDULED", ...},
+          ...
+        ]
+      }
     }
 """
 
@@ -164,7 +170,9 @@ class MyLirrAdapter(BaseAdapter):
             if ts is not None:
                 vp.timestamp = int(ts)
 
-            stop_code, stop_seq, current_status = _current_stop(train.get("stops") or [])
+            stop_code, stop_seq, current_status = _current_stop(
+                (train.get("details") or {}).get("stops") or []
+            )
             if stop_code is not None:
                 # Raw stop code (e.g. "0NY"); MtaRailroadNormalizer resolves
                 # this to the GTFS stop_id via the stop_codes index.
