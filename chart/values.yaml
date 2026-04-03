@@ -389,6 +389,42 @@ agencies:
       modes: ["rapid"]
 
 
+  # ── Long Island Railroad ───────────────────────────────────────────────────
+
+  - slug: lirr
+    region: nyc
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/lirr%2Fgtfs-lirr"
+      gtfsStaticUrl: "http://web.mta.info/developers/data/lirr/google_transit.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      fillShapeDistTraveled: false
+      s3Bucket: lirr-performance-data
+    gobble:
+      agency: lirr
+      s3Bucket: lirr-performance-data
+      modes: ["cr"]
+
+  # ── Metro-North Railroad ───────────────────────────────────────────────────
+
+  - slug: mnr
+    region: nyc
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/mnr%2Fgtfs-mnr"
+      gtfsStaticUrl: "http://web.mta.info/developers/data/mnr/google_transit.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      fillShapeDistTraveled: false
+      s3Bucket: mnr-performance-data
+    gobble:
+      agency: mnr
+      s3Bucket: mnr-performance-data
+      modes: ["cr"]
+
   # ── Connecticut ────────────────────────────────────────────────────────────
 
   - slug: cttransit
