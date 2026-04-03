@@ -45,6 +45,28 @@ _ACCEPT_VERSION = "3.0"
 _MPH_TO_MS = 0.44704
 
 
+def _current_stop(stops: list[dict]) -> tuple[str | None, int, int]:
+    """Return (stop_code, 1-based sequence, current_status proto int) for the current stop.
+
+    Scans the stops array for the first non-DEPARTED stop. If the train has
+    an actual arrival time but no departure time at that stop it is STOPPED_AT;
+    otherwise IN_TRANSIT_TO. Returns (None, 0, IN_TRANSIT_TO) when no stop is
+    found (empty list or all stops departed).
+    """
+    for idx, stop in enumerate(stops):
+        if stop.get("stop_status") == "DEPARTED":
+            continue
+        has_arrived = stop.get("act_arrive_time") is not None
+        has_departed = stop.get("act_depart_time") is not None
+        if has_arrived and not has_departed:
+            status = gtfs_realtime_pb2.VehiclePosition.STOPPED_AT
+        else:
+            status = gtfs_realtime_pb2.VehiclePosition.IN_TRANSIT_TO
+        return stop.get("code"), idx + 1, status
+
+    return None, 0, gtfs_realtime_pb2.VehiclePosition.IN_TRANSIT_TO
+
+
 class MyLirrAdapter(BaseAdapter):
     """Fetches MTA Railroad train positions from backend-unified.mylirr.org."""
 
@@ -141,5 +163,13 @@ class MyLirrAdapter(BaseAdapter):
             ts = location.get("timestamp")
             if ts is not None:
                 vp.timestamp = int(ts)
+
+            stop_code, stop_seq, current_status = _current_stop(train.get("stops") or [])
+            if stop_code is not None:
+                # Raw stop code (e.g. "0NY"); MtaRailroadNormalizer resolves
+                # this to the GTFS stop_id via the stop_codes index.
+                vp.stop_id = stop_code
+                vp.current_stop_sequence = stop_seq
+                vp.current_status = current_status
 
         return feed

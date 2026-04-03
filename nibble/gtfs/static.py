@@ -49,6 +49,7 @@ class StaticGTFS:
     trips: dict[str, Trip] = field(default_factory=dict)
     stop_times: dict[str, list[StopTime]] = field(default_factory=dict)
     stops: dict[str, tuple[float, float]] = field(default_factory=dict)
+    stop_codes: dict[str, str] = field(default_factory=dict)
     shapes: dict[str, list[tuple[float, float]]] = field(default_factory=dict)
     route_trips: dict[str, list[str]] = field(default_factory=dict)
     route_short_names: dict[str, str] = field(default_factory=dict)
@@ -617,6 +618,9 @@ def _parse_gtfs_zip(content: bytes, fill_shape_dist_traveled: bool = True) -> St
                     except ValueError:
                         continue
                     gtfs.stops[stop_id] = (lat, lon)
+                    stop_code = row.get("stop_code", "").strip()
+                    if stop_code:
+                        gtfs.stop_codes[stop_code] = stop_id
 
         if "routes.txt" in names:
             logger.info("Parsing routes.txt")

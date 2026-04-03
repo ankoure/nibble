@@ -46,10 +46,20 @@ class MtaRailroadNormalizer(BaseNormalizer):
                 continue
             trip_id = vehicle.trip.trip_id
             if not trip_id or trip_id in gtfs.trips:
-                continue
-            full_id = gtfs.trip_short_names.get(trip_id)
-            if full_id:
-                logger.debug("MTA Railroad: rewrote trip_id %r -> %r", trip_id, full_id)
-                vehicle.trip.trip_id = full_id
+                pass
+            else:
+                full_id = gtfs.trip_short_names.get(trip_id)
+                if full_id:
+                    logger.debug("MTA Railroad: rewrote trip_id %r -> %r", trip_id, full_id)
+                    vehicle.trip.trip_id = full_id
+
+            raw_stop = vehicle.stop_id
+            if raw_stop and raw_stop not in gtfs.stops:
+                resolved = gtfs.stop_codes.get(raw_stop)
+                if resolved:
+                    logger.debug("MTA Railroad: resolved stop_code %r -> %r", raw_stop, resolved)
+                    vehicle.stop_id = resolved
+                else:
+                    logger.debug("MTA Railroad: stop_code %r not found in stop_codes index", raw_stop)
 
         return feed
