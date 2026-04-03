@@ -60,6 +60,8 @@ class MtaRailroadNormalizer(BaseNormalizer):
                     logger.debug("MTA Railroad: resolved stop_code %r -> %r", raw_stop, resolved)
                     vehicle.stop_id = resolved
                 else:
-                    logger.debug("MTA Railroad: stop_code %r not found in stop_codes index", raw_stop)
+                    logger.debug(
+                        "MTA Railroad: stop_code %r not found in stop_codes index", raw_stop
+                    )
 
         return feed
