@@ -64,4 +64,8 @@ def get_adapter(
         from nibble.adapters.vta import VtaAdapter
 
         return VtaAdapter(url, agency_id, agency_timezone)
+    if adapter_name == "mylirr":
+        from nibble.adapters.mylirr import MyLirrAdapter
+
+        return MyLirrAdapter(url)
     raise ValueError(f"Unknown adapter: {adapter_name!r}")

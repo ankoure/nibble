@@ -394,9 +394,10 @@ agencies:
   - slug: lirr
     region: nyc
     nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/lirr%2Fgtfs-lirr"
+      adapter: mylirr
+      normalizer: lirr
+      gtfsRtUrl: "https://backend-unified.mylirr.org/locations?geometry=TRACK_TURF&railroad=BOTH"
+      ignoreUnknownTripIds: true
       gtfsStaticUrl: "http://web.mta.info/developers/data/lirr/google_transit.zip"
       timezone: America/New_York
       gtfsStaticFix: "true"
@@ -412,9 +413,10 @@ agencies:
   - slug: mnr
     region: nyc
     nibble:
-      adapter: gtfs_rt
-      normalizer: default
-      gtfsRtUrl: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/mnr%2Fgtfs-mnr"
+      adapter: mylirr
+      normalizer: mnr
+      gtfsRtUrl: "https://backend-unified.mylirr.org/locations?geometry=TRACK_TURF&railroad=BOTH"
+      ignoreUnknownTripIds: true
       gtfsStaticUrl: "http://web.mta.info/developers/data/mnr/google_transit.zip"
       timezone: America/New_York
       gtfsStaticFix: "true"

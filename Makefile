@@ -9,13 +9,18 @@ generate-protos: ## Compile all .proto files in protos/ into nibble/protos/
 		--python_out=nibble/protos \
 		--mypy_out=nibble/protos \
 		gtfs-realtime.proto \
-		nyct/nyct-subway.proto
-	@# Fix import in generated NYCT file: protoc emits a bare module name which
-	@# won't resolve from a subpackage; rewrite to a fully-qualified package path.
+		nyct/nyct-subway.proto \
+		mtarr/gtfs-realtime-MTARR.proto
+	@# Fix imports in generated subpackage files: protoc emits bare module names
+	@# which won't resolve from a subpackage; rewrite to fully-qualified package paths.
 	sed -i 's/^import gtfs_realtime_pb2/from nibble.protos import gtfs_realtime_pb2/' \
 		nibble/protos/nyct/nyct_subway_pb2.py
 	sed -i 's/^import gtfs_realtime_pb2/from nibble.protos import gtfs_realtime_pb2/' \
 		nibble/protos/nyct/nyct_subway_pb2.pyi
+	sed -i 's/^import gtfs_realtime_pb2/from nibble.protos import gtfs_realtime_pb2/' \
+		nibble/protos/mtarr/gtfs_realtime_MTARR_pb2.py
+	sed -i 's/^import gtfs_realtime_pb2/from nibble.protos import gtfs_realtime_pb2/' \
+		nibble/protos/mtarr/gtfs_realtime_MTARR_pb2.pyi
 
 openapi: ## Regenerate openapi.json from current server routes
 	uv run nibble-openapi > openapi.json

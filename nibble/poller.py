@@ -85,6 +85,10 @@ def _get_normalizer(name: str) -> BaseNormalizer:
         from nibble.normalizer.nyct import NyctNormalizer
 
         return NyctNormalizer()
+    if name in ("mnr", "lirr"):
+        from nibble.normalizer.mta_railroad import MtaRailroadNormalizer
+
+        return MtaRailroadNormalizer()
     raise ValueError(f"Unknown normalizer: {name!r}")
 
 

@@ -39,6 +39,11 @@ class StaticGTFS:
         route_short_names: Mapping of ``route_short_name`` → ``route_id`` for
             agencies whose GTFS-RT feeds report short names instead of the
             internal route UUID/ID.  Built from ``routes.txt`` at load time.
+        trip_short_names: Mapping of ``trip_short_name`` → ``trip_id`` for
+            agencies whose GTFS-RT feeds report human-readable train/trip
+            numbers instead of the internal composite trip ID.  Built from
+            ``trips.txt`` at load time; empty when ``trip_short_name`` is
+            absent from the feed.
     """
 
     trips: dict[str, Trip] = field(default_factory=dict)
@@ -47,6 +52,7 @@ class StaticGTFS:
     shapes: dict[str, list[tuple[float, float]]] = field(default_factory=dict)
     route_trips: dict[str, list[str]] = field(default_factory=dict)
     route_short_names: dict[str, str] = field(default_factory=dict)
+    trip_short_names: dict[str, str] = field(default_factory=dict)
 
 
 def last_stop_sequence(gtfs: StaticGTFS, trip_id: str) -> int | None:
@@ -664,6 +670,9 @@ def _parse_gtfs_zip(content: bytes, fill_shape_dist_traveled: bool = True) -> St
                         direction_id=direction_id,
                         shape_id=row.get("shape_id", "").strip() or None,
                     )
+                    short_name = row.get("trip_short_name", "").strip()
+                    if short_name and short_name not in gtfs.trip_short_names:
+                        gtfs.trip_short_names[short_name] = trip_id
             # Build reverse index: route_id → [trip_id, ...]
             rt: dict[str, list[str]] = defaultdict(list)
             for tid, trip in gtfs.trips.items():
