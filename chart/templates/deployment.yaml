@@ -158,6 +158,9 @@ spec:
             - name: gobble-config
               mountPath: /app/config/local.json
               subPath: local.json
+            - name: gobble-routes
+              mountPath: /app/config/routes.json
+              subPath: routes.json
             - name: data
               mountPath: /app/data
 
@@ -212,6 +215,9 @@ spec:
             - name: gobble-config
               mountPath: /app/config/local.json
               subPath: local.json
+            - name: gobble-routes
+              mountPath: /app/config/routes.json
+              subPath: routes.json
             - name: data
               mountPath: /app/data
         {{- end }}
@@ -220,7 +226,10 @@ spec:
         {{- if .gobble }}
         - name: gobble-config
           configMap:
-            name: gobble-config-{{ .slug }}
+            name: gobble-{{ .slug }}-config
+        - name: gobble-routes
+          configMap:
+            name: gobble-{{ .gobble.agency | replace "_" "-" }}-routes
         - name: data
           emptyDir: {}
         {{- end }}
