@@ -40,6 +40,12 @@ global:
     # runs as a sidecar in the same Pod. Override here if you ever extract
     # gobble to its own Deployment and route via a Service DNS name.
     nibbleBaseUrl: "http://localhost:8080"
+    # Persist gobble's /app/data directory (GTFS archives, CSV performance
+    # data) across pod restarts and image updates.
+    dataPvc:
+      enabled: true
+      storageClassName: ""  # "" → cluster default
+      size: 2Gi
   resources:
     nibble:
       requests:

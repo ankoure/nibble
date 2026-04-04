@@ -19,3 +19,26 @@ spec:
       storage: {{ $.Values.global.nibble.overridesPvc.size }}
 {{- end }}
 {{- end }}
+{{- if $.Values.global.gobble.dataPvc.enabled }}
+{{- range .Values.agencies }}
+{{- if .gobble }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gobble-data-{{ .slug }}
+  labels:
+    {{- include "transit-agencies.labels" $ | nindent 4 }}
+    agency: {{ .slug }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if $.Values.global.gobble.dataPvc.storageClassName }}
+  storageClassName: {{ $.Values.global.gobble.dataPvc.storageClassName }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ $.Values.global.gobble.dataPvc.size }}
+{{- end }}
+{{- end }}
+{{- end }}

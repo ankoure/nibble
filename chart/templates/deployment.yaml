@@ -231,7 +231,12 @@ spec:
           configMap:
             name: gobble-{{ .gobble.agency | replace "_" "-" }}-routes
         - name: data
+          {{- if $.Values.global.gobble.dataPvc.enabled }}
+          persistentVolumeClaim:
+            claimName: gobble-data-{{ .slug }}
+          {{- else }}
           emptyDir: {}
+          {{- end }}
         {{- end }}
         {{- if $.Values.global.nibble.overridesPvc.enabled }}
         - name: overrides
