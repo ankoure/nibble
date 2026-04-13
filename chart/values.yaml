@@ -6,7 +6,7 @@
 #   Secret/nibble-<slug>-secrets    — key: AUTH_SECRET  (only for agencies with auth configured)
 
 global:
-  nibbleImage: ghcr.io/ankoure/nibble:sha-aa002407ab5bf7ad4752a6ec7d0838890e573ba9
+  nibbleImage: ghcr.io/ankoure/nibble:sha-838746f4c0bc2fce3dcc7a5fe4e0d2470b080df5
   gobbleImage: ghcr.io/ankoure/gobble@sha256:9af0c353d11741d63f749644e610d6aa9c4043247266fdff635aa3e991b5bb72
   # Number of nibble pod replicas per agency.  Keep at 1 (the default) unless
   # you have addressed the in-memory state and SSE affinity constraints
