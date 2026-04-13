@@ -3,11 +3,23 @@
 from __future__ import annotations
 
 import logging
+import re
 
 from nibble.gtfs.static import StaticGTFS
 from nibble.normalizer.base import BaseNormalizer
 from nibble.protos import gtfs_realtime_pb2
 from nibble.protos.nyct import nyct_subway_pb2
+
+# Trip ID path fields carry variable dot runs between agencies. Static GTFS for the
+# Staten Island Railway uses ``SI..S03R`` while the realtime feed publishes ``SI.S03R``
+# for the same trip. Collapsing consecutive dots gives a canonical key that matches
+# both forms without changing subway trip IDs (which use consistent double dots).
+_DOT_RUN_RE = re.compile(r"\.+")
+
+
+def _canonical(trip_id: str) -> str:
+    return _DOT_RUN_RE.sub(".", trip_id)
+
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +75,7 @@ class NyctNormalizer(BaseNormalizer):
             idx = full_id.find("_")
             if idx == -1:
                 continue
-            short_id = full_id[idx + 1 :]
+            short_id = _canonical(full_id[idx + 1 :])
             if short_id not in index:
                 index[short_id] = full_id
         self._suffix_index = index
@@ -144,7 +156,7 @@ class NyctNormalizer(BaseNormalizer):
                 if vehicle.HasField("trip"):
                     trip_id = vehicle.trip.trip_id
                     if trip_id and trip_id not in gtfs.trips:
-                        full_id = self._suffix_index.get(trip_id)
+                        full_id = self._suffix_index.get(_canonical(trip_id))
                         if full_id:
                             logger.debug("NYCT: rewrote trip_id %r -> %r", trip_id, full_id)
                             vehicle.trip.trip_id = full_id
