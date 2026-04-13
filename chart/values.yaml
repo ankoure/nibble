@@ -392,7 +392,7 @@ agencies:
     gobble:
       agency: nyc_subway
       s3Bucket: nyct-sir-performance-data
-      modes: ["rapid"]
+      modes: ["cr"]
 
 
   # ── Long Island Railroad ───────────────────────────────────────────────────
