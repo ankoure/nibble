@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import logging
 import time
 from collections.abc import Awaitable, Callable
@@ -16,6 +17,7 @@ import httpx
 
 from nibble.adapters.base import BaseAdapter
 from nibble.config import Settings
+from nibble.departure import detect_departures
 from nibble.gtfs.static import StaticGTFS
 from nibble.models import Position, VehicleEvent
 from nibble.normalizer.base import BaseNormalizer
@@ -159,6 +161,37 @@ def _parse_feed(feed: gtfs_realtime_pb2.FeedMessage) -> dict[str, VehicleEvent]:
     return snapshot
 
 
+def _parse_trip_update_heads(feed: gtfs_realtime_pb2.FeedMessage) -> dict[str, str]:
+    """Return a mapping of ``trip_id -> head stop_id`` from a feed's TripUpdates.
+
+    The head is the first entry of ``stop_time_update`` ordered by
+    ``stop_sequence`` when present, otherwise by list order. Entities without a
+    trip_id, without any stop_time_update entries, or whose head entry has no
+    stop_id are skipped.
+
+    Args:
+        feed: A parsed GTFS-RT ``FeedMessage`` protobuf.
+
+    Returns:
+        A dict keyed by trip_id with the head stop_id as the value.
+    """
+    heads: dict[str, str] = {}
+    for entity in feed.entity:
+        if not entity.HasField("trip_update"):
+            continue
+        tu = entity.trip_update
+        trip_id = tu.trip.trip_id if tu.HasField("trip") else None
+        if not trip_id or not tu.stop_time_update:
+            continue
+        updates = list(tu.stop_time_update)
+        if any(u.stop_sequence for u in updates):
+            updates.sort(key=lambda u: u.stop_sequence)
+        head_stop = updates[0].stop_id
+        if head_stop:
+            heads[trip_id] = head_stop
+    return heads
+
+
 async def poll_loop(
     config: Settings,
     gtfs: StaticGTFS | GtfsHolder,
@@ -210,6 +243,7 @@ async def poll_loop(
         ignore_unknown_trip_ids=config.ignore_unknown_trip_ids,
     )
     prev_snapshot: dict[str, VehicleEvent] = {}
+    prev_head_stops: dict[str, str] = {}
 
     from nibble.auth import build_httpx_auth
 
@@ -222,6 +256,31 @@ async def poll_loop(
                 if feed is not None:
                     feed = normalizer.normalize(feed, current_gtfs)
                     curr_snapshot = _parse_feed(feed)
+                    if config.infer_in_transit_from_trip_updates:
+                        curr_heads = _parse_trip_update_heads(feed)
+                        feed_ts = feed.header.timestamp
+                        feed_time = (
+                            datetime.fromtimestamp(feed_ts, tz=timezone.utc)
+                            if feed_ts
+                            else datetime.now(timezone.utc)
+                        )
+                        vehicles_by_trip = {
+                            v.trip_id: v for v in curr_snapshot.values() if v.trip_id is not None
+                        }
+                        departed = detect_departures(
+                            prev_head_stops,
+                            curr_heads,
+                            vehicles_by_trip,
+                            feed_time,
+                            config.stalled_vehicle_timestamp_threshold_seconds,
+                        )
+                        if departed:
+                            for vid, ve in list(curr_snapshot.items()):
+                                if ve.trip_id in departed:
+                                    curr_snapshot[vid] = dataclasses.replace(
+                                        ve, current_status="IN_TRANSIT_TO"
+                                    )
+                        prev_head_stops = curr_heads
                     sse_events, resolved_snapshot = reconcile(
                         prev_snapshot, curr_snapshot, state_store, current_gtfs, config
                     )

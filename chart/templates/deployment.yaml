@@ -101,6 +101,10 @@ spec:
             - name: NIBBLE_FILL_SHAPE_DIST_TRAVELED
               value: "false"
             {{- end }}
+            {{- if .nibble.inferInTransitFromTripUpdates }}
+            - name: NIBBLE_INFER_IN_TRANSIT_FROM_TRIP_UPDATES
+              value: "true"
+            {{- end }}
             {{- if .nibble.passioStaticRoutesFile }}
             - name: NIBBLE_PASSIO_STATIC_ROUTES_FILE
               value: {{ .nibble.passioStaticRoutesFile | quote }}

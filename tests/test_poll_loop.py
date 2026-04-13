@@ -203,6 +203,107 @@ class TestPollLoopOnSnapshot:
         mock_sleep.assert_called_once()
 
 
+def _feed_with_trip_update(
+    vehicle_id: str,
+    trip_id: str,
+    head_stop_id: str,
+    vehicle_ts: int = 1704067200,
+    feed_ts: int = 1704067200,
+    current_status: int = 2,
+) -> gtfs_realtime_pb2.FeedMessage:
+    feed = gtfs_realtime_pb2.FeedMessage()
+    feed.header.gtfs_realtime_version = "2.0"
+    feed.header.timestamp = feed_ts
+    v = feed.entity.add()
+    v.id = vehicle_id
+    v.vehicle.vehicle.id = vehicle_id
+    v.vehicle.trip.trip_id = trip_id
+    v.vehicle.trip.route_id = "route-1"
+    v.vehicle.position.latitude = 40.0
+    v.vehicle.position.longitude = -73.0
+    v.vehicle.timestamp = vehicle_ts
+    v.vehicle.current_status = current_status
+    tu = feed.entity.add()
+    tu.id = f"tu-{trip_id}"
+    tu.trip_update.trip.trip_id = trip_id
+    stu = tu.trip_update.stop_time_update.add()
+    stu.stop_id = head_stop_id
+    stu.stop_sequence = 1
+    stu2 = tu.trip_update.stop_time_update.add()
+    stu2.stop_id = f"{head_stop_id}-next"
+    stu2.stop_sequence = 2
+    return feed
+
+
+class TestPollLoopDepartureInference:
+    async def test_head_change_synthesizes_in_transit_to(self) -> None:
+        adapter = AsyncMock()
+        adapter.fetch.side_effect = [
+            _feed_with_trip_update("v1", "trip-1", "stopA", current_status=1),
+            _feed_with_trip_update("v1", "trip-1", "stopB", current_status=1),
+        ]
+        broadcaster = _mock_broadcaster()
+        config = _settings(infer_in_transit_from_trip_updates=True)
+
+        call_count = {"n": 0}
+
+        async def sleep_side_effect(_: float) -> None:
+            call_count["n"] += 1
+            if call_count["n"] >= 2:
+                raise asyncio.CancelledError()
+
+        with patch("nibble.poller.asyncio.sleep", new=sleep_side_effect):
+            with pytest.raises(asyncio.CancelledError):
+                await poll_loop(config, StaticGTFS(), broadcaster, adapter=adapter)
+
+        # Second broadcast should include an update with IN_TRANSIT_TO
+        second_call_events = broadcaster.broadcast.call_args_list[1][0][0]
+        statuses = [
+            ev.data.get("attributes", {}).get("current_status")
+            for ev in second_call_events
+            if ev.event_type == "update" and isinstance(ev.data, dict)
+        ]
+        assert "IN_TRANSIT_TO" in statuses
+
+    async def test_stalled_vehicle_suppresses_inference(self) -> None:
+        adapter = AsyncMock()
+        # Vehicle ts 200s behind feed header on the 2nd poll -> suppressed
+        adapter.fetch.side_effect = [
+            _feed_with_trip_update("v1", "trip-1", "stopA", current_status=1),
+            _feed_with_trip_update(
+                "v1",
+                "trip-1",
+                "stopB",
+                vehicle_ts=1704067200,
+                feed_ts=1704067400,
+                current_status=1,
+            ),
+        ]
+        broadcaster = _mock_broadcaster()
+        config = _settings(infer_in_transit_from_trip_updates=True)
+
+        call_count = {"n": 0}
+
+        async def sleep_side_effect(_: float) -> None:
+            call_count["n"] += 1
+            if call_count["n"] >= 2:
+                raise asyncio.CancelledError()
+
+        with patch("nibble.poller.asyncio.sleep", new=sleep_side_effect):
+            with pytest.raises(asyncio.CancelledError):
+                await poll_loop(config, StaticGTFS(), broadcaster, adapter=adapter)
+
+        # With stalled suppression, no IN_TRANSIT_TO update should fire
+        if len(broadcaster.broadcast.call_args_list) >= 2:
+            second_call_events = broadcaster.broadcast.call_args_list[1][0][0]
+            statuses = [
+                ev.data.get("attributes", {}).get("current_status")
+                for ev in second_call_events
+                if ev.event_type == "update" and isinstance(ev.data, dict)
+            ]
+            assert "IN_TRANSIT_TO" not in statuses
+
+
 class TestPollLoopGtfsHolder:
     async def test_gtfs_holder_attribute_is_read(self) -> None:
         """When gtfs has a .gtfs attribute (GtfsHolder), it should read gtfs.gtfs."""

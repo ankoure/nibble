@@ -276,6 +276,7 @@ agencies:
       timezone: America/New_York
       gtfsStaticFix: "true"
       fillShapeDistTraveled: false
+      inferInTransitFromTripUpdates: true
       s3Bucket: nyct-ace-performance-data
     gobble:
       agency: nyc_subway
@@ -292,6 +293,7 @@ agencies:
       timezone: America/New_York
       gtfsStaticFix: "true"
       fillShapeDistTraveled: false
+      inferInTransitFromTripUpdates: true
       s3Bucket: nyct-bdfm-performance-data
     gobble:
       agency: nyc_subway
@@ -308,6 +310,7 @@ agencies:
       timezone: America/New_York
       gtfsStaticFix: "true"
       fillShapeDistTraveled: false
+      inferInTransitFromTripUpdates: true
       s3Bucket: nyct-g-performance-data
     gobble:
       agency: nyc_subway
@@ -324,6 +327,7 @@ agencies:
       timezone: America/New_York
       gtfsStaticFix: "true"
       fillShapeDistTraveled: false
+      inferInTransitFromTripUpdates: true
       s3Bucket: nyct-jz-performance-data
     gobble:
       agency: nyc_subway
@@ -340,6 +344,7 @@ agencies:
       timezone: America/New_York
       gtfsStaticFix: "true"
       fillShapeDistTraveled: false
+      inferInTransitFromTripUpdates: true
       s3Bucket: nyct-nqrw-performance-data
     gobble:
       agency: nyc_subway
@@ -356,6 +361,7 @@ agencies:
       timezone: America/New_York
       gtfsStaticFix: "true"
       fillShapeDistTraveled: false
+      inferInTransitFromTripUpdates: true
       s3Bucket: nyct-l-performance-data
     gobble:
       agency: nyc_subway
@@ -372,6 +378,7 @@ agencies:
       timezone: America/New_York
       gtfsStaticFix: "true"
       fillShapeDistTraveled: false
+      inferInTransitFromTripUpdates: true
       s3Bucket: nyct-1234567s-performance-data
     gobble:
       agency: nyc_subway
@@ -388,6 +395,7 @@ agencies:
       timezone: America/New_York
       gtfsStaticFix: "true"
       fillShapeDistTraveled: false
+      inferInTransitFromTripUpdates: true
       s3Bucket: nyct-sir-performance-data
     gobble:
       agency: nyc_subway

@@ -136,3 +136,16 @@ class Settings(BaseSettings):
     """Query parameter name when ``auth_type="query_param"``."""
     auth_header_name: str = "X-API-Key"
     """Header name when ``auth_type="header"``."""
+
+    infer_in_transit_from_trip_updates: bool = False
+    """When ``True``, snapshot each trip's ``stop_time_update`` list between
+    polls and synthesize a ``current_status = IN_TRANSIT_TO`` transition when
+    the head stop drops, indicating the vehicle has departed. Useful for feeds
+    (e.g. NYCT) that bundle TripUpdates but don't report ``IN_TRANSIT_TO`` on
+    VehiclePositions."""
+
+    stalled_vehicle_timestamp_threshold_seconds: int = 90
+    """When inferring departures from TripUpdates, suppress the event if the
+    vehicle's timestamp is more than this many seconds behind the feed header
+    timestamp. A stalled VehiclePosition makes list changes likely to be data
+    artifacts rather than real departures."""
