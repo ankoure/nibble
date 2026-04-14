@@ -70,7 +70,8 @@ declare -a AGENCIES=(
   # ── Maryland ─────────────────────────────────────────────────────────────────
   "marc         https://mdotmta-gtfs.s3.amazonaws.com/mdotmta_gtfs_marc.zip"
   # ── Pennsylvania ─────────────────────────────────────────────────────────────
-  "septa_regionalrail https://www3.septa.org/developer/google_rail.zip"
+  "septa_regionalrail https://www3.septa.org/developer/gtfs_public.zip inner:google_rail.zip"
+  "septa_bus          https://www3.septa.org/developer/gtfs_public.zip inner:google_bus.zip"
   # ── Virginia ─────────────────────────────────────────────────────────────────
   "vre          https://gtfs.vre.org/containercdngtfsupload/google_transit.zip"
   # ── Tennessee ────────────────────────────────────────────────────────────────
@@ -94,7 +95,17 @@ declare -a FAILED=()
 for entry in "${AGENCIES[@]}"; do
   agency=$(echo "$entry" | awk '{print $1}')
   gtfs_url=$(echo "$entry" | awk '{print $2}')
-  auth_spec=$(echo "$entry" | awk '{print $3}')   # optional: header:<slug> | query_param:<slug>:<param>
+  # Tokens 3+ are optional and identified by prefix:
+  #   header:<slug> | query_param:<slug>:<param>  → auth
+  #   inner:<filename>                            → nested zip inside the download
+  auth_spec=""
+  inner_zip=""
+  for tok in $(echo "$entry" | awk '{for (i=3; i<=NF; i++) print $i}'); do
+    case "$tok" in
+      inner:*) inner_zip="${tok#inner:}" ;;
+      header:*|query_param:*) auth_spec="$tok" ;;
+    esac
+  done
   routes_file="config/${agency}_routes.json"
   cm_name="gobble-${agency//_/-}-routes"
 
@@ -136,6 +147,20 @@ for entry in "${AGENCIES[@]}"; do
     rm -f "$local_gtfs"
     echo ""
     continue
+  fi
+
+  if [[ -n "$inner_zip" ]]; then
+    echo "  Extracting nested $inner_zip..."
+    inner_dir=$(mktemp -d)
+    if ! unzip -j -o "$local_gtfs" "$inner_zip" -d "$inner_dir" > /dev/null; then
+      echo "  SKIPPED: failed to extract $inner_zip from $local_gtfs" >&2
+      FAILED+=("$agency")
+      rm -rf "$local_gtfs" "$inner_dir"
+      echo ""
+      continue
+    fi
+    rm -f "$local_gtfs"
+    local_gtfs="$inner_dir/$(basename "$inner_zip")"
   fi
 
   if ! uv run python scripts/generate_agency_routes.py "$local_gtfs" "$agency" --format json; then
