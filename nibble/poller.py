@@ -286,7 +286,7 @@ async def poll_loop(
                     )
                     if sse_events:
                         await broadcaster.broadcast(sse_events)
-                        broadcaster.last_poll_time = datetime.now(timezone.utc)
+                    broadcaster.last_poll_time = datetime.now(timezone.utc)
                     broadcaster.vehicle_snapshot = resolved_snapshot
                     prev_snapshot = curr_snapshot
                     if on_snapshot is not None:
