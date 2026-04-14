@@ -623,6 +623,13 @@ def _load_gtfs(config: Settings) -> tuple[StaticGTFS, str | None]:
         )
         response.raise_for_status()
         raw_zip = response.content
+        if config.gtfs_static_inner_zip:
+            from nibble.gtfs.static import extract_inner_zip
+
+            logger.info(
+                "Extracting inner zip '%s' from outer archive", config.gtfs_static_inner_zip
+            )
+            raw_zip = extract_inner_zip(raw_zip, config.gtfs_static_inner_zip)
 
         # Check if a fixed bundle for this feed version is already on S3 to avoid
         # re-running the fixer on every restart for large, unchanged feeds.
@@ -692,6 +699,7 @@ def _load_gtfs(config: Settings) -> tuple[StaticGTFS, str | None]:
         config.gtfs_static_url,
         auth=build_httpx_auth(config),
         fill_shape_dist_traveled=config.fill_shape_dist_traveled,
+        inner_zip=config.gtfs_static_inner_zip,
     ), None
 
 
@@ -736,6 +744,10 @@ async def gtfs_reload_loop(
             )
             response.raise_for_status()
             raw_zip = response.content
+            if config.gtfs_static_inner_zip:
+                from nibble.gtfs.static import extract_inner_zip
+
+                raw_zip = extract_inner_zip(raw_zip, config.gtfs_static_inner_zip)
 
             if config.gtfs_static_fix:
                 candidate_zip = fix_gtfs_zip(raw_zip)

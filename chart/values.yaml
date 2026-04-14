@@ -545,15 +545,32 @@ agencies:
     nibble:
       adapter: gtfs_rt
       normalizer: default
-      gtfsRtUrl: "https://www3.septa.org/gtfsrt/septa-pa-us/Vehicle/rtVehiclePosition.pb"
-      gtfsStaticUrl: "https://www3.septa.org/developer/google_rail.zip"
+      gtfsRtUrl: "https://www3.septa.org/gtfsrt/septarail-pa-us/Vehicle/rtVehiclePosition.pb"
+      gtfsStaticUrl: "https://www3.septa.org/developer/gtfs_public.zip"
+      gtfsStaticInnerZip: "google_rail.zip"
       timezone: America/New_York
       gtfsStaticFix: "true"
       s3Bucket: septa-performance-data
     gobble:
       agency: septa_regionalrail
       s3Bucket: septa-performance-data
-      modes: ["cr"]
+      modes: ["rapid","cr"]
+
+  - slug: septa-bus
+    region: pa
+    nibble:
+      adapter: gtfs_rt
+      normalizer: default
+      gtfsRtUrl: "https://www3.septa.org/gtfsrt/septa-pa-us/Vehicle/rtVehiclePosition.pb"
+      gtfsStaticUrl: "https://www3.septa.org/developer/gtfs_public.zip"
+      gtfsStaticInnerZip: "google_bus.zip"
+      timezone: America/New_York
+      gtfsStaticFix: "true"
+      s3Bucket: septa-bus-performance-data
+    gobble:
+      agency: septa_bus
+      s3Bucket: septa-bus-performance-data
+      modes: ["bus"]
 
   # ── Virginia ───────────────────────────────────────────────────────────────
 

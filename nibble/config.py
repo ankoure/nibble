@@ -91,6 +91,12 @@ class Settings(BaseSettings):
     agency_id: str = ""
     agency_timezone: str | None = None
 
+    gtfs_static_inner_zip: str | None = None
+    """When set, the static GTFS URL is expected to return a zip-of-zips
+    outer archive; this names the inner zip member to extract and use as the
+    actual GTFS feed (e.g. ``"google_rail.zip"`` for SEPTA's
+    ``gtfs_public.zip``). Defaults to ``None`` (URL returns GTFS directly)."""
+
     gtfs_static_fix: bool = False
     s3_bucket: str | None = None
     s3_agency_slug: str | None = None

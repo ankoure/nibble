@@ -73,10 +73,29 @@ def last_stop_sequence(gtfs: StaticGTFS, trip_id: str) -> int | None:
     return times[-1].stop_sequence  # stop_times lists are sorted by stop_sequence at load time
 
 
+def extract_inner_zip(content: bytes, inner_name: str) -> bytes:
+    """Return the bytes of ``inner_name`` from a zip-of-zips outer archive.
+
+    Some agencies (e.g. SEPTA's ``gtfs_public.zip``) distribute multiple GTFS
+    feeds as individual zips inside a single outer zip. When configured, the
+    adapter unwraps the outer archive and treats the selected inner zip as the
+    static GTFS feed.
+    """
+    with zipfile.ZipFile(io.BytesIO(content)) as zf:
+        try:
+            return zf.read(inner_name)
+        except KeyError as exc:
+            names = ", ".join(zf.namelist())
+            raise ValueError(
+                f"Inner zip '{inner_name}' not found in outer archive (members: {names})"
+            ) from exc
+
+
 def load_static_gtfs(
     url: str,
     auth: httpx.Auth | None = None,
     fill_shape_dist_traveled: bool = True,
+    inner_zip: str | None = None,
 ) -> StaticGTFS:
     """Download and parse a static GTFS ZIP from a URL. Synchronous; runs at startup.
 
@@ -96,7 +115,11 @@ def load_static_gtfs(
     logger.info("Downloading static GTFS from %s", url)
     response = httpx.get(url, auth=auth, follow_redirects=True, timeout=60)
     response.raise_for_status()
-    return _parse_gtfs_zip(response.content, fill_shape_dist_traveled=fill_shape_dist_traveled)
+    content = response.content
+    if inner_zip:
+        logger.info("Extracting inner zip '%s' from outer archive", inner_zip)
+        content = extract_inner_zip(content, inner_zip)
+    return _parse_gtfs_zip(content, fill_shape_dist_traveled=fill_shape_dist_traveled)
 
 
 def load_static_gtfs_from_bytes(

@@ -67,6 +67,10 @@ spec:
               value: {{ .nibble.gtfsRtUrl | quote }}
             - name: NIBBLE_GTFS_STATIC_URL
               value: {{ .nibble.gtfsStaticUrl | quote }}
+            {{- if .nibble.gtfsStaticInnerZip }}
+            - name: NIBBLE_GTFS_STATIC_INNER_ZIP
+              value: {{ .nibble.gtfsStaticInnerZip | quote }}
+            {{- end }}
             - name: NIBBLE_AGENCY_TIMEZONE
               value: {{ .nibble.timezone | quote }}
             - name: NIBBLE_POLL_INTERVAL_SECONDS
