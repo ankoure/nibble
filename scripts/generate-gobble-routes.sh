@@ -177,7 +177,7 @@ for entry in "${AGENCIES[@]}"; do
     --from-file=routes.json="$routes_file" \
     --dry-run=client -o yaml \
     -n "$NAMESPACE" \
-    | "${KUBECTL[@]}" apply -n "$NAMESPACE" -f -; then
+    | "${KUBECTL[@]}" apply --server-side --force-conflicts -n "$NAMESPACE" -f -; then
     echo "  SKIPPED: kubectl apply failed for $cm_name" >&2
     FAILED+=("$agency")
   fi
