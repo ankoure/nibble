@@ -1,0 +1,3471 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="GTFS-RT to MBTA V3 SSE adapter">
+      
+      
+      
+      
+        <link rel="prev" href="../normalizers/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>GTFS - nibble</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#gtfs-utilities" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="nibble" class="md-header__button md-logo" aria-label="nibble" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            nibble
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              GTFS
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="nibble" class="md-nav__button md-logo" aria-label="nibble" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    nibble
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/trip-assignment-corrections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manual trip assignment corrections
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/arrival-predictions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Arrival predictions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/monitoring-headways/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring headways
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/publishing-gtfs-rt-to-s3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing GTFS-RT to S3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Code Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../state/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    State
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Pipeline
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../poller/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Poller
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reconciler/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reconciler
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interpolator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpolator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../emitter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Emitter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../normalizers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Normalizers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GTFS
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GTFS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#static-loader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Static loader
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.gtfs.static" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        static
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="static">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.static.StaticGTFS" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StaticGTFS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.static.last_stop_sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        last_stop_sequence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.static.extract_inner_zip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_inner_zip
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.static.load_static_gtfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_static_gtfs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.static.load_static_gtfs_from_bytes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_static_gtfs_from_bytes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.static.infer_stop_from_position" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infer_stop_from_position
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.static.infer_trip_from_position" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infer_trip_from_position
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#realtime-fetcher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Realtime fetcher
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.gtfs.realtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        realtime
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="realtime">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.realtime.fetch_feed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fetch_feed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feed-info-parser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feed info parser
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.gtfs.feed_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        feed_info
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="feed_info">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.feed_info.FeedInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FeedInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.feed_info.dates_from_calendar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dates_from_calendar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.feed_info.parse_feed_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        parse_feed_info
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-fixer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data fixer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.gtfs.fixer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fixer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="fixer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.fixer.fix_gtfs_zip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fix_gtfs_zip
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#s3-publisher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        S3 publisher
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.gtfs.publisher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        publisher
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="publisher">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.publisher.publish_gtfs_to_s3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        publish_gtfs_to_s3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.publisher.fetch_fixed_bundle_from_s3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fetch_fixed_bundle_from_s3
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#static-loader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Static loader
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.gtfs.static" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        static
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="static">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.static.StaticGTFS" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StaticGTFS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.static.last_stop_sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        last_stop_sequence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.static.extract_inner_zip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_inner_zip
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.static.load_static_gtfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_static_gtfs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.static.load_static_gtfs_from_bytes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_static_gtfs_from_bytes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.static.infer_stop_from_position" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infer_stop_from_position
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.static.infer_trip_from_position" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infer_trip_from_position
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#realtime-fetcher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Realtime fetcher
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.gtfs.realtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        realtime
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="realtime">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.realtime.fetch_feed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fetch_feed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feed-info-parser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feed info parser
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.gtfs.feed_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        feed_info
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="feed_info">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.feed_info.FeedInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FeedInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.feed_info.dates_from_calendar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dates_from_calendar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.feed_info.parse_feed_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        parse_feed_info
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-fixer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data fixer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.gtfs.fixer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fixer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="fixer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.fixer.fix_gtfs_zip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fix_gtfs_zip
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#s3-publisher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        S3 publisher
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.gtfs.publisher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        publisher
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="publisher">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.publisher.publish_gtfs_to_s3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        publish_gtfs_to_s3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nibble.gtfs.publisher.fetch_fixed_bundle_from_s3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fetch_fixed_bundle_from_s3
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="gtfs-utilities">GTFS Utilities<a class="headerlink" href="#gtfs-utilities" title="Permanent link">&para;</a></h1>
+<p>Modules for loading, fetching, fixing, and publishing GTFS data.</p>
+<h2 id="static-loader">Static loader<a class="headerlink" href="#static-loader" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.gtfs.static" class="doc doc-heading">
+            <code>nibble.gtfs.static</code>
+
+
+<a href="#nibble.gtfs.static" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Downloads and parses static GTFS ZIP archives into in-memory indexes.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.gtfs.static.StaticGTFS" class="doc doc-heading">
+            <code>StaticGTFS</code>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#nibble.gtfs.static.StaticGTFS" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>In-memory indexes built from a static GTFS ZIP at startup.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="nibble.gtfs.static.StaticGTFS.trips">trips</span></code></td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="Trip
+
+
+  
+      dataclass
+   (nibble.models.Trip)" href="../models/#nibble.models.Trip">Trip</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mapping of <code>trip_id</code> → :class:<code>~nibble.models.Trip</code>, loaded
+from <code>trips.txt</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="nibble.gtfs.static.StaticGTFS.stop_times">stop_times</span></code></td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="list">list</span>[<a class="autorefs autorefs-internal" title="StopTime
+
+
+  
+      dataclass
+   (nibble.models.StopTime)" href="../models/#nibble.models.StopTime">StopTime</a>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mapping of <code>trip_id</code> → list of
+:class:<code>~nibble.models.StopTime</code> sorted by <code>stop_sequence</code>,
+loaded from <code>stop_times.txt</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="nibble.gtfs.static.StaticGTFS.stops">stops</span></code></td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mapping of <code>stop_id</code> → <code>(lat, lon)</code> float tuple, loaded
+from <code>stops.txt</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="nibble.gtfs.static.StaticGTFS.shapes">shapes</span></code></td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="list">list</span>[<span title="tuple">tuple</span>[<span title="float">float</span>, <span title="float">float</span>]]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mapping of <code>shape_id</code> → list of <code>(lat, lon)</code> tuples sorted
+by <code>shape_pt_sequence</code>, loaded from <code>shapes.txt</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="nibble.gtfs.static.StaticGTFS.route_trips">route_trips</span></code></td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="list">list</span>[<span title="str">str</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mapping of <code>route_id</code> → list of <code>trip_id</code> strings for
+all trips on that route.  Built from <code>trips.txt</code> at load time.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="nibble.gtfs.static.StaticGTFS.route_short_names">route_short_names</span></code></td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mapping of <code>route_short_name</code> → <code>route_id</code> for
+agencies whose GTFS-RT feeds report short names instead of the
+internal route UUID/ID.  Built from <code>routes.txt</code> at load time.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="nibble.gtfs.static.StaticGTFS.trip_short_names">trip_short_names</span></code></td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mapping of <code>trip_short_name</code> → <code>trip_id</code> for
+agencies whose GTFS-RT feeds report human-readable train/trip
+numbers instead of the internal composite trip ID.  Built from
+<code>trips.txt</code> at load time; empty when <code>trip_short_name</code> is
+absent from the feed.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nibble.gtfs.static.last_stop_sequence" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">last_stop_sequence</span><span class="p">(</span><span class="n">gtfs</span><span class="p">,</span> <span class="n">trip_id</span><span class="p">)</span></code>
+
+<a href="#nibble.gtfs.static.last_stop_sequence" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the stop_sequence of the final stop for <em>trip_id</em>, or <code>None</code> if unknown.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>gtfs</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="StaticGTFS
+
+
+  
+      dataclass
+   (nibble.gtfs.static.StaticGTFS)" href="#nibble.gtfs.static.StaticGTFS">StaticGTFS</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The loaded static GTFS indexes.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>trip_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The GTFS trip identifier to look up.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="int">int</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The highest <code>stop_sequence</code> value for the trip, or <code>None</code> if the</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="int">int</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>trip has no stop-time data.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nibble.gtfs.static.extract_inner_zip" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">extract_inner_zip</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">inner_name</span><span class="p">)</span></code>
+
+<a href="#nibble.gtfs.static.extract_inner_zip" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the bytes of <code>inner_name</code> from a zip-of-zips outer archive.</p>
+<p>Some agencies (e.g. SEPTA's <code>gtfs_public.zip</code>) distribute multiple GTFS
+feeds as individual zips inside a single outer zip. When configured, the
+adapter unwraps the outer archive and treats the selected inner zip as the
+static GTFS feed.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nibble.gtfs.static.load_static_gtfs" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">load_static_gtfs</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fill_shape_dist_traveled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inner_zip</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#nibble.gtfs.static.load_static_gtfs" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Download and parse a static GTFS ZIP from a URL. Synchronous; runs at startup.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>url</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>URL of the static GTFS ZIP archive.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>auth</code>
+            </td>
+            <td>
+                  <code><span title="httpx.Auth">Auth</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional httpx auth strategy (e.g. query-param or header key).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fill_shape_dist_traveled</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>When <code>True</code> (the default), back-fill
+<code>shape_dist_traveled</code> for stop times that lack it.  Pass
+<code>False</code> for feeds that already include complete values.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="StaticGTFS
+
+
+  
+      dataclass
+   (nibble.gtfs.static.StaticGTFS)" href="#nibble.gtfs.static.StaticGTFS">StaticGTFS</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A <code>StaticGTFS</code> object with populated trip and stop-time indexes.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="httpx.HTTPStatusError">HTTPStatusError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the download returns a non-2xx response.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nibble.gtfs.static.load_static_gtfs_from_bytes" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">load_static_gtfs_from_bytes</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">fill_shape_dist_traveled</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+<a href="#nibble.gtfs.static.load_static_gtfs_from_bytes" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Parse a static GTFS ZIP from already-downloaded bytes.</p>
+<p>Use this when the ZIP was already fetched (e.g. by the fixer/publisher)
+to avoid downloading it a second time.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>content</code>
+            </td>
+            <td>
+                  <code><span title="bytes">bytes</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Raw bytes of a GTFS ZIP archive.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fill_shape_dist_traveled</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>When <code>True</code> (the default), back-fill
+<code>shape_dist_traveled</code> for stop times that lack it.  Pass
+<code>False</code> for feeds that already include complete values.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="StaticGTFS
+
+
+  
+      dataclass
+   (nibble.gtfs.static.StaticGTFS)" href="#nibble.gtfs.static.StaticGTFS">StaticGTFS</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A <code>StaticGTFS</code> object with populated trip and stop-time indexes.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nibble.gtfs.static.infer_stop_from_position" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">infer_stop_from_position</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">trip_id</span><span class="p">,</span> <span class="n">gtfs</span><span class="p">)</span></code>
+
+<a href="#nibble.gtfs.static.infer_stop_from_position" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Infer stop_id, stop_sequence, and current_status from a raw vehicle position.</p>
+<p>Projects the vehicle onto the trip's shape polyline using
+<code>shape_dist_traveled</code>, then determines the next stop ahead and whether
+the vehicle is stopped at it.</p>
+<p>Returns <code>(None, None, "IN_TRANSIT_TO")</code> when inference is not possible
+(trip not found, no shape, no stop times, or stop times lack
+<code>shape_dist_traveled</code>).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>lat</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Vehicle latitude in WGS84 decimal degrees.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>lon</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Vehicle longitude in WGS84 decimal degrees.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>trip_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>GTFS trip identifier for the vehicle's current trip.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>gtfs</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="StaticGTFS
+
+
+  
+      dataclass
+   (nibble.gtfs.static.StaticGTFS)" href="#nibble.gtfs.static.StaticGTFS">StaticGTFS</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Loaded static GTFS indexes.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A <code>(stop_id, stop_sequence, current_status)</code> tuple.  <code>current_status</code></p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="int">int</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>is <code>"STOPPED_AT"</code> when the vehicle is within</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.Literal">Literal</span>[&#39;INCOMING_AT&#39;, &#39;STOPPED_AT&#39;, &#39;IN_TRANSIT_TO&#39;]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>data:<code>_STOPPED_THRESHOLD_M</code> metres of a stop, otherwise</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="str">str</span> | None, <span title="int">int</span> | None, <span title="typing.Literal">Literal</span>[&#39;INCOMING_AT&#39;, &#39;STOPPED_AT&#39;, &#39;IN_TRANSIT_TO&#39;]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>"IN_TRANSIT_TO"</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nibble.gtfs.static.infer_trip_from_position" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">infer_trip_from_position</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">route_id</span><span class="p">,</span> <span class="n">gtfs</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">agency_timezone</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bearing</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#nibble.gtfs.static.infer_trip_from_position" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Infer the most likely <code>trip_id</code> for a vehicle given its position and route.</p>
+<p>Iterates over all trips for <em>route_id</em> that have an associated shape and
+computes the minimum perpendicular distance from <em>(lat, lon)</em> to each
+shape polyline.</p>
+<p>When both <em>timestamp</em> and <em>agency_timezone</em> are supplied, trips whose
+scheduled time window (first-stop to last-stop departure/arrival times,
+with a ±30-minute tolerance) does not bracket the current local time are
+excluded before the distance ranking.  When no trips survive the time
+filter the constraint is dropped and all candidates are ranked by distance
+alone, so the function always returns the best geometric match.</p>
+<p>Returns <code>None</code> only when <em>route_id</em> is not in the index or no candidate
+trip has a shape.</p>
+<p>Note: if two trips share the same shape (same physical path, different
+times of day) the returned <code>trip_id</code> is one of them arbitrarily, but
+stop inference via :func:<code>infer_stop_from_position</code> will still be correct
+since the shapes are identical.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>lat</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Vehicle latitude in WGS84 decimal degrees.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>lon</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Vehicle longitude in WGS84 decimal degrees.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>route_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>GTFS route identifier reported by the feed.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>gtfs</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="StaticGTFS
+
+
+  
+      dataclass
+   (nibble.gtfs.static.StaticGTFS)" href="#nibble.gtfs.static.StaticGTFS">StaticGTFS</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Loaded static GTFS indexes.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>timestamp</code>
+            </td>
+            <td>
+                  <code><span title="datetime.datetime">datetime</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>UTC-aware datetime of the observation.  Required for
+time-of-day filtering.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>agency_timezone</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>IANA timezone string (e.g. <code>"America/New_York"</code>).
+Required for time-of-day filtering.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>bearing</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Vehicle heading in degrees clockwise from north (0-359), or
+<code>None</code> if not reported.  When provided, trips whose shape runs
+more than :data:<code>_BEARING_TOLERANCE_DEG</code> degrees opposite to the
+vehicle's heading at the projected point are excluded.  The filter
+is skipped when no candidates survive it.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The best-matching <code>trip_id</code>, or <code>None</code> if no match is possible.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="realtime-fetcher">Realtime fetcher<a class="headerlink" href="#realtime-fetcher" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.gtfs.realtime" class="doc doc-heading">
+            <code>nibble.gtfs.realtime</code>
+
+
+<a href="#nibble.gtfs.realtime" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Async GTFS-RT protobuf feed fetcher.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nibble.gtfs.realtime.fetch_feed" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">fetch_feed</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">client</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#nibble.gtfs.realtime.fetch_feed" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Fetch and parse a GTFS-RT VehiclePositions protobuf feed.</p>
+<p>All errors (network failure, non-200 response, protobuf parse error) are
+caught and logged, returning <code>None</code> so the caller can skip the cycle
+without crashing.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>url</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The GTFS-RT endpoint URL.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>client</code>
+            </td>
+            <td>
+                  <code><span title="httpx.AsyncClient">AsyncClient</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Shared async HTTP client with a 30-second timeout.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A parsed <code>FeedMessage</code>, or <code>None</code> on any error.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="feed-info-parser">Feed info parser<a class="headerlink" href="#feed-info-parser" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.gtfs.feed_info" class="doc doc-heading">
+            <code>nibble.gtfs.feed_info</code>
+
+
+<a href="#nibble.gtfs.feed_info" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Parse feed_info.txt from a GTFS ZIP to extract feed metadata.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.gtfs.feed_info.FeedInfo" class="doc doc-heading">
+            <code>FeedInfo</code>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#nibble.gtfs.feed_info.FeedInfo" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Metadata from a GTFS feed_info.txt file.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="nibble.gtfs.feed_info.FeedInfo.feed_start_date">feed_start_date</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Date the feed becomes valid, in <code>YYYYMMDD</code> format.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="nibble.gtfs.feed_info.FeedInfo.feed_end_date">feed_end_date</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Date after which the feed is no longer valid, in <code>YYYYMMDD</code> format.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="nibble.gtfs.feed_info.FeedInfo.feed_version">feed_version</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Publisher-assigned version string for this feed.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nibble.gtfs.feed_info.dates_from_calendar" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">dates_from_calendar</span><span class="p">(</span><span class="n">zf</span><span class="p">)</span></code>
+
+<a href="#nibble.gtfs.feed_info.dates_from_calendar" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Derive feed start/end dates from calendar.txt and calendar_dates.txt.</p>
+<p>Returns a <code>(start_date, end_date)</code> tuple in <code>YYYYMMDD</code> format.  Falls
+back to empty strings when neither file is present.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nibble.gtfs.feed_info.parse_feed_info" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">parse_feed_info</span><span class="p">(</span><span class="n">zip_content</span><span class="p">)</span></code>
+
+<a href="#nibble.gtfs.feed_info.parse_feed_info" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Extract FeedInfo from a GTFS ZIP's feed_info.txt.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>zip_content</code>
+            </td>
+            <td>
+                  <code><span title="bytes">bytes</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Raw bytes of a GTFS ZIP archive.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="FeedInfo
+
+
+  
+      dataclass
+   (nibble.gtfs.feed_info.FeedInfo)" href="#nibble.gtfs.feed_info.FeedInfo">FeedInfo</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A <code>FeedInfo</code> populated from the first row of <code>feed_info.txt</code>, or</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="FeedInfo
+
+
+  
+      dataclass
+   (nibble.gtfs.feed_info.FeedInfo)" href="#nibble.gtfs.feed_info.FeedInfo">FeedInfo</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>None</code> if the file is absent from the archive.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="data-fixer">Data fixer<a class="headerlink" href="#data-fixer" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.gtfs.fixer" class="doc doc-heading">
+            <code>nibble.gtfs.fixer</code>
+
+
+<a href="#nibble.gtfs.fixer" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Fix common issues in GTFS static ZIP archives before loading or publishing.</p>
+<p>Each fixer is a callable that receives the raw text of a single CSV file and
+returns corrected text. Fixers are applied to every .txt file in the ZIP.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nibble.gtfs.fixer.fix_gtfs_zip" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">fix_gtfs_zip</span><span class="p">(</span><span class="n">content</span><span class="p">)</span></code>
+
+<a href="#nibble.gtfs.fixer.fix_gtfs_zip" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Apply all registered fixers to every .txt file in a GTFS ZIP.</p>
+<p>Non-CSV files are passed through unchanged. The returned ZIP has the same
+file structure as the input but with corrected CSV content.</p>
+<p>Fixers applied (in order): BOM stripping, CRLF normalisation, field
+whitespace stripping.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>content</code>
+            </td>
+            <td>
+                  <code><span title="bytes">bytes</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Raw bytes of the original GTFS ZIP archive.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bytes">bytes</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Bytes of a new ZIP archive with all <code>.txt</code> files corrected.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="s3-publisher">S3 publisher<a class="headerlink" href="#s3-publisher" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.gtfs.publisher" class="doc doc-heading">
+            <code>nibble.gtfs.publisher</code>
+
+
+<a href="#nibble.gtfs.publisher" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Upload a fixed GTFS ZIP to S3 and maintain archived_feeds.txt for gobble.</p>
+<p>The archived_feeds.txt format (CSV, no header quoting):
+    feed_start_date,feed_end_date,feed_version,archive_url,archive_note</p>
+<p>The most recent entry must appear first. Each call to publish_gtfs_to_s3()
+downloads the existing file (if any), prepends the new row, and re-uploads it.</p>
+<p>Requires boto3 (install nibble[s3]).</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nibble.gtfs.publisher.publish_gtfs_to_s3" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">publish_gtfs_to_s3</span><span class="p">(</span><span class="n">zip_bytes</span><span class="p">,</span> <span class="n">feed_info</span><span class="p">,</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">archived_feeds_key</span><span class="p">,</span> <span class="n">region</span><span class="o">=</span><span class="s1">&#39;us-east-1&#39;</span><span class="p">,</span> <span class="n">archive_url_base</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#nibble.gtfs.publisher.publish_gtfs_to_s3" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Upload the fixed GTFS ZIP and update archived_feeds.txt on S3.</p>
+<p>Returns the archive_url written into archived_feeds.txt.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>zip_bytes</code>
+            </td>
+            <td>
+                  <code><span title="bytes">bytes</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Fixed GTFS ZIP content to upload.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>feed_info</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="FeedInfo
+
+
+  
+      dataclass
+   (nibble.gtfs.feed_info.FeedInfo)" href="#nibble.gtfs.feed_info.FeedInfo">FeedInfo</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Metadata extracted from <code>feed_info.txt</code> used to name the
+ZIP (<code>{prefix}/{feed_start_date}.zip</code>) and populate the index row.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>bucket</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>S3 bucket name.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>prefix</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Key prefix for the ZIP (e.g. <code>"gtfs"</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>archived_feeds_key</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Full S3 key for the <code>archived_feeds.txt</code> index.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>region</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>AWS region used for the S3 client and to construct the archive URL.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;us-east-1&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>archive_url_base</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>When set, the archive_url stored in the index is
+<code>{archive_url_base}/{feed_start_date}.zip</code> (e.g. <code>"/gtfs"</code>).
+When <code>None</code>, the public S3 HTTPS URL is used instead.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The archive_url written into archived_feeds.txt.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ImportError">ImportError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>boto3</code> is not installed (install <code>nibble[s3]</code>).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nibble.gtfs.publisher.fetch_fixed_bundle_from_s3" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">fetch_fixed_bundle_from_s3</span><span class="p">(</span><span class="n">feed_start_date</span><span class="p">,</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">region</span><span class="o">=</span><span class="s1">&#39;us-east-1&#39;</span><span class="p">)</span></code>
+
+<a href="#nibble.gtfs.publisher.fetch_fixed_bundle_from_s3" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Download a previously-fixed GTFS ZIP from S3, or return None if absent.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>feed_start_date</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Feed start date in <code>YYYYMMDD</code> format, used as the ZIP key
+(<code>{prefix}/{feed_start_date}.zip</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>bucket</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>S3 bucket name.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>prefix</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Key prefix for the ZIP (e.g. <code>"gtfs"</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>region</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>AWS region used for the S3 client.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;us-east-1&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bytes">bytes</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>ZIP bytes if the object exists, or <code>None</code> if it is not found.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ImportError">ImportError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>boto3</code> is not installed (install <code>nibble[s3]</code>).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

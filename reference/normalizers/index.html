@@ -1,0 +1,4436 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="GTFS-RT to MBTA V3 SSE adapter">
+      
+      
+      
+      
+        <link rel="prev" href="../adapters/">
+      
+      
+        <link rel="next" href="../gtfs/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Normalizers - nibble</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#normalizers" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="nibble" class="md-header__button md-logo" aria-label="nibble" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            nibble
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Normalizers
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="nibble" class="md-nav__button md-logo" aria-label="nibble" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    nibble
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/trip-assignment-corrections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manual trip assignment corrections
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/arrival-predictions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Arrival predictions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/monitoring-headways/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring headways
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/publishing-gtfs-rt-to-s3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing GTFS-RT to S3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Code Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../state/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    State
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Pipeline
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../poller/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Poller
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reconciler/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reconciler
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interpolator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpolator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../emitter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Emitter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Normalizers
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Normalizers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#base-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base class
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.base" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        base
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="base">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.base.BaseNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BaseNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BaseNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.base.BaseNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-pass-through" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default (pass-through)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        default
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="default">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.default.DefaultNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DefaultNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DefaultNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.default.DefaultNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#brta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BRTA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.brta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        brta
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="brta">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.brta.BrtaNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BrtaNormalizer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ccrta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ccrta
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.ccrta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ccrta
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ccrta">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.ccrta.CcrtaNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CcrtaNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CcrtaNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.ccrta.CcrtaNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cttransit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cttransit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.cttransit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cttransit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="cttransit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.cttransit.CttransitNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CttransitNormalizer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mta-railroad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mta Railroad
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.mta_railroad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mta_railroad
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mta_railroad">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.mta_railroad.MtaRailroadNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MtaRailroadNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MtaRailroadNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.mta_railroad.MtaRailroadNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mwrta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MWRTA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.mwrta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mwrta
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mwrta">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.mwrta.MwrtaNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MwrtaNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MwrtaNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.mwrta.MwrtaNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nyct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nyct
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.nyct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nyct
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="nyct">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.nyct.NyctNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NyctNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="NyctNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.nyct.NyctNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#passio-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Passio GO!
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.passio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        passio
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="passio">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.passio.PassioNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PassioNormalizer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ripta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RIPTA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.ripta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ripta
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ripta">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.ripta.RiptaNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RiptaNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RiptaNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.ripta.RiptaNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#swiv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Swiv
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.swiv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        swiv
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="swiv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.swiv.SwivNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SwivNormalizer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VTA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.vta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vta
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="vta">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.vta.VtaNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VtaNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="VtaNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.vta.VtaNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wrta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wrta
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.wrta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        wrta
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="wrta">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.wrta.WrtaNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WrtaNormalizer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gtfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GTFS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#base-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base class
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.base" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        base
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="base">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.base.BaseNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BaseNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BaseNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.base.BaseNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-pass-through" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default (pass-through)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        default
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="default">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.default.DefaultNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DefaultNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DefaultNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.default.DefaultNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#brta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BRTA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.brta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        brta
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="brta">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.brta.BrtaNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BrtaNormalizer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ccrta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ccrta
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.ccrta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ccrta
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ccrta">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.ccrta.CcrtaNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CcrtaNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CcrtaNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.ccrta.CcrtaNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cttransit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cttransit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.cttransit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cttransit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="cttransit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.cttransit.CttransitNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CttransitNormalizer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mta-railroad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mta Railroad
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.mta_railroad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mta_railroad
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mta_railroad">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.mta_railroad.MtaRailroadNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MtaRailroadNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MtaRailroadNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.mta_railroad.MtaRailroadNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mwrta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MWRTA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.mwrta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mwrta
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mwrta">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.mwrta.MwrtaNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MwrtaNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MwrtaNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.mwrta.MwrtaNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nyct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nyct
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.nyct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nyct
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="nyct">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.nyct.NyctNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NyctNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="NyctNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.nyct.NyctNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#passio-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Passio GO!
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.passio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        passio
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="passio">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.passio.PassioNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PassioNormalizer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ripta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RIPTA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.ripta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ripta
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ripta">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.ripta.RiptaNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RiptaNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RiptaNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.ripta.RiptaNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#swiv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Swiv
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.swiv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        swiv
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="swiv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.swiv.SwivNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SwivNormalizer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VTA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.vta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vta
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="vta">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.vta.VtaNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VtaNormalizer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="VtaNormalizer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.vta.VtaNormalizer.normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        normalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wrta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wrta
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nibble.normalizer.wrta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        wrta
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="wrta">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nibble.normalizer.wrta.WrtaNormalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WrtaNormalizer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="normalizers">Normalizers<a class="headerlink" href="#normalizers" title="Permanent link">&para;</a></h1>
+<p>Agency-specific feed normalizers that fix quirks before parsing.</p>
+<h2 id="base-class">Base class<a class="headerlink" href="#base-class" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.normalizer.base" class="doc doc-heading">
+            <code>nibble.normalizer.base</code>
+
+
+<a href="#nibble.normalizer.base" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Abstract base class for agency-specific feed normalizers.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.normalizer.base.BaseNormalizer" class="doc doc-heading">
+            <code>BaseNormalizer</code>
+
+
+<a href="#nibble.normalizer.base.BaseNormalizer" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="abc.ABC">ABC</span></code></p>
+
+
+
+        <p>Contract for agency-specific feed normalizers.</p>
+<p>A normalizer receives the raw GTFS-RT <code>FeedMessage</code> and the loaded
+<code>StaticGTFS</code>, may mutate the feed to fix agency quirks, and returns the
+(possibly modified) <code>FeedMessage</code>. It runs before <code>_parse_feed</code> so
+downstream code never sees the raw agency data.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="nibble.normalizer.base.BaseNormalizer.normalize" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">normalize</span><span class="p">(</span><span class="n">feed</span><span class="p">,</span> <span class="n">gtfs</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#nibble.normalizer.base.BaseNormalizer.normalize" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Normalize the feed (potentially in place) and return it.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>feed</code>
+            </td>
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The raw <code>FeedMessage</code> from the adapter.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>gtfs</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="StaticGTFS
+
+
+  
+      dataclass
+   (nibble.gtfs.static.StaticGTFS)" href="../gtfs/#nibble.gtfs.static.StaticGTFS">StaticGTFS</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Static GTFS indexes, available for cross-referencing trip IDs.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The (possibly mutated) <code>FeedMessage</code> ready for parsing.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="default-pass-through">Default (pass-through)<a class="headerlink" href="#default-pass-through" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.normalizer.default" class="doc doc-heading">
+            <code>nibble.normalizer.default</code>
+
+
+<a href="#nibble.normalizer.default" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Pass-through normalizer for well-behaved feeds.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.normalizer.default.DefaultNormalizer" class="doc doc-heading">
+            <code>DefaultNormalizer</code>
+
+
+<a href="#nibble.normalizer.default.DefaultNormalizer" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="BaseNormalizer (nibble.normalizer.base.BaseNormalizer)" href="#nibble.normalizer.base.BaseNormalizer">BaseNormalizer</a></code></p>
+
+
+
+        <p>No-op normalizer. Returns the feed unmodified.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="nibble.normalizer.default.DefaultNormalizer.normalize" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">normalize</span><span class="p">(</span><span class="n">feed</span><span class="p">,</span> <span class="n">gtfs</span><span class="p">)</span></code>
+
+<a href="#nibble.normalizer.default.DefaultNormalizer.normalize" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the feed unchanged.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>feed</code>
+            </td>
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The raw <code>FeedMessage</code> from the adapter.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>gtfs</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="StaticGTFS
+
+
+  
+      dataclass
+   (nibble.gtfs.static.StaticGTFS)" href="../gtfs/#nibble.gtfs.static.StaticGTFS">StaticGTFS</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Static GTFS indexes (unused).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The unmodified <code>feed</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="brta">BRTA<a class="headerlink" href="#brta" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.normalizer.brta" class="doc doc-heading">
+            <code>nibble.normalizer.brta</code>
+
+
+<a href="#nibble.normalizer.brta" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Normalizer for BRTA (Berkshire Regional Transit Authority) feeds.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.normalizer.brta.BrtaNormalizer" class="doc doc-heading">
+            <code>BrtaNormalizer</code>
+
+
+<a href="#nibble.normalizer.brta.BrtaNormalizer" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="BaseNormalizer (nibble.normalizer.base.BaseNormalizer)" href="#nibble.normalizer.base.BaseNormalizer">BaseNormalizer</a></code></p>
+
+
+
+        <p>Normalizer for BRTA (Berkshire Regional Transit Authority) feeds.</p>
+<p>The RouteMatch API reports <code>masterRouteId</code> values like <code>"Wk Rt 01"</code>
+and <code>tripId</code> values like <code>"Rte 01 1130 in"</code> that do not match BRTA's
+static GTFS. This normalizer:</p>
+<ol>
+<li>Remaps route_id by extracting the numeric short name and looking it up
+   in the <code>route_short_names</code> index built from <code>routes.txt</code>.</li>
+<li>Clears trip_id entirely, since RouteMatch trip IDs have no relationship
+   to GTFS trip IDs. This lets nibble's position-based trip inference run
+   rather than failing to find the trip silently.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="ccrta">Ccrta<a class="headerlink" href="#ccrta" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.normalizer.ccrta" class="doc doc-heading">
+            <code>nibble.normalizer.ccrta</code>
+
+
+<a href="#nibble.normalizer.ccrta" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Normalizer for CCRTA (Cape Cod Regional Transit Authority) feeds.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.normalizer.ccrta.CcrtaNormalizer" class="doc doc-heading">
+            <code>CcrtaNormalizer</code>
+
+
+<a href="#nibble.normalizer.ccrta.CcrtaNormalizer" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="BaseNormalizer (nibble.normalizer.base.BaseNormalizer)" href="#nibble.normalizer.base.BaseNormalizer">BaseNormalizer</a></code></p>
+
+
+
+        <p>Normalizer for CCRTA feeds.</p>
+<p>CCRTA's static GTFS uses internal numeric route_ids (e.g. <code>"2976"</code>) with
+descriptive long names (e.g. <code>"Sealine Hyannis-Falmouth/Woods Hole"</code>), but
+the RT feed reports abbreviated route names (e.g. <code>"Sealine"</code>).  This
+normalizer remaps abbreviated names to static GTFS route_ids using
+case-insensitive prefix and substring matching against <code>route_long_name</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="nibble.normalizer.ccrta.CcrtaNormalizer.normalize" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">normalize</span><span class="p">(</span><span class="n">feed</span><span class="p">,</span> <span class="n">gtfs</span><span class="p">)</span></code>
+
+<a href="#nibble.normalizer.ccrta.CcrtaNormalizer.normalize" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Remap CCRTA abbreviated route names to their static GTFS route_ids.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>feed</code>
+            </td>
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The raw <code>FeedMessage</code> from the CCRTA feed.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>gtfs</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="StaticGTFS
+
+
+  
+      dataclass
+   (nibble.gtfs.static.StaticGTFS)" href="../gtfs/#nibble.gtfs.static.StaticGTFS">StaticGTFS</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Static GTFS indexes containing the <code>route_short_names</code> map
+(which for CCRTA holds long name → route_id entries).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The modified <code>FeedMessage</code> with normalised route IDs.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="cttransit">Cttransit<a class="headerlink" href="#cttransit" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.normalizer.cttransit" class="doc doc-heading">
+            <code>nibble.normalizer.cttransit</code>
+
+
+<a href="#nibble.normalizer.cttransit" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Normalizer for CTTransit (Connecticut Transit) feeds.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.normalizer.cttransit.CttransitNormalizer" class="doc doc-heading">
+            <code>CttransitNormalizer</code>
+
+
+<a href="#nibble.normalizer.cttransit.CttransitNormalizer" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="BaseNormalizer (nibble.normalizer.base.BaseNormalizer)" href="#nibble.normalizer.base.BaseNormalizer">BaseNormalizer</a></code></p>
+
+
+
+        <p>Normalizer for CTTransit GTFS-RT feeds.</p>
+<p>CTTransit's feed populates <code>trip_id</code> but omits <code>route_id</code>. This
+normalizer fills in <code>route_id</code> from the static GTFS <code>trips</code> index.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="mta-railroad">Mta Railroad<a class="headerlink" href="#mta-railroad" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.normalizer.mta_railroad" class="doc doc-heading">
+            <code>nibble.normalizer.mta_railroad</code>
+
+
+<a href="#nibble.normalizer.mta_railroad" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Normalizer for MTA Railroad feeds (Metro-North and LIRR).</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.normalizer.mta_railroad.MtaRailroadNormalizer" class="doc doc-heading">
+            <code>MtaRailroadNormalizer</code>
+
+
+<a href="#nibble.normalizer.mta_railroad.MtaRailroadNormalizer" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="BaseNormalizer (nibble.normalizer.base.BaseNormalizer)" href="#nibble.normalizer.base.BaseNormalizer">BaseNormalizer</a></code></p>
+
+
+
+        <p>Normalizer for MTA Railroad GTFS-RT feeds (Metro-North and LIRR).</p>
+<p>Both MNR and LIRR feeds report train numbers as trip IDs (e.g. <code>"1300"</code>)
+while their static GTFS files use composite or opaque trip IDs. The train
+number corresponds to the <code>trip_short_name</code> field in <code>trips.txt</code>.</p>
+<p>This normalizer rewrites each RT train-number trip ID to its full static
+trip ID via the <code>trip_short_names</code> index built by the static GTFS loader,
+so that downstream stop-time and interpolation lookups succeed.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="nibble.normalizer.mta_railroad.MtaRailroadNormalizer.normalize" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">normalize</span><span class="p">(</span><span class="n">feed</span><span class="p">,</span> <span class="n">gtfs</span><span class="p">)</span></code>
+
+<a href="#nibble.normalizer.mta_railroad.MtaRailroadNormalizer.normalize" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Rewrite MTA Railroad train numbers to their full static GTFS trip IDs.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>feed</code>
+            </td>
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The raw <code>FeedMessage</code> from the adapter.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>gtfs</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="StaticGTFS
+
+
+  
+      dataclass
+   (nibble.gtfs.static.StaticGTFS)" href="../gtfs/#nibble.gtfs.static.StaticGTFS">StaticGTFS</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Static GTFS indexes, including the <code>trip_short_names</code>
+mapping populated from <code>trips.txt</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The modified <code>FeedMessage</code> with train-number trip IDs replaced</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>by their corresponding static trip IDs where a match exists.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Unmatched IDs are left unchanged.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="mwrta">MWRTA<a class="headerlink" href="#mwrta" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.normalizer.mwrta" class="doc doc-heading">
+            <code>nibble.normalizer.mwrta</code>
+
+
+<a href="#nibble.normalizer.mwrta" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Normalizer for MWRTA (MetroWest Regional Transit Authority) feeds.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.normalizer.mwrta.MwrtaNormalizer" class="doc doc-heading">
+            <code>MwrtaNormalizer</code>
+
+
+<a href="#nibble.normalizer.mwrta.MwrtaNormalizer" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="BaseNormalizer (nibble.normalizer.base.BaseNormalizer)" href="#nibble.normalizer.base.BaseNormalizer">BaseNormalizer</a></code></p>
+
+
+
+        <p>Normalizer for MWRTA feeds.</p>
+<p>MWRTA's static GTFS uses internal UUIDs for route_id, but the GTFS-RT feed
+reports human-readable short names (e.g. <code>"06"</code>, <code>"07"</code>).  This
+normalizer remaps the feed's route_id to the corresponding UUID using the
+<code>route_short_names</code> index built from <code>routes.txt</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="nibble.normalizer.mwrta.MwrtaNormalizer.normalize" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">normalize</span><span class="p">(</span><span class="n">feed</span><span class="p">,</span> <span class="n">gtfs</span><span class="p">)</span></code>
+
+<a href="#nibble.normalizer.mwrta.MwrtaNormalizer.normalize" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Remap MWRTA route short names to their static GTFS UUID route_ids.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>feed</code>
+            </td>
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The raw <code>FeedMessage</code> from the MWRTA feed.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>gtfs</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="StaticGTFS
+
+
+  
+      dataclass
+   (nibble.gtfs.static.StaticGTFS)" href="../gtfs/#nibble.gtfs.static.StaticGTFS">StaticGTFS</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Static GTFS indexes containing the <code>route_short_names</code> map.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The modified <code>FeedMessage</code> with normalised route IDs.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="nyct">Nyct<a class="headerlink" href="#nyct" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.normalizer.nyct" class="doc doc-heading">
+            <code>nibble.normalizer.nyct</code>
+
+
+<a href="#nibble.normalizer.nyct" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Normalizer for MTA NYCT subway feeds.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.normalizer.nyct.NyctNormalizer" class="doc doc-heading">
+            <code>NyctNormalizer</code>
+
+
+<a href="#nibble.normalizer.nyct.NyctNormalizer" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="BaseNormalizer (nibble.normalizer.base.BaseNormalizer)" href="#nibble.normalizer.base.BaseNormalizer">BaseNormalizer</a></code></p>
+
+
+
+        <p>Normalizer for MTA NYCT subway GTFS-RT feeds.</p>
+<p>The NYCT static GTFS uses full trip IDs that include a service-period
+prefix (e.g. <code>"BFA25GEN-B087-Weekday-00_067600_B..S65R"</code>), while the
+GTFS-RT feed publishes only the suffix (e.g. <code>"067600_B..S65R"</code>).</p>
+<p>On first use with a given static GTFS, this normalizer builds a suffix
+index mapping each short trip ID to its full static counterpart. Each
+incoming RT trip ID that matches a suffix is rewritten to the full form
+so that downstream trip lookups (stop times, interpolation) succeed.</p>
+<p>Trip IDs with no suffix match (e.g. B-train express variants not present
+in the static GTFS) are left unchanged; the state machine handles them
+via its unknown-trip-id path.</p>
+<p>NYCT extension fields processed per entity:</p>
+<ul>
+<li><code>is_assigned</code>: Entities with <code>is_assigned=False</code> are dropped — they
+  are phantom scheduled trips with no physical train assigned and produce
+  spurious unknown-trip-id warnings downstream.</li>
+<li><code>train_id</code>: Physical train/consist identifier from ATS. Written to
+  <code>vehicle.vehicle.id</code> when the feed leaves that field empty.</li>
+<li><code>direction</code>: Cardinal direction (NORTH/SOUTH) mapped to GTFS
+  <code>direction_id</code> (0/1) when the trip descriptor does not already carry one.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="nibble.normalizer.nyct.NyctNormalizer.normalize" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">normalize</span><span class="p">(</span><span class="n">feed</span><span class="p">,</span> <span class="n">gtfs</span><span class="p">)</span></code>
+
+<a href="#nibble.normalizer.nyct.NyctNormalizer.normalize" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Rewrite short NYCT trip IDs to their full static GTFS form, drop
+unassigned trips, and back-fill direction_id and vehicle ID from
+NYCT-specific protobuf extensions.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>feed</code>
+            </td>
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The raw <code>FeedMessage</code> from the NYCT GTFS-RT feed.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>gtfs</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="StaticGTFS
+
+
+  
+      dataclass
+   (nibble.gtfs.static.StaticGTFS)" href="../gtfs/#nibble.gtfs.static.StaticGTFS">StaticGTFS</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Static GTFS indexes used to build the suffix lookup.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The modified <code>FeedMessage</code> with:</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <ul>
+<li>Entities with <code>is_assigned=False</code> removed.</li>
+</ul>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <ul>
+<li>Trip IDs expanded to full form where a static match exists.</li>
+</ul>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <ul>
+<li><code>direction_id</code> set from the NYCT cardinal direction when absent.</li>
+</ul>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <ul>
+<li><code>vehicle.id</code> populated from <code>train_id</code> when absent.</li>
+</ul>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="passio-go">Passio GO!<a class="headerlink" href="#passio-go" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.normalizer.passio" class="doc doc-heading">
+            <code>nibble.normalizer.passio</code>
+
+
+<a href="#nibble.normalizer.passio" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Normalizer for Passio GO! feeds.</p>
+<p>After the PassioAdapter maps <code>routeId</code> → <code>shortName</code> (or <code>name</code>) via the
+routes endpoint, this normalizer resolves any values that don't directly match
+a GTFS <code>route_id</code> by looking them up in the <code>route_short_names</code> index
+(short_name → route_id).  Values that match neither are logged and recorded
+in <code>unknown_routes</code>.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.normalizer.passio.PassioNormalizer" class="doc doc-heading">
+            <code>PassioNormalizer</code>
+
+
+<a href="#nibble.normalizer.passio.PassioNormalizer" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="BaseNormalizer (nibble.normalizer.base.BaseNormalizer)" href="#nibble.normalizer.base.BaseNormalizer">BaseNormalizer</a></code></p>
+
+
+
+        <p>Resolve Passio route short names / display names to GTFS route_ids.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="ripta">RIPTA<a class="headerlink" href="#ripta" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.normalizer.ripta" class="doc doc-heading">
+            <code>nibble.normalizer.ripta</code>
+
+
+<a href="#nibble.normalizer.ripta" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Normalizer for RIPTA (Rhode Island Public Transit Authority) feeds.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.normalizer.ripta.RiptaNormalizer" class="doc doc-heading">
+            <code>RiptaNormalizer</code>
+
+
+<a href="#nibble.normalizer.ripta.RiptaNormalizer" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="BaseNormalizer (nibble.normalizer.base.BaseNormalizer)" href="#nibble.normalizer.base.BaseNormalizer">BaseNormalizer</a></code></p>
+
+
+
+        <p>Normalizer for RIPTA (Rhode Island Public Transit Authority) feeds.</p>
+<p>RIPTA feeds may include trip_ids that don't directly match trips.txt.
+This normalizer attempts to reconcile known formatting quirks.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="nibble.normalizer.ripta.RiptaNormalizer.normalize" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">normalize</span><span class="p">(</span><span class="n">feed</span><span class="p">,</span> <span class="n">gtfs</span><span class="p">)</span></code>
+
+<a href="#nibble.normalizer.ripta.RiptaNormalizer.normalize" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Strip date suffixes from RIPTA trip_ids that don't match static GTFS.</p>
+<p>RIPTA sometimes appends a date component to trip IDs (e.g.
+<code>"trip-123_20240101"</code>). This method strips the suffix and remaps the
+entity to the base trip ID when the base is found in static GTFS.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>feed</code>
+            </td>
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The raw <code>FeedMessage</code> from the RIPTA feed.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>gtfs</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="StaticGTFS
+
+
+  
+      dataclass
+   (nibble.gtfs.static.StaticGTFS)" href="../gtfs/#nibble.gtfs.static.StaticGTFS">StaticGTFS</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Static GTFS indexes used to check whether a trip ID is valid.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The modified <code>FeedMessage</code> with normalised trip IDs.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="swiv">Swiv<a class="headerlink" href="#swiv" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.normalizer.swiv" class="doc doc-heading">
+            <code>nibble.normalizer.swiv</code>
+
+
+<a href="#nibble.normalizer.swiv" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Generic normalizer for Swiv-based feeds.</p>
+<p>After the SwivAdapter maps <code>idLigne</code> → <code>nomCommercial</code> via the topo
+endpoint, this normalizer resolves any <code>nomCommercial</code> values that don't
+directly match a GTFS <code>route_id</code> by looking them up in the
+<code>route_short_names</code> index (short_name → route_id).  Values that match
+neither are logged and recorded in <code>unknown_routes</code>.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.normalizer.swiv.SwivNormalizer" class="doc doc-heading">
+            <code>SwivNormalizer</code>
+
+
+<a href="#nibble.normalizer.swiv.SwivNormalizer" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="BaseNormalizer (nibble.normalizer.base.BaseNormalizer)" href="#nibble.normalizer.base.BaseNormalizer">BaseNormalizer</a></code></p>
+
+
+
+        <p>Resolve Swiv nomCommercial values to GTFS route_ids.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="vta">VTA<a class="headerlink" href="#vta" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.normalizer.vta" class="doc doc-heading">
+            <code>nibble.normalizer.vta</code>
+
+
+<a href="#nibble.normalizer.vta" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Normalizer for VTA (Vineyard Transit Authority) feeds.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.normalizer.vta.VtaNormalizer" class="doc doc-heading">
+            <code>VtaNormalizer</code>
+
+
+<a href="#nibble.normalizer.vta.VtaNormalizer" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="BaseNormalizer (nibble.normalizer.base.BaseNormalizer)" href="#nibble.normalizer.base.BaseNormalizer">BaseNormalizer</a></code></p>
+
+
+
+        <p>Normalizer for VTA (Vineyard Transit Authority) feeds.</p>
+<p>The MyTransitRide API reports <code>headsignText</code> values (e.g. <code>"3"</code>,
+<code>"10"</code>) as route identifiers, which match GTFS <code>route_short_name</code> but
+not the internal numeric <code>route_id</code> (e.g. <code>"2801"</code>, <code>"2808"</code>). This
+normalizer remaps them using the <code>route_short_names</code> index built from
+<code>routes.txt</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="nibble.normalizer.vta.VtaNormalizer.normalize" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">normalize</span><span class="p">(</span><span class="n">feed</span><span class="p">,</span> <span class="n">gtfs</span><span class="p">)</span></code>
+
+<a href="#nibble.normalizer.vta.VtaNormalizer.normalize" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Remap VTA <code>headsignText</code> route identifiers to internal GTFS route IDs.</p>
+<p>The MyTransitRide API sets <code>trip.route_id</code> to a <code>route_short_name</code>
+value (e.g. <code>"3"</code>, <code>"10"</code>). This method replaces those values with
+the corresponding internal <code>route_id</code> from <code>routes.txt</code>, logging a
+warning and recording any unmatched identifiers in <code>unknown_routes</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>feed</code>
+            </td>
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The raw FeedMessage from the VTA adapter.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>gtfs</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="StaticGTFS
+
+
+  
+      dataclass
+   (nibble.gtfs.static.StaticGTFS)" href="../gtfs/#nibble.gtfs.static.StaticGTFS">StaticGTFS</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Loaded static GTFS providing the <code>route_short_names</code> index.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="nibble.protos.gtfs_realtime_pb2.FeedMessage">FeedMessage</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The same FeedMessage with <code>route_id</code> fields remapped in place.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="wrta">Wrta<a class="headerlink" href="#wrta" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="nibble.normalizer.wrta" class="doc doc-heading">
+            <code>nibble.normalizer.wrta</code>
+
+
+<a href="#nibble.normalizer.wrta" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Normalizer for WRTA (Worcester Regional Transit Authority) feeds.</p>
+<p>WRTA uses a Swiv-based real-time feed.  When <code>NIBBLE_SWIV_TOPO_URL</code> is set,
+the SwivAdapter already replaces <code>idLigne</code> integers with <code>nomCommercial</code>
+route names before this normalizer runs, so the feed arrives with human-readable
+route IDs that match the GTFS directly.</p>
+<p>This normalizer acts as a fallback for any <code>idLigne</code> values the topo endpoint
+didn't cover, using a static map built from known Swiv line IDs.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nibble.normalizer.wrta.WrtaNormalizer" class="doc doc-heading">
+            <code>WrtaNormalizer</code>
+
+
+<a href="#nibble.normalizer.wrta.WrtaNormalizer" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="SwivNormalizer (nibble.normalizer.swiv.SwivNormalizer)" href="#nibble.normalizer.swiv.SwivNormalizer">SwivNormalizer</a></code></p>
+
+
+
+        <p>Normalizer for WRTA: applies the hard-coded idLigne fallback map first,
+then delegates to SwivNormalizer for route_short_names lookup.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
